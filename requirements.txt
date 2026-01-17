@@ -1,0 +1,15 @@
+# Core dependencies
+torch
+transformers
+datasets
+evaluate
+
+# Configuration
+pyyaml
+
+# Utilities
+numpy
+tqdm
+
+# Optional: for extensions
+#bitsandbytes
