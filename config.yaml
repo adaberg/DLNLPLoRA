@@ -1,0 +1,48 @@
+# As a mvp we are going to restric our reproduction on one model and one dataset,
+# with 3 configurations:
+#   - "none": baseline (no finetuning, zero-shot evaluation)
+#   - "full": full finetuning (all parameters trainable)
+#   - "lora": LoRA finetuning (only adaptation matrices trainable)
+
+experiment_name: "lora_gpt2_e2e"
+seed: 42
+output_dir: "./results"
+
+model_name: "gpt2-medium"  # ~355M parameters
+
+dataset_name: "e2e_nlg"
+sample_percentage: 0.1      # Use 10% of dataset
+
+# LoRA Hyperparameters
+lora:
+  rank: 8                   # Rank of adaptation matrices
+                            # Paper tests: 1, 2, 4, 8, 16, 32, 64
+  alpha: 16                 # Scaling factor
+                            # Typically α = 2×rank
+  dropout: 0.1              # Dropout applied to LoRA layers
+  target_modules:           # GPT-2 attention modules to adapt
+    - "c_attn"              # Fused QKV projection (in_features=1024, out_features=3072)
+    - "c_proj"              # Output projection (in_features=1024, out_features=1024)
+  # Note: GPT-2 uses fused attention (c_attn), not separate q/k/v projections
+  # Applying LoRA to both c_attn and c_proj per layer = 24 layers × 2 = 48 LoRA modules
+
+evaluation:
+  metrics:
+    - "perplexity"
+    - "bleu"
+    - "rouge"               # ROUGE-1, ROUGE-2, ROUGE-L
+  
+  generation:
+    num_samples: 10         # Number of samples to generate for qualitative eval
+    max_new_tokens: 50      # Maximum tokens to generate per sample
+    temperature: 1.0
+    top_p: 0.9
+    do_sample: true
+
+# ============================================================================
+# Expected Results (from LoRA paper, GPT-2 Medium on E2E)
+# ============================================================================
+# Baseline (no finetuning): ~high perplexity, poor BLEU
+# Full finetuning (~355M params): BLEU ~68-70
+# LoRA r=8 (~1.2M params, 0.3% of base): BLEU ~68-70 (comparable to full)
+# ============================================================================
