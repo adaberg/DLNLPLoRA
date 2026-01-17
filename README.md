@@ -5,7 +5,8 @@ tuwien project 2025/2026
 ## possible extentions
 
 - Weightwatcher
-- DoRA
+- DoRA: LoRA updates magnitude and direction of the weight matrix concurrently. it is not good for small nuanced changes in one of the two directions. DoRA solves this by decoupling magnitude from direction through weight decomposition
+- QLoRA: quantization + LoRA
 
 ## project structure 
 
