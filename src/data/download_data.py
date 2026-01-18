@@ -15,9 +15,18 @@ e2e_dir = os.path.join(current_dir, "e2e_data")
 os.makedirs(e2e_dir, exist_ok=True)
 
 files = [
-    ("train.csv", "https://raw.githubusercontent.com/tuetschek/e2e-cleaning/master/cleaned-data/train-fixed.no-ol.csv"),
-    ("dev.csv", "https://raw.githubusercontent.com/tuetschek/e2e-cleaning/master/cleaned-data/devel-fixed.no-ol.csv"),
-    ("test.csv", "https://raw.githubusercontent.com/tuetschek/e2e-cleaning/master/cleaned-data/test-fixed.csv")
+    (
+        "train.csv",
+        "https://raw.githubusercontent.com/tuetschek/e2e-cleaning/master/cleaned-data/train-fixed.no-ol.csv",
+    ),
+    (
+        "dev.csv",
+        "https://raw.githubusercontent.com/tuetschek/e2e-cleaning/master/cleaned-data/devel-fixed.no-ol.csv",
+    ),
+    (
+        "test.csv",
+        "https://raw.githubusercontent.com/tuetschek/e2e-cleaning/master/cleaned-data/test-fixed.csv",
+    ),
 ]
 
 for filename, url in files:
@@ -27,8 +36,8 @@ for filename, url in files:
         response = requests.get(url)
         with open(save_path, "wb") as f:
             f.write(response.content)
-        print(f"✅ 保存到: {save_path}")
+        print(f"保存到: {save_path}")
     except Exception as e:
-        print(f"❌ 失败: {e}")
+        print(f"失败: {e}")
 
-print(f"\n🎉 完成！路径: {e2e_dir}")
+print(f"\n完成！路径: {e2e_dir}")
