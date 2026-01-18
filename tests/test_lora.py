@@ -11,7 +11,6 @@ from src.lora.model import LoRALinear, LoRAGPT2
 
 
 class TestLoRALayer:
-    """Test LoRALayer implementation"""
 
     @pytest.mark.layer
     def test_initialization(self):
@@ -155,4 +154,4 @@ class TestLoRAGPT2:
         assert total / trainable > 100
 
 
-# tagging of tests probably not required but i am flexing
+# tagging of tests definetlye not required but i am flexing
