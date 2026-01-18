@@ -31,11 +31,7 @@ tuwien project 2025/2026
 #### LoRA
 
 ```bash
-#
-pytest -m lorafast tests/test_lora.py -v
-#
-pytest -m lorafast tests/test_lora.py -v
-#
+# can also use -m layer / linear / model to split testing
 pytest tests/test_lora.py -v
 ```
 
