@@ -11,9 +11,10 @@ loaders = create_datasets_and_loaders(tokenizer)
 train_loader = loaders["train"]      # Training data
 val_loader = loaders["validation"]   # Validation data
 test_loader = loaders["test"]        # Test data
+```
 
 # For Debugging
-
+```python
 from dataset import E2EDataset, get_dataloader
 
 # For debugging or custom setups
@@ -34,8 +35,9 @@ loader = get_dataloader(
     shuffle=True,
     num_workers=2
 )
+```
 
-Notes
+# Notes
 create_datasets_and_loaders(): For normal training
 
 E2EDataset() + get_dataloader(): For debugging or custom needs
