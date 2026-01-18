@@ -52,9 +52,7 @@ class LoRALayer(nn.Module):
         self.lora_A = nn.Parameter(torch.empty(rank, in_features))
         nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
 
-        # B is set to zero at initialization
         self.lora_B = nn.Parameter(torch.zeros(out_features, rank))
-
         self.dropout = nn.Dropout(p=dropout) if dropout > 0.0 else nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

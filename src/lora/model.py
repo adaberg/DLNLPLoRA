@@ -39,6 +39,13 @@ class LoRAGPT2(nn.Module):
         for param in base_model.parameters():
             param.requires_grad = False
 
+        ### debug
+        print("Available attention modules:")
+        for name, module in base_model.named_modules():
+            if isinstance(module, nn.Linear) and 'attn' in name:
+                print(f"  {name}")
+        ###
+        
         # Inject LoRA into target modules
         self.lora_modules = []
         for name, module in base_model.named_modules():

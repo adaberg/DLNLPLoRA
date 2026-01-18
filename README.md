@@ -26,6 +26,19 @@ tuwien project 2025/2026
    pip install -r requirements.txt
    ```
 
+### pytests
+
+#### LoRA
+
+```bash
+#
+pytest -m lorafast tests/test_lora.py -v
+#
+pytest -m lorafast tests/test_lora.py -v
+#
+pytest tests/test_lora.py -v
+```
+
 ## project structure 
 
 ```
