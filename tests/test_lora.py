@@ -2,6 +2,10 @@ import torch
 import torch.nn as nn
 import pytest
 from transformers import GPT2LMHeadModel
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.lora.layer import LoRALayer
 from src.lora.model import LoRALinear, LoRAGPT2
 
