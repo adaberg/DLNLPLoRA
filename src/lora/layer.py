@@ -8,8 +8,6 @@ import torch.nn.functional as F
 
 class LoRALayer(nn.Module):
     """
-    Low-Rank Adaptation (LoRA) layer.
-
     Attributes:
         rank: Rank of the low-rank decomposition
         alpha: Scaling factor for LoRA updates
@@ -28,8 +26,6 @@ class LoRALayer(nn.Module):
         dropout: float = 0.0,
     ) -> None:
         """
-        Initialize LoRA layer with low-rank matrices.
-
         importnant
             in_features: Input dimension (must match base layer)
             out_features: Output dimension (must match base layer)
@@ -63,7 +59,6 @@ class LoRALayer(nn.Module):
         x_dropped = self.dropout(x)
 
         down_proj = x_dropped @ self.lora_A.T
-
         up_proj = down_proj @ self.lora_B.T
 
         # Apply scaling factor α/r

@@ -93,17 +93,6 @@ class TestLoRAGPT2:
         for param in gpt2_model.parameters():
             if id(param) not in lora_param_ids:
                 assert param.requires_grad == False
-
-    @pytest.mark.model
-    def test_lora_parameters_trainable(self, gpt2_model):
-        lora_model = LoRAGPT2(
-            gpt2_model, rank=8, alpha=16, target_modules=["c_attn", "c_proj"]
-        )
-        
-        lora_params = lora_model.get_lora_parameters()
-        assert len(lora_params) > 0
-        for param in lora_params:
-            assert param.requires_grad == True
     
     @pytest.mark.model
     def test_injects_lora_modules(self, gpt2_model):
@@ -125,14 +114,8 @@ class TestLoRAGPT2:
         lora_params = lora_model.get_lora_parameters()
 
         assert len(lora_params) > 0
-
         for param in lora_params:
             assert param.requires_grad == True
-
-        total_params = sum(p.numel() for p in gpt2_model.parameters())
-        trainable_params = sum(p.numel() for p in lora_params)
-
-        assert trainable_params < total_params * 0.01
 
     @pytest.mark.model
     def test_forward_pass(self, gpt2_model):
@@ -153,14 +136,14 @@ class TestLoRAGPT2:
             gpt2_model.config.vocab_size,
         )
 
-    @pytest.mark.lorafast
+    @pytest.mark.model
     def test_fails_on_invalid_target_modules(self, gpt2_model):
         with pytest.raises(AssertionError):
             LoRAGPT2(
                 gpt2_model, rank=8, alpha=16, target_modules=["invalid_module_name"]
             )
 
-    @pytest.mark.lorafast
+    @pytest.mark.model
     def test_parameter_count(self, gpt2_model):
         lora_model = LoRAGPT2(
             gpt2_model, rank=8, alpha=16, target_modules=["c_attn", "c_proj"]
