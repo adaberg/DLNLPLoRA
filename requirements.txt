@@ -11,5 +11,7 @@ pyyaml
 numpy
 tqdm
 
+pytest
+
 # Optional: for extensions
 #bitsandbytes
