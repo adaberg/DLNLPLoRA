@@ -7,6 +7,11 @@ import torch
 import os
 import sys
 from transformers import GPT2TokenizerFast
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.join(current_dir, "..")
+sys.path.insert(0, os.path.abspath(project_root))
+
 from src.data.dataset import E2EDataset, get_dataloader
 
 
@@ -19,12 +24,11 @@ def test_format_sample():
     expected = "meaning_representation: name[The Eagle], eatType[coffee shop] | reference: The Eagle is a coffee shop."
     
     assert formatted == expected, f"Expected: {expected}, Got: {formatted}"
-    print("✅ format_sample test passed")
+    print("format_sample test passed")
 
 
 def test_e2e_dataset_loading():
     """Test E2E dataset loads from local CSV files."""
-    # Check if data files exist
     current_dir = os.path.dirname(os.path.abspath(__file__))
     e2e_dir = os.path.join(current_dir, "..", "src", "data", "e2e_data")
     train_csv = os.path.join(e2e_dir, "train.csv")
@@ -51,7 +55,6 @@ def test_dataset_length():
     tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
     
-    # Get full dataset
     full_dataset = E2EDataset(
         split="validation",
         tokenizer=tokenizer,
@@ -60,7 +63,6 @@ def test_dataset_length():
     )
     full_size = len(full_dataset)
     
-    # Get 10% of dataset
     partial_dataset = E2EDataset(
         split="validation",
         tokenizer=tokenizer,
@@ -69,14 +71,13 @@ def test_dataset_length():
     )
     partial_size = len(partial_dataset)
     
-    # Allow 10% tolerance
     expected_size = int(full_size * 0.1)
     tolerance = max(1, expected_size * 0.1)
     
     assert abs(partial_size - expected_size) <= tolerance, \
         f"Expected ~{expected_size} samples, got {partial_size}"
     
-    print(f"✅ Dataset sampling: full={full_size}, 10%={partial_size}")
+    print(f"Dataset sampling: full={full_size}, 10%={partial_size}")
 
 
 def test_tokenization_length():
@@ -108,7 +109,7 @@ def test_tokenization_length():
         assert actual_length <= max_length, \
             f"Actual length {actual_length} > max_length {max_length}"
     
-    print("✅ Tokenization length test passed")
+    print("Tokenization length test passed")
 
 
 def test_dataloader():
@@ -128,7 +129,6 @@ def test_dataloader():
     
     first_batch = next(iter(dataloader))
     
-    # Check batch shapes
     assert first_batch["input_ids"].shape == (batch_size, 128), \
         f"Batch input IDs shape: {first_batch['input_ids'].shape}"
     assert first_batch["attention_mask"].shape == (batch_size, 128), \
@@ -136,7 +136,7 @@ def test_dataloader():
     assert first_batch["labels"].shape == (batch_size, 128), \
         f"Batch labels shape: {first_batch['labels'].shape}"
     
-    print("✅ DataLoader test passed")
+    print("DataLoader test passed")
 
 
 def test_raw_sample():
@@ -164,7 +164,7 @@ def test_raw_sample():
     assert len(raw["human_reference"]) > 0, \
         "human_reference should not be empty"
     
-    print("✅ Raw sample test passed")
+    print("Raw sample test passed")
 
 
 def run_all_tests():
@@ -190,7 +190,7 @@ def run_all_tests():
             test_func()
             passed += 1
         except Exception as e:
-            print(f"❌ {test_func.__name__} failed: {e}")
+            print(f"{test_func.__name__} failed: {e}")
             failed += 1
     
     print("=" * 60)

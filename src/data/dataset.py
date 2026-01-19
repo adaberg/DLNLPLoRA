@@ -44,11 +44,9 @@ class E2EDataset(Dataset):
         if not os.path.exists(csv_path):
             raise FileNotFoundError(f"File not found: {csv_path}\nRun download_data.py first")
         
-        # Load from local CSV
         dataset = load_dataset("csv", data_files={split: csv_path})
         dataset = dataset[split]
         
-        # Rename columns to match our format
         if 'mr' in dataset.column_names:
             dataset = dataset.rename_column('mr', 'meaning_representation')
         if 'ref' in dataset.column_names:
@@ -73,7 +71,6 @@ class E2EDataset(Dataset):
         # Format the text
         text = f"meaning_representation: {meaning_rep} | reference: {reference}"
         
-        # Tokenize
         encoding = self.tokenizer(
             text,
             max_length=self.max_length,
