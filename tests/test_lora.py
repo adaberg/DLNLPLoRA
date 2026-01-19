@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import pytest
-from transformers import GPT2LMHeadModel
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 import sys
 from pathlib import Path
 
@@ -154,4 +154,83 @@ class TestLoRAGPT2:
         assert total / trainable > 100
 
 
+class TestLoRALearning:
+    
+    @pytest.fixture
+    def model_and_inputs(self):
+        base_model = GPT2LMHeadModel.from_pretrained("gpt2-medium")
+        model = LoRAGPT2(
+            base_model=base_model,
+            rank=4,
+            alpha=16.0,
+            target_modules=["c_attn"],
+            dropout=0.0
+        )
+        
+        tokenizer = GPT2Tokenizer.from_pretrained("gpt2-medium")
+        tokenizer.pad_token = tokenizer.eos_token
+        
+        text = ["The students love deep learning for nlp"]
+        inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
+        inputs["labels"] = inputs["input_ids"].clone()
+        
+        return model, inputs
+    
+    @pytest.mark.learning
+    def test_only_lora_receives_gradients(self, model_and_inputs):
+        model, inputs = model_and_inputs
+        
+        outputs = model(**inputs)
+        loss = outputs.loss
+        loss.backward()
+        
+        for name, param in model.base_model.named_parameters():
+            if "lora" in name:
+                assert param.grad is not None, f"LoRA param {name} missing gradient"
+                assert not torch.allclose(param.grad, torch.zeros_like(param.grad)), \
+                    f"LoRA param {name} has zero gradient"
+            else:
+                assert param.grad is None or torch.allclose(param.grad, torch.zeros_like(param.grad)), \
+                    f"Base param {name} should not receive gradients"
+    
+    @pytest.mark.learning
+    def test_parameters_update_after_step(self, model_and_inputs):
+        model, inputs = model_and_inputs
+        
+        lora_params = model.get_lora_parameters()
+        initial_params = [p.data.clone() for p in lora_params]
+        
+        optimizer = torch.optim.AdamW(lora_params, lr=1e-3)
+        
+        outputs = model(**inputs)
+        loss = outputs.loss
+        loss.backward()
+        optimizer.step()
+        
+        for initial, current in zip(initial_params, lora_params):
+            assert not torch.allclose(initial, current.data), \
+                "LoRA parameters did not update after optimizer step"
+    
+    @pytest.mark.learning
+    def test_loss_decreases_on_overfit(self, model_and_inputs):
+        model, inputs = model_and_inputs
+        
+        lora_params = model.get_lora_parameters()
+        optimizer = torch.optim.AdamW(lora_params, lr=1e-3)
+        
+        initial_loss = model(**inputs).loss.item()
+        
+        for _ in range(10):
+            optimizer.zero_grad()
+            loss = model(**inputs).loss
+            loss.backward()
+            optimizer.step()
+        
+        final_loss = model(**inputs).loss.item()
+        
+        assert final_loss < initial_loss, \
+            f"Loss did not decrease: {initial_loss:.4f} -> {final_loss:.4f}"
+            
+            
 # tagging of tests definetlye not required but i am flexing
+# actually it is useful to not run layer tests again

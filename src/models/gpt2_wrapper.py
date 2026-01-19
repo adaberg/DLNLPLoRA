@@ -1,5 +1,4 @@
 # wrapper
-# wrapper
 from typing import Tuple
 import torch.nn as nn
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
