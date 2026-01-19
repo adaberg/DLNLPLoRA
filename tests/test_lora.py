@@ -180,6 +180,15 @@ class TestLoRALearning:
     def test_only_lora_receives_gradients(self, model_and_inputs):
         model, inputs = model_and_inputs
         
+        lora_params = model.get_lora_parameters()
+        optimizer = torch.optim.SGD(lora_params, lr=1e-3)
+        
+        # warmup step if we want gradient to pass the B
+        optimizer.zero_grad()
+        model(**inputs).loss.backward()
+        optimizer.step()
+        
+        optimizer.zero_grad()
         outputs = model(**inputs)
         loss = outputs.loss
         loss.backward()
@@ -201,11 +210,14 @@ class TestLoRALearning:
         initial_params = [p.data.clone() for p in lora_params]
         
         optimizer = torch.optim.AdamW(lora_params, lr=1e-3)
-        
-        outputs = model(**inputs)
-        loss = outputs.loss
-        loss.backward()
-        optimizer.step()
+
+        # again warmp up step
+        for _ in range(2):
+            optimizer.zero_grad()        
+            outputs = model(**inputs)
+            loss = outputs.loss
+            loss.backward()
+            optimizer.step()
         
         for initial, current in zip(initial_params, lora_params):
             assert not torch.allclose(initial, current.data), \

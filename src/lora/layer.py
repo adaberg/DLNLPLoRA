@@ -9,7 +9,7 @@ import torch.nn.functional as F
 class LoRALayer(nn.Module):
     """
     Attributes:
-        rank: Rank of the low-rank decomposition
+        rank: Rank of decomposition
         alpha: Scaling factor for LoRA updates
         scaling: Computed scaling factor (alpha / rank)
         lora_A: Down-projection matrix (rank × in_features)
@@ -106,7 +106,3 @@ class LoRALayer(nn.Module):
         lora_params = self.rank * (self.lora_A.shape[1] + self.lora_B.shape[0])
         full_params = self.lora_A.shape[1] * self.lora_B.shape[0]
         return lora_params, full_params
-
-
-# For convenience, export the main class
-__all__ = ["LoRALayer"]
