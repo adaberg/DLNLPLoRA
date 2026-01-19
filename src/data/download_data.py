@@ -28,16 +28,10 @@ for filename, url in files:
         response = requests.get(url)
         with open(save_path, "wb") as f:
             f.write(response.content)
-<<<<<<< HEAD
+
         print(f"save to: {save_path}")
     except Exception as e:
         print(f"error: {e}")
 
 print(f"\n Succeed")
-=======
-        print(f"保存到: {save_path}")
-    except Exception as e:
-        print(f"失败: {e}")
 
-print(f"\n完成！路径: {e2e_dir}")
->>>>>>> 246de1b5342db25998f170be1257df5cb6290139
