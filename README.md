@@ -2,7 +2,7 @@
 
 tuwien project 2025/2026
 
-### Installation
+## Installation
 
 1. **Clone the repository**
    ```bash
@@ -26,13 +26,107 @@ tuwien project 2025/2026
    pip install -r requirements.txt
    ```
 
-### pytests
+4. **Download the E2E NLG dataset**
+   ```bash
+   python src/data/download_data.py
+   ```
 
-#### LoRA
+## Training
+
+### Quick Start
 
 ```bash
-# can also use -m layer / linear / model to split testing
-pytest tests/test_lora.py -v
+# LoRA training (default, following paper hyperparameters)
+python scripts/train.py --config config.yaml --mode lora
+
+# Full fine-tuning baseline
+python scripts/train.py --config config.yaml --mode full
+
+# With custom hyperparameters
+python scripts/train.py --config config.yaml --mode lora --lr 2e-4 --epochs 5 --batch_size 8
+```
+
+### Training Modes
+
+| Mode | Description | Trainable Params |
+|------|-------------|------------------|
+| `lora` | LoRA fine-tuning (paper method) | ~0.35M (0.1%) |
+| `full` | Full fine-tuning baseline | ~355M (100%) |
+| `none` | Evaluation only | 0 |
+
+### Command Line Options
+
+```bash
+python scripts/train.py --help
+
+# Key options:
+--config CONFIG       # Path to config file (default: config.yaml)
+--mode {lora,full,none}  # Training mode
+--lr LR               # Learning rate (default: 2e-4)
+--epochs EPOCHS       # Number of epochs (default: 5)
+--batch_size N        # Batch size (default: 8)
+--warmup_steps N      # Warmup steps (default: 500)
+--fp16                # Enable FP16 mixed precision
+--bf16                # Enable BF16 mixed precision
+--resume PATH         # Resume from checkpoint
+--output_dir DIR      # Output directory
+```
+
+### Default Hyperparameters (from LoRA Paper Table 11)
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| Learning Rate | 2e-4 | AdamW optimizer |
+| Weight Decay | 0.01 | L2 regularization |
+| Batch Size | 8 | Per-device batch size |
+| Epochs | 5 | Training epochs |
+| Warmup Steps | 500 | Linear warmup |
+| LoRA Rank | 4 | Rank of adaptation matrices |
+| LoRA Alpha | 32 | Scaling factor |
+| LoRA Dropout | 0.0 | Dropout on LoRA layers |
+
+## Cloud Deployment
+
+### GPU Training (Recommended!)
+
+The training script automatically detects available GPUs/TPUs.
+
+#### Cloud (e.g. JupyterHub) VM Setup
+```bash
+# 1. Launch a GPU instance (recommended: NVIDIA A100, V100, or T4)
+# 2. Clone the repo and install dependencies
+git clone git@github.com:adaberg/DLNLPLoRA.git
+cd DLNLPLoRA
+pip install -r requirements.txt
+
+# 3. Download data
+python src/data/download_data.py
+
+# 4. Run training
+python scripts/train.py --config config.yaml --mode lora --fp16
+```
+
+## Evaluation
+
+```bash
+# Evaluate a trained checkpoint
+python scripts/run_evaluation.py --checkpoint results/best_model/checkpoint.pt --config config.yaml
+```
+
+## Tests
+
+```bash
+# Run all tests
+pytest tests/ -v
+
+# Run specific test modules
+pytest tests/test_lora.py -v  # LoRA layer tests
+pytest tests/test_data.py -v  # Dataset tests
+
+# Test with markers
+pytest tests/test_lora.py -v -m layer   # Only layer tests
+pytest tests/test_lora.py -v -m linear  # Only linear tests
+pytest tests/test_lora.py -v -m model   # Only model tests
 ```
 
 ## project structure 
