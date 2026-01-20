@@ -230,15 +230,16 @@ def main():
     # Create training configuration
     # Use hyperparameters from paper (Table 11) as defaults
     # TODO: Possibly needs adaptation for better fit our data changes if necessary!
+    # NB: YAML may parse scientific notation (e.g., 2e-4) as strings, so we explicitly convert to float/int
     training_config = TrainingConfig(
-        learning_rate=args.lr or config.get('training', {}).get('learning_rate', 2e-4),
-        weight_decay=args.weight_decay or config.get('training', {}).get('weight_decay', 0.01),
-        num_epochs=args.epochs or config.get('training', {}).get('num_epochs', 5),
-        batch_size=args.batch_size or config.get('training', {}).get('batch_size', 8),
-        warmup_steps=args.warmup_steps or config.get('training', {}).get('warmup_steps', 500),
-        max_grad_norm=args.max_grad_norm or config.get('training', {}).get('max_grad_norm', 1.0),
-        gradient_accumulation_steps=args.gradient_accumulation_steps or 
-            config.get('training', {}).get('gradient_accumulation_steps', 1),
+        learning_rate=float(args.lr or config.get('training', {}).get('learning_rate', 2e-4)),
+        weight_decay=float(args.weight_decay or config.get('training', {}).get('weight_decay', 0.01)),
+        num_epochs=int(args.epochs or config.get('training', {}).get('num_epochs', 5)),
+        batch_size=int(args.batch_size or config.get('training', {}).get('batch_size', 8)),
+        warmup_steps=int(args.warmup_steps or config.get('training', {}).get('warmup_steps', 500)),
+        max_grad_norm=float(args.max_grad_norm or config.get('training', {}).get('max_grad_norm', 1.0)),
+        gradient_accumulation_steps=int(args.gradient_accumulation_steps or 
+            config.get('training', {}).get('gradient_accumulation_steps', 1)),
         output_dir=output_dir,
         logging_steps=args.logging_steps or config.get('training', {}).get('logging_steps', 100),
         eval_steps=args.eval_steps or config.get('training', {}).get('eval_steps', 500),
