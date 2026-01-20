@@ -85,12 +85,18 @@ def setup_test_data(config: Dict, tokenizer):
     """Create test dataset and dataloader."""
     print("Setting up test data...")
     
+    # Get max_length from config, supporting both config.yaml and training_config.json formats
+    max_length = config.get("max_length", 256)  # Default from config.yaml
+    
+    # Get sample_percentage, checking both top-level and nested 'dataset' key
+    sample_percentage = config.get("sample_percentage") or config.get("dataset", {}).get("sample_percentage", 1.0)
+    
     test_dataset = E2EDataset(
         split="test",
         tokenizer=tokenizer,
-        max_length=config["max_length"],
-        sample_percentage=config.get("sample_percentage", 1.0),
-        device=config["device"] if config.get("device") else "cpu"
+        max_length=max_length,
+        sample_percentage=sample_percentage
+        # NB: device parameter not needed here - data is moved to device in evaluation functions
     )
     
     test_loader = get_dataloader(
