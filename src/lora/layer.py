@@ -8,10 +8,8 @@ import torch.nn.functional as F
 
 class LoRALayer(nn.Module):
     """
-    Low-Rank Adaptation (LoRA) layer.
-
     Attributes:
-        rank: Rank of the low-rank decomposition
+        rank: Rank of decomposition
         alpha: Scaling factor for LoRA updates
         scaling: Computed scaling factor (alpha / rank)
         lora_A: Down-projection matrix (rank × in_features)
@@ -28,8 +26,6 @@ class LoRALayer(nn.Module):
         dropout: float = 0.0,
     ) -> None:
         """
-        Initialize LoRA layer with low-rank matrices.
-
         importnant
             in_features: Input dimension (must match base layer)
             out_features: Output dimension (must match base layer)
@@ -52,9 +48,7 @@ class LoRALayer(nn.Module):
         self.lora_A = nn.Parameter(torch.empty(rank, in_features))
         nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
 
-        # B is set to zero at initialization
         self.lora_B = nn.Parameter(torch.zeros(out_features, rank))
-
         self.dropout = nn.Dropout(p=dropout) if dropout > 0.0 else nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -65,7 +59,6 @@ class LoRALayer(nn.Module):
         x_dropped = self.dropout(x)
 
         down_proj = x_dropped @ self.lora_A.T
-
         up_proj = down_proj @ self.lora_B.T
 
         # Apply scaling factor α/r
@@ -113,7 +106,3 @@ class LoRALayer(nn.Module):
         lora_params = self.rank * (self.lora_A.shape[1] + self.lora_B.shape[0])
         full_params = self.lora_A.shape[1] * self.lora_B.shape[0]
         return lora_params, full_params
-
-
-# For convenience, export the main class
-__all__ = ["LoRALayer"]

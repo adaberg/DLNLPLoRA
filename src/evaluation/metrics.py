@@ -20,17 +20,9 @@ logging.basicConfig(level=logging.INFO)
 def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) -> float:
     """
     Compute perplexity: exp(average_cross_entropy_loss)
-
-    Args:
-        model: Language model (should return loss in forward pass)
-        dataloader: DataLoader with evaluation data
-        device: Device to run computation on ("cuda" or "cpu")
-
+        
     Returns:
         Perplexity score (float)
-
-    Raises:
-        ValueError: If no valid batches processed or model doesn't return loss
     """
     model.eval()
     total_loss = 0.0
@@ -38,12 +30,9 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
 
     with torch.no_grad():
         for batch in dataloader:
-            # Move batch to device
-            batch = {
-                k: v.to(device) for k, v in batch.items() if isinstance(v, torch.Tensor)
-            }
-
-            # Forward pass - model should return loss
+            batch = {k: v.to(device) for k, v in batch.items() 
+                    if isinstance(v, torch.Tensor)}
+            
             outputs = model(**batch)
 
             if not hasattr(outputs, "loss") or outputs.loss is None:
@@ -53,16 +42,14 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
                 )
 
             loss = outputs.loss
-
-            # Accumulate loss (weighted by batch size)
+            
             batch_size = batch["input_ids"].size(0)
             total_loss += loss.item() * batch_size
             total_samples += batch_size
 
     if total_samples == 0:
         raise ValueError("No valid batches processed for perplexity computation")
-
-    # Compute average cross-entropy loss
+    
     avg_loss = total_loss / total_samples
 
     # Perplexity = exp(average_loss)
@@ -83,44 +70,30 @@ def generate_texts(
 ) -> List[str]:
     """
     Generate text completions for given prompts.
-
-    Args:
-        model: Language model
-        tokenizer: Tokenizer for encoding/decoding
-        prompts: List of prompt strings
-        max_new_tokens: Maximum number of tokens to generate
-        device: Device to run generation on
-
-    Returns:
-        List of generated text strings (same length as prompts)
     """
     model.eval()
     generated_texts = []
-
-    # Ensure tokenizer has pad token
+    
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
     with torch.no_grad():
         for prompt in prompts:
             try:
-                # Encode prompt
                 inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
 
                 # Generate text
-                # Using min_new_tokens to ensure we generate at least some tokens
                 outputs = model.generate(
                     inputs,
                     max_new_tokens=max_new_tokens,
                     min_new_tokens=1,
-                    do_sample=True,  # Use sampling for more diverse outputs
-                    temperature=0.8,  # Slightly creative
-                    top_p=0.9,  # Nucleus sampling
+                    do_sample=True,
+                    temperature=0.8,
+                    top_p=0.9,
                     pad_token_id=tokenizer.pad_token_id,
                     eos_token_id=tokenizer.eos_token_id,
                 )
-
-                # Decode generated part (skip prompt)
+                
                 generated = tokenizer.decode(
                     outputs[0][len(inputs[0]) :], skip_special_tokens=True
                 ).strip()
@@ -141,30 +114,13 @@ def compute_generation_metrics(
 ) -> Dict[str, float]:
     """
     Compute BLEU and ROUGE using HuggingFace evaluate library.
-
-    Args:
-        predictions: List of generated/predicted texts
-        references: List of reference/target texts
-
-    Returns:
-        Dictionary with metric names and scores:
-        {
-            "bleu": float,
-            "rouge1": float,
-            "rouge2": float,
-            "rougeL": float
-        }
-
-    Raises:
-        ValueError: If predictions and references have different lengths
     """
     if len(predictions) != len(references):
         raise ValueError(
             f"Length mismatch: predictions ({len(predictions)}) != "
             f"references ({len(references)})"
         )
-
-    # Clean inputs (remove extra whitespace)
+    
     predictions = [str(p).strip() for p in predictions]
     references = [str(r).strip() for r in references]
 
@@ -173,7 +129,6 @@ def compute_generation_metrics(
     # 1. Compute BLEU
     try:
         bleu = evaluate.load("bleu")
-        # BLEU expects list of references for each prediction
         references_list = [[ref] for ref in references]
         bleu_result = bleu.compute(predictions=predictions, references=references_list)
         results["bleu"] = bleu_result["bleu"]
@@ -187,7 +142,6 @@ def compute_generation_metrics(
         rouge_result = rouge.compute(
             predictions=predictions, references=references, use_stemmer=True
         )
-        # Extract ROUGE-1, ROUGE-2, ROUGE-L
         results["rouge1"] = rouge_result["rouge1"]
         results["rouge2"] = rouge_result["rouge2"]
         results["rougeL"] = rouge_result["rougeL"]
@@ -210,23 +164,12 @@ def evaluate_model_comprehensive(
     model: nn.Module,
     tokenizer: PreTrainedTokenizer,
     test_loader: DataLoader,
-    test_dataset,  # E2EDataset instance to get references
+    test_dataset,
     device: str = "cuda",
     num_samples: int = 10,
 ) -> Dict[str, float]:
     """
     Comprehensive evaluation combining perplexity and generation metrics.
-
-    Args:
-        model: Trained language model
-        tokenizer: Tokenizer
-        test_loader: DataLoader for test set
-        test_dataset: E2EDataset instance (to extract references)
-        device: Device to run evaluation on
-        num_samples: Number of samples for generation evaluation
-
-    Returns:
-        Dictionary with all evaluation metrics
     """
     results = {}
 
@@ -242,33 +185,27 @@ def evaluate_model_comprehensive(
     # 2. Generate texts for evaluation
     logger.info(f"Generating texts for {num_samples} samples...")
 
-    # Prepare prompts and references
     prompts = []
     references = []
 
     for i in range(min(num_samples, len(test_dataset))):
-        # Get raw sample from dataset
-        # Assuming test_dataset has get_raw_sample method from dataset.py
-        if hasattr(test_dataset, "get_raw_sample"):
+        if hasattr(test_dataset, 'get_raw_sample'):
             raw = test_dataset.get_raw_sample(i)
             mr = raw.get("meaning_representation", "")
             ref = raw.get("human_reference", "")
         else:
-            # Fallback: try to access directly
             try:
                 mr = test_dataset.dataset[i]["meaning_representation"]
                 ref = test_dataset.dataset[i]["human_reference"]
             except:
                 logger.warning(f"Could not extract sample {i}, skipping")
                 continue
-
-        # Create prompt: only the meaning representation part
+        
         prompt = f"meaning_representation: {mr} | reference:"
         prompts.append(prompt)
         references.append(ref)
 
     if len(prompts) > 0:
-        # Generate predictions
         predictions = generate_texts(
             model=model,
             tokenizer=tokenizer,
@@ -276,13 +213,11 @@ def evaluate_model_comprehensive(
             max_new_tokens=50,
             device=device,
         )
-
-        # 3. Compute generation metrics
+        
         logger.info("Computing generation metrics...")
         gen_metrics = compute_generation_metrics(predictions, references)
         results.update(gen_metrics)
-
-        # Add example outputs for debugging
+        
         results["_examples"] = []
         for i in range(min(3, len(prompts))):
             results["_examples"].append(
@@ -306,15 +241,13 @@ def evaluate_model_comprehensive(
 def _test_metrics():
     """Internal test function to verify metrics work correctly."""
     print("Testing evaluation metrics...")
-
-    # Mock a simple model for testing
+    
     class MockModel(nn.Module):
         def __init__(self):
             super().__init__()
             self.dummy = nn.Parameter(torch.randn(1))
 
         def forward(self, input_ids, attention_mask=None, labels=None):
-            # Return a mock loss
             batch_size = input_ids.shape[0]
             loss = torch.tensor(1.0, requires_grad=True)
 
@@ -325,22 +258,20 @@ def _test_metrics():
             return MockOutput(loss)
 
         def generate(self, input_ids, **kwargs):
-            # Mock generation - just repeat the input
             return torch.cat([input_ids, input_ids], dim=-1)
-
-    # Create tokenizer
+    
+    from transformers import GPT2TokenizerFast
+    
     tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
-
-    # Test generate_texts
+    
     prompts = ["Hello world", "Test prompt"]
     model = MockModel()
 
     print("Testing generate_texts...")
     generated = generate_texts(model, tokenizer, prompts, device="cpu")
     print(f"Generated: {generated}")
-
-    # Test compute_generation_metrics
+    
     print("\nTesting compute_generation_metrics...")
     predictions = ["The cat sits on the mat", "I love programming"]
     references = ["The cat sits on the mat", "I enjoy coding"]
@@ -352,4 +283,6 @@ def _test_metrics():
 
 
 if __name__ == "__main__":
+    import logging
+    logging.basicConfig(level=logging.INFO)
     _test_metrics()

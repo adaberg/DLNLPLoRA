@@ -1,20 +1,28 @@
-from typing import List
+from typing import List, Union
 import torch
 import torch.nn as nn
 from transformers import GPT2LMHeadModel
+from transformers.pytorch_utils import Conv1D
 from .layer import LoRALayer
 
 
 class LoRALinear(nn.Module):
 
     def __init__(
-        self, base_layer: nn.Linear, rank: int, alpha: float, dropout: float = 0.0
+        self, base_layer: Union[nn.Linear, Conv1D], rank: int, alpha: float, dropout: float = 0.0
     ) -> None:
         super().__init__()
         self.base_layer = base_layer
-        self.lora = LoRALayer(
-            base_layer.in_features, base_layer.out_features, rank, alpha, dropout
-        )
+        
+        # Handle both Linear and Conv1D if in feature we test other models
+        if isinstance(base_layer, nn.Linear):
+            in_features = base_layer.in_features
+            out_features = base_layer.out_features
+        else:
+            in_features = base_layer.weight.shape[0]
+            out_features = base_layer.nf
+        
+        self.lora = LoRALayer(in_features, out_features, rank, alpha, dropout)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """W₀x + BAx più facile di così non si può"""
@@ -35,27 +43,26 @@ class LoRAGPT2(nn.Module):
         super().__init__()
         self.base_model = base_model
 
-        # Freeze all base parameters
         for param in base_model.parameters():
             param.requires_grad = False
-
-        # Inject LoRA into target modules
+        
         self.lora_modules = []
         for name, module in base_model.named_modules():
-            if isinstance(module, nn.Linear):
+            if isinstance(module, (nn.Linear, Conv1D)):
                 if any(target in name for target in target_modules):
                     self._inject_lora(name, module, rank, alpha, dropout)
-
+        
         assert len(self.lora_modules) > 0, f"No modules matched {target_modules}"
 
     def _inject_lora(
         self, name: str, module: nn.Linear, rank: int, alpha: float, dropout: float
     ) -> None:
-        """Replace Linear with LoRALinear"""
+        
         parent_name, child_name = name.rsplit(".", 1)
         parent = self.base_model.get_submodule(parent_name)
 
         lora_linear = LoRALinear(module, rank, alpha, dropout)
+        # says to the parent "when you call child_name you get lora_linear"
         setattr(parent, child_name, lora_linear)
         self.lora_modules.append(name)
 
