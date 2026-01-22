@@ -4,6 +4,7 @@ import pytest
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 import sys
 from pathlib import Path
+from torch.nn import functional as F
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.lora.layer import DoRALayer
@@ -23,8 +24,8 @@ class TestDoRALayer:
         )
         assert not torch.allclose(layer.lora_A, torch.zeros_like(layer.lora_A))
         assert torch.allclose(layer.lora_B, torch.zeros_like(layer.lora_B))
-        assert layer.magnitude.abs().item() > 0
-        assert layer.magnitude.shape == (64, 128)
+        assert layer.magnitude.shape == (128,)
+
 
     @pytest.mark.layer
     def test_output_shape(self):
@@ -40,7 +41,7 @@ class TestDoRALayer:
         )
         x = torch.randn(batch_size, seq_len, in_features)
 
-        output = layer(x)
+        output = layer(x, torch.randn(64, 128))
 
         assert output.shape == (batch_size, seq_len, out_features)
 
@@ -60,18 +61,20 @@ class TestDoRALayer:
 
     @pytest.mark.layer
     def test_zero_output_when_B_is_zero(self):
+        weight = torch.randn(64, 128)
         layer = DoRALayer(
             in_features=128,
             out_features=64,
             rank=8,
             alpha=16,
-            base_weight=torch.randn(64, 128),
+            base_weight=weight,
         )
         x = torch.randn(2, 10, 128)
 
-        output = layer(x)
-
-        assert torch.allclose(output, torch.zeros_like(output))
+        output = layer(x, weight)
+        expected = F.linear(x, weight)
+        
+        assert torch.allclose(output, expected)
 
 
 class TestDoRALinear:

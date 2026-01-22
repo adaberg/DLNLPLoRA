@@ -31,8 +31,9 @@ tuwien project 2025/2026
 #### LoRA
 
 ```bash
-# can also use -m layer / linear / model to split testing
+# can also use -m layer / linear / model / learning to split testing
 pytest tests/test_lora.py -v
+# pytest -m model  tests/test_lora.py -v
 ```
 
 ## project structure 
