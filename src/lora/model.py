@@ -118,3 +118,22 @@ class DoRAGPT2(LoRAGPT2):
         dora_linear = DoRALinear(module, rank, alpha, dropout)
         setattr(parent, child_name, dora_linear)
         self.lora_modules.append(name)
+
+
+if __name__ == "__main__":
+    lora_layer = LoRALayer(in_features=128, out_features=64, rank=8, alpha=16)
+    print(lora_layer)
+    print("--" * 40)
+    print(lora_layer.extra_repr)
+    print("--" * 40)
+    print()
+    dora_layer = DoRALayer(
+        in_features=128,
+        out_features=64,
+        rank=8,
+        alpha=16,
+        base_weight=torch.randn(64, 128),
+    )
+    print(dora_layer)
+    print("--" * 40)
+    print(dora_layer.extra_repr())
