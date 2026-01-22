@@ -33,7 +33,8 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
             batch = {k: v.to(device) for k, v in batch.items() 
                     if isinstance(v, torch.Tensor)}
             
-            outputs = model(**batch)
+            # Modifiction
+            outputs = model(**batch, loss_type="ForCausalLMLoss")
 
             if not hasattr(outputs, "loss") or outputs.loss is None:
                 raise ValueError(
@@ -51,8 +52,6 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
         raise ValueError("No valid batches processed for perplexity computation")
     
     avg_loss = total_loss / total_samples
-
-    # Perplexity = exp(average_loss)
     perplexity = np.exp(avg_loss)
 
     logger.info(
@@ -82,9 +81,14 @@ def generate_texts(
             try:
                 inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
 
+                # modificaiont: add attention_mask
+                attention_mask = torch.ones_like(inputs)
+                
                 # Generate text
                 outputs = model.generate(
                     inputs,
+                    # add
+                    attention_mask=attention_mask,
                     max_new_tokens=max_new_tokens,
                     min_new_tokens=1,
                     do_sample=True,
