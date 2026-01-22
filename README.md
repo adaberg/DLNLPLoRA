@@ -111,6 +111,9 @@ python scripts/train.py --config config.yaml --mode lora --fp16
 ```bash
 # Evaluate a trained checkpoint
 python scripts/run_evaluation.py --checkpoint results/best_model/checkpoint.pt --config results/training_config.json
+
+# Evaluate Zero-shot
+python scripts/run_evaluation.py --checkpoint gpt2-medium --config config.yaml
 ```
 
 ## Tests
