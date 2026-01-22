@@ -41,6 +41,15 @@ def load_checkpoint(
     Returns:
         Loaded model ready for evaluation
     """
+    # MODIFICATION: Support zero-shot evaluation
+    if checkpoint_path.replace('-', '').lower().startswith('gpt2'):
+        model_name = config["model_name"]
+        print(f"Zero-shot with {model_name}")
+        model, tokenizer = load_gpt2_model_and_tokenizer(model_name)
+        model.to(device)
+        model.eval()
+        return model, tokenizer
+
     print(f"Loading checkpoint from {checkpoint_path}...")
     
     model, tokenizer = load_gpt2_model_and_tokenizer(config["model_name"])
