@@ -106,3 +106,17 @@ class LoRALayer(nn.Module):
         lora_params = self.rank * (self.lora_A.shape[1] + self.lora_B.shape[0])
         full_params = self.lora_A.shape[1] * self.lora_B.shape[0]
         return lora_params, full_params
+
+
+class DoRALayer(LoRALayer):
+    def __init__(self, in_features, out_features, rank, alpha, dropout, base_weight):
+        super().__init__(in_features, out_features, rank, alpha, dropout)
+        # m = ||W₀||_c (column-wise norm), shape: (out_features,)
+        self.magnitude = nn.Parameter(torch.norm(base_weight, dim=0))
+
+    def forward(self, x, base_weight):
+        x = self.dropout(x)
+        # W' = m × (W₀ + BA) / ||W₀ + BA||_c
+        merged = base_weight + (self.lora_B @ self.lora_A) * self.scaling
+        norm = torch.norm(merged, dim=0, keepdim=True) + 1e-8
+        return x @ (self.magnitude * merged / norm).T

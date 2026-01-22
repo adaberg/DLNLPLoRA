@@ -3,17 +3,21 @@ import torch
 import torch.nn as nn
 from transformers import GPT2LMHeadModel
 from transformers.pytorch_utils import Conv1D
-from .layer import LoRALayer
+from .layer import LoRALayer, DoRALayer
 
 
 class LoRALinear(nn.Module):
 
     def __init__(
-        self, base_layer: Union[nn.Linear, Conv1D], rank: int, alpha: float, dropout: float = 0.0
+        self,
+        base_layer: Union[nn.Linear, Conv1D],
+        rank: int,
+        alpha: float,
+        dropout: float = 0.0,
     ) -> None:
         super().__init__()
         self.base_layer = base_layer
-        
+
         # Handle both Linear and Conv1D if in feature we test other models
         if isinstance(base_layer, nn.Linear):
             in_features = base_layer.in_features
@@ -21,7 +25,7 @@ class LoRALinear(nn.Module):
         else:
             in_features = base_layer.weight.shape[0]
             out_features = base_layer.nf
-        
+
         self.lora = LoRALayer(in_features, out_features, rank, alpha, dropout)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -45,19 +49,19 @@ class LoRAGPT2(nn.Module):
 
         for param in base_model.parameters():
             param.requires_grad = False
-        
+
         self.lora_modules = []
         for name, module in base_model.named_modules():
             if isinstance(module, (nn.Linear, Conv1D)):
                 if any(target in name for target in target_modules):
                     self._inject_lora(name, module, rank, alpha, dropout)
-        
+
         assert len(self.lora_modules) > 0, f"No modules matched {target_modules}"
 
     def _inject_lora(
         self, name: str, module: nn.Linear, rank: int, alpha: float, dropout: float
     ) -> None:
-        
+
         parent_name, child_name = name.rsplit(".", 1)
         parent = self.base_model.get_submodule(parent_name)
 
@@ -84,3 +88,33 @@ class LoRAGPT2(nn.Module):
             if isinstance(module, LoRALinear):
                 params.extend([module.lora.lora_A, module.lora.lora_B])
         return params
+
+
+class DoRALinear(LoRALinear):
+    def __init__(self, base_layer, rank, alpha, dropout=0.0):
+        super().__init__(base_layer, rank, alpha, dropout)
+        base_w = (
+            self.base_layer.weight
+            if isinstance(base_layer, nn.Linear)
+            else self.base_layer.weight.T
+        )
+        in_f, out_f = self.lora.lora_A.shape[1], self.lora.lora_B.shape[0]
+        self.lora = DoRALayer(in_f, out_f, rank, alpha, dropout, base_w)
+
+    def forward(self, x):
+        base_w = (
+            self.base_layer.weight
+            if isinstance(self.base_layer, nn.Linear)
+            else self.base_layer.weight.T
+        )
+        return self.lora(x, base_w)
+
+
+class DoRAGPT2(LoRAGPT2):
+    def _inject_lora(self, name, module, rank, alpha, dropout):
+        parent_name, child_name = name.rsplit(".", 1)
+        parent = self.base_model.get_submodule(parent_name)
+
+        dora_linear = DoRALinear(module, rank, alpha, dropout)
+        setattr(parent, child_name, dora_linear)
+        self.lora_modules.append(name)
