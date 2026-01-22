@@ -109,14 +109,48 @@ class LoRALayer(nn.Module):
 
 
 class DoRALayer(LoRALayer):
-    def __init__(self, in_features, out_features, rank, alpha, dropout, base_weight):
+
+    def __init__(
+        self, in_features, out_features, rank, alpha, base_weight, dropout=0.0
+    ):
         super().__init__(in_features, out_features, rank, alpha, dropout)
-        # m = ||W₀||_c (column-wise norm), shape: (out_features,)
         self.magnitude = nn.Parameter(torch.norm(base_weight, dim=0))
 
     def forward(self, x, base_weight):
         x = self.dropout(x)
-        # W' = m × (W₀ + BA) / ||W₀ + BA||_c
         merged = base_weight + (self.lora_B @ self.lora_A) * self.scaling
         norm = torch.norm(merged, dim=0, keepdim=True) + 1e-8
+        # following the paper description
         return x @ (self.magnitude * merged / norm).T
+
+    def reset_parameters(self) -> None:
+        nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
+        nn.init.zeros_(self.lora_B)
+        # it effectively resets, it does not count as initialization (for my understanding)
+        nn.init.ones_(self.magnitude)
+
+    def extra_repr(self) -> str:
+        """
+        String representation for debugging and logging.
+        """
+        return (
+            f"in_features={self.lora_A.shape[1]}, "
+            f"out_features={self.lora_B.shape[0]}, "
+            f"rank={self.rank}, "
+            f"alpha={self.alpha}, "
+            f"scaling={self.scaling:.4f}, "
+            f"magnitude={self.magnitude}, "
+            f"dropout={self.dropout.p if isinstance(self.dropout, nn.Dropout) else 0.0}"
+        )
+
+    @property
+    def magnitude(self) -> torch.Tensor:
+        return self._magnitude
+
+    def get_num_parameters(self) -> tuple[int, int]:
+        lora_params = (
+            self.rank * (self.lora_A.shape[1] + self.lora_B.shape[0])
+            + self.magnitude.numel()
+        )
+        full_params = self.lora_A.shape[1] * self.lora_B.shape[0]
+        return lora_params, full_params
