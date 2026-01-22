@@ -46,12 +46,14 @@ def load_checkpoint(
     model, tokenizer = load_gpt2_model_and_tokenizer(config["model_name"])
     
     if config.get("training_mode") == "lora":
+        # Support both "lora" (config.yaml) and "lora_config" (training_config.json) keys
+        lora_config = config.get("lora") or config.get("lora_config", {})
         model = LoRAGPT2(
             base_model=model,
-            rank=config["lora"]["rank"],
-            alpha=config["lora"]["alpha"],
-            target_modules=config["lora"]["target_modules"],
-            dropout=config["lora"]["dropout"]
+            rank=lora_config["rank"],
+            alpha=lora_config["alpha"],
+            target_modules=lora_config["target_modules"],
+            dropout=lora_config.get("dropout", 0.0)
         )
     
     checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
@@ -70,9 +72,12 @@ def load_checkpoint(
 
 
 def load_config(config_path: str) -> Dict:
-    """Load YAML configuration file."""
+    """Load configuration file (YAML or JSON)."""
     with open(config_path, 'r') as f:
-        config = yaml.safe_load(f)
+        if config_path.endswith('.json'):
+            config = json.load(f)
+        else:
+            config = yaml.safe_load(f)
     return config
 
 
@@ -80,12 +85,18 @@ def setup_test_data(config: Dict, tokenizer):
     """Create test dataset and dataloader."""
     print("Setting up test data...")
     
+    # Get max_length from config, supporting both config.yaml and training_config.json formats
+    max_length = config.get("max_length", 256)  # Default from config.yaml
+    
+    # Get sample_percentage, checking both top-level and nested 'dataset' key
+    sample_percentage = config.get("sample_percentage") or config.get("dataset", {}).get("sample_percentage", 1.0)
+    
     test_dataset = E2EDataset(
         split="test",
         tokenizer=tokenizer,
-        max_length=config["max_length"],
-        sample_percentage=config.get("sample_percentage", 1.0),
-        device=config["device"] if config.get("device") else "cpu"
+        max_length=max_length,
+        sample_percentage=sample_percentage
+        # NB: device parameter not needed here - data is moved to device in evaluation functions
     )
     
     test_loader = get_dataloader(

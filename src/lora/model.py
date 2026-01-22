@@ -77,6 +77,10 @@ class LoRAGPT2(nn.Module):
             input_ids=input_ids, attention_mask=attention_mask, labels=labels, **kwargs
         )
 
+    def generate(self, *args, **kwargs):
+        """Delegate text generation to the base model."""
+        return self.base_model.generate(*args, **kwargs)
+
     def get_lora_parameters(self) -> List[nn.Parameter]:
         """Return A and B"""
         params = []

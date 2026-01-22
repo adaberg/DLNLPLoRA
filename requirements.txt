@@ -3,6 +3,7 @@ torch
 transformers
 datasets
 evaluate
+rouge-score
 
 # Configuration
 pyyaml
