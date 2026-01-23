@@ -114,10 +114,18 @@ def generate_texts(
 
 
 def compute_generation_metrics(
-    predictions: List[str], references: List[str]
+    predictions: List[str], references: List[List[str]]
 ) -> Dict[str, float]:
     """
     Compute BLEU and ROUGE using HuggingFace evaluate library.
+    
+    Args:
+        predictions: List of generated texts (one per unique MR)
+        references: List of reference lists (multiple references per MR)
+                   Format: [[ref1_mr1, ref2_mr1, ...], [ref1_mr2, ref2_mr2, ...], ...]
+    
+    Returns:
+        Dictionary with BLEU and ROUGE scores
     """
     if len(predictions) != len(references):
         raise ValueError(
@@ -126,25 +134,29 @@ def compute_generation_metrics(
         )
     
     predictions = [str(p).strip() for p in predictions]
-    references = [str(r).strip() for r in references]
+    # Clean up references (each is a list of strings)
+    references = [[str(r).strip() for r in ref_list] for ref_list in references]
 
     results = {}
 
-    # 1. Compute BLEU
+    # 1. Compute BLEU with multiple references
     try:
         bleu = evaluate.load("bleu")
-        references_list = [[ref] for ref in references]
-        bleu_result = bleu.compute(predictions=predictions, references=references_list)
+        # references is already in correct format: List[List[str]]
+        bleu_result = bleu.compute(predictions=predictions, references=references)
         results["bleu"] = bleu_result["bleu"]
     except Exception as e:
         logger.warning(f"BLEU computation failed: {e}")
         results["bleu"] = 0.0
 
-    # 2. Compute ROUGE
+    # 2. Compute ROUGE (use first reference from each list for ROUGE)
+    # ROUGE doesn't natively support multiple references well
     try:
         rouge = evaluate.load("rouge")
+        # Use first reference for ROUGE computation
+        first_references = [ref_list[0] for ref_list in references]
         rouge_result = rouge.compute(
-            predictions=predictions, references=references, use_stemmer=True
+            predictions=predictions, references=first_references, use_stemmer=True
         )
         results["rouge1"] = rouge_result["rouge1"]
         results["rouge2"] = rouge_result["rouge2"]
@@ -163,17 +175,22 @@ def compute_generation_metrics(
     return results
 
 
-# Additional utility function (not in original spec but useful)
 def evaluate_model_comprehensive(
     model: nn.Module,
     tokenizer: PreTrainedTokenizer,
     test_loader: DataLoader,
     test_dataset,
     device: str = "cuda",
-    num_samples: int = 10,
+    num_samples: int = -1,
 ) -> Dict[str, float]:
     """
     Comprehensive evaluation combining perplexity and generation metrics.
+    
+    E2E NLG evaluation methodology:
+    - Test samples are grouped by unique meaning representation (MR)
+    - Generate one prediction per unique MR
+    - Compute multi-reference BLEU
+        (validate output against ALL references for each MR)
     """
     results = {}
 
@@ -186,30 +203,36 @@ def evaluate_model_comprehensive(
         logger.error(f"Perplexity computation failed: {e}")
         results["perplexity"] = float("inf")
 
-    # 2. Generate texts for evaluation
-    logger.info(f"Generating texts for {num_samples} samples...")
+    # 2. Get grouped data (unique MRs with all their references)
+    if not hasattr(test_dataset, 'get_grouped_data'):
+        logger.error("test_dataset must have get_grouped_data() method for proper E2E evaluation")
+        return results
+    
+    grouped_data = test_dataset.get_grouped_data()
+    total_unique_mrs = len(grouped_data)
+    
+    # Determine how many MRs to evaluate
+    if num_samples == -1 or num_samples > total_unique_mrs:
+        num_samples = total_unique_mrs
+    
+    logger.info(f"E2E Evaluation: {num_samples} unique MRs (out of {total_unique_mrs} total)")
+    logger.info(f"Total test samples: {len(test_dataset)}, Average refs per MR: {len(test_dataset)/total_unique_mrs:.1f}")
 
+    # 3. Generate texts for evaluation (ONE per unique MR)
     prompts = []
-    references = []
-
-    for i in range(min(num_samples, len(test_dataset))):
-        if hasattr(test_dataset, 'get_raw_sample'):
-            raw = test_dataset.get_raw_sample(i)
-            mr = raw.get("meaning_representation", "")
-            ref = raw.get("human_reference", "")
-        else:
-            try:
-                mr = test_dataset.dataset[i]["meaning_representation"]
-                ref = test_dataset.dataset[i]["human_reference"]
-            except:
-                logger.warning(f"Could not extract sample {i}, skipping")
-                continue
-        
+    all_references = []  # List[List[str]] - multiple refs per MR
+    mr_list = []  # Keep track of MRs for examples
+    
+    for i, (mr, refs) in enumerate(grouped_data.items()):
+        if i >= num_samples:
+            break
         prompt = f"meaning_representation: {mr} | reference:"
         prompts.append(prompt)
-        references.append(ref)
+        all_references.append(refs)  # All references for this MR
+        mr_list.append(mr)
 
     if len(prompts) > 0:
+        logger.info(f"Generating {len(prompts)} predictions (one per unique MR)...")
         predictions = generate_texts(
             model=model,
             tokenizer=tokenizer,
@@ -218,23 +241,29 @@ def evaluate_model_comprehensive(
             device=device,
         )
         
-        logger.info("Computing generation metrics...")
-        gen_metrics = compute_generation_metrics(predictions, references)
+        logger.info("Computing generation metrics with multi-reference BLEU...")
+        gen_metrics = compute_generation_metrics(predictions, all_references)
         results.update(gen_metrics)
         
+        # Store some examples for inspection
         results["_examples"] = []
         for i in range(min(3, len(prompts))):
             results["_examples"].append(
                 {
-                    "prompt": (
-                        prompts[i][:100] + "..."
-                        if len(prompts[i]) > 100
-                        else prompts[i]
-                    ),
+                    "mr": mr_list[i][:100] + "..." if len(mr_list[i]) > 100 else mr_list[i],
                     "prediction": predictions[i],
-                    "reference": references[i],
+                    "num_references": len(all_references[i]),
+                    "sample_reference": all_references[i][0],  # Show first reference
                 }
             )
+        
+        # Add evaluation metadata
+        results["_eval_info"] = {
+            "unique_mrs_evaluated": len(prompts),
+            "total_unique_mrs": total_unique_mrs,
+            "total_test_samples": len(test_dataset),
+            "avg_refs_per_mr": len(test_dataset) / total_unique_mrs,
+        }
     else:
         logger.warning("No valid prompts extracted for generation evaluation")
 
@@ -276,9 +305,13 @@ def _test_metrics():
     generated = generate_texts(model, tokenizer, prompts, device="cpu")
     print(f"Generated: {generated}")
     
-    print("\nTesting compute_generation_metrics...")
+    print("\nTesting compute_generation_metrics with multi-reference BLEU...")
     predictions = ["The cat sits on the mat", "I love programming"]
-    references = ["The cat sits on the mat", "I enjoy coding"]
+    # NB: Multi-reference format: List[List[str]]
+    references = [
+        ["The cat sits on the mat", "A cat is sitting on the mat", "The cat sat on the mat"],
+        ["I enjoy coding", "I love programming", "Programming is fun"]
+    ]
 
     metrics = compute_generation_metrics(predictions, references)
     print(f"Metrics: {metrics}")
