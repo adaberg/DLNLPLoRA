@@ -290,7 +290,7 @@ def main():
         device=device,
         seed=seed,
         training_mode=args.mode,
-        lora_dropout=config.get("lora", {}).get("dropout", 0.0),
+        lora_dropout=config.get("lora", {}).get("dropout", 0.1),
         early_stopping_patience=args.early_stopping_patience
         or config.get("training", {}).get("early_stopping_patience"),
     )
