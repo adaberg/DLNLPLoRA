@@ -142,14 +142,14 @@ class Trainer:
             num_training_steps=self.total_steps,
         )
 
+        # Validate mixed precision settings
+        if self.config.fp16 and self.config.bf16:
+            raise ValueError("Cannot enable both fp16 and bf16 simultaneously")
+
         # Mixed precision
         self.scaler = None
         if config.fp16:
             self.scaler = torch.amp.GradScaler("cuda")
-
-        # Validate mixed precision settings
-        if self.config.fp16 and self.config.bf16:
-            raise ValueError("Cannot enable both fp16 and bf16 simultaneously")
 
         # Training state
         self.global_step = 0
@@ -344,7 +344,7 @@ class Trainer:
             )
 
         # After the for loop ends, apply accumulated gradients if any remain
-        if len(progress_bar) % self.config.gradient_accumulation_steps != 0:
+        if len(self.train_dataloader) % self.config.gradient_accumulation_steps != 0:
 
             if self.scaler is not None:
                 self.scaler.step(self.optimizer)
@@ -458,14 +458,11 @@ class Trainer:
                 name.startswith("checkpoint_step_")
                 or name.startswith("checkpoint_epoch_")
             ):
-                try:
-                    # Extract number from either format
-                    num = int(name.split("_")[-1])
-                    checkpoints.append((num, path))
-                except ValueError:
-                    continue
+                # Use modification time for sorting instead of numeric suffix
+                mtime = os.path.getmtime(path)
+                checkpoints.append((mtime, path))
 
-        # Sort by step number
+        # Sort by modification time (oldest first)
         checkpoints.sort(key=lambda x: x[0])
 
         # Remove oldest checkpoints
