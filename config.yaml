@@ -55,7 +55,7 @@ lora:
                             # Paper tests: 1, 2, 4, 8, 16, 32, 64
   alpha: 32                 # Scaling factor (paper: 32)
                             # Scaling = alpha/rank
-  dropout: 0.0              # Dropout on LoRA layers (paper: 0.0 for LoRA)
+  dropout: 0.1              # Dropout on LoRA layers (paper: 0.1 for LoRA)
   target_modules:           # GPT-2 attention modules to adapt
     - "c_attn"              # Fused QKV projection (in_features=1024, out_features=3072)
     - "c_proj"              # Output projection (in_features=1024, out_features=1024)

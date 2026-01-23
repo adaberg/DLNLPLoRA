@@ -23,7 +23,7 @@ class LoRALayer(nn.Module):
         out_features: int,
         rank: int = 8,
         alpha: float = 16.0,
-        dropout: float = 0.0,
+        dropout: float = 0.1,
     ) -> None:
         """
         importnant
