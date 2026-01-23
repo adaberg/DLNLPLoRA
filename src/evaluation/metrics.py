@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) -> float:
     """
     Compute perplexity: exp(average_cross_entropy_loss)
-        
+
     Returns:
         Perplexity score (float)
     """
@@ -30,11 +30,12 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
 
     with torch.no_grad():
         for batch in dataloader:
-            batch = {k: v.to(device) for k, v in batch.items() 
-                    if isinstance(v, torch.Tensor)}
-            
+            batch = {
+                k: v.to(device) for k, v in batch.items() if isinstance(v, torch.Tensor)
+            }
+
             # Modifiction
-            outputs = model(**batch, loss_type="ForCausalLMLoss")
+            outputs = model(**batch)
 
             if not hasattr(outputs, "loss") or outputs.loss is None:
                 raise ValueError(
@@ -43,14 +44,14 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
                 )
 
             loss = outputs.loss
-            
+
             batch_size = batch["input_ids"].size(0)
             total_loss += loss.item() * batch_size
             total_samples += batch_size
 
     if total_samples == 0:
         raise ValueError("No valid batches processed for perplexity computation")
-    
+
     avg_loss = total_loss / total_samples
     perplexity = np.exp(avg_loss)
 
@@ -72,7 +73,7 @@ def generate_texts(
     """
     model.eval()
     generated_texts = []
-    
+
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -83,7 +84,7 @@ def generate_texts(
 
                 # modificaiont: add attention_mask
                 attention_mask = torch.ones_like(inputs)
-                
+
                 # Generate text
                 outputs = model.generate(
                     inputs,
@@ -97,7 +98,7 @@ def generate_texts(
                     pad_token_id=tokenizer.pad_token_id,
                     eos_token_id=tokenizer.eos_token_id,
                 )
-                
+
                 generated = tokenizer.decode(
                     outputs[0][len(inputs[0]) :], skip_special_tokens=True
                 ).strip()
@@ -124,7 +125,7 @@ def compute_generation_metrics(
             f"Length mismatch: predictions ({len(predictions)}) != "
             f"references ({len(references)})"
         )
-    
+
     predictions = [str(p).strip() for p in predictions]
     references = [str(r).strip() for r in references]
 
@@ -193,7 +194,7 @@ def evaluate_model_comprehensive(
     references = []
 
     for i in range(min(num_samples, len(test_dataset))):
-        if hasattr(test_dataset, 'get_raw_sample'):
+        if hasattr(test_dataset, "get_raw_sample"):
             raw = test_dataset.get_raw_sample(i)
             mr = raw.get("meaning_representation", "")
             ref = raw.get("human_reference", "")
@@ -204,7 +205,7 @@ def evaluate_model_comprehensive(
             except:
                 logger.warning(f"Could not extract sample {i}, skipping")
                 continue
-        
+
         prompt = f"meaning_representation: {mr} | reference:"
         prompts.append(prompt)
         references.append(ref)
@@ -217,11 +218,11 @@ def evaluate_model_comprehensive(
             max_new_tokens=50,
             device=device,
         )
-        
+
         logger.info("Computing generation metrics...")
         gen_metrics = compute_generation_metrics(predictions, references)
         results.update(gen_metrics)
-        
+
         results["_examples"] = []
         for i in range(min(3, len(prompts))):
             results["_examples"].append(
@@ -245,13 +246,13 @@ def evaluate_model_comprehensive(
 def _test_metrics():
     """Internal test function to verify metrics work correctly."""
     print("Testing evaluation metrics...")
-    
+
     class MockModel(nn.Module):
         def __init__(self):
             super().__init__()
             self.dummy = nn.Parameter(torch.randn(1))
 
-        def forward(self, input_ids, attention_mask=None, labels=None):
+        def forward(self, input_ids, attention_mask=None, labels=None, **kwargs):
             batch_size = input_ids.shape[0]
             loss = torch.tensor(1.0, requires_grad=True)
 
@@ -263,19 +264,19 @@ def _test_metrics():
 
         def generate(self, input_ids, **kwargs):
             return torch.cat([input_ids, input_ids], dim=-1)
-    
+
     from transformers import GPT2TokenizerFast
-    
+
     tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
-    
+
     prompts = ["Hello world", "Test prompt"]
     model = MockModel()
 
     print("Testing generate_texts...")
     generated = generate_texts(model, tokenizer, prompts, device="cpu")
     print(f"Generated: {generated}")
-    
+
     print("\nTesting compute_generation_metrics...")
     predictions = ["The cat sits on the mat", "I love programming"]
     references = ["The cat sits on the mat", "I enjoy coding"]
@@ -288,5 +289,6 @@ def _test_metrics():
 
 if __name__ == "__main__":
     import logging
+
     logging.basicConfig(level=logging.INFO)
     _test_metrics()
