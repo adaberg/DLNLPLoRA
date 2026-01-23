@@ -55,10 +55,6 @@ class TrainingConfig:
     # Device
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # Mixed precision
-    fp16: bool = False
-    bf16: bool = False
-
     # Gradient accumulation for larger effective batch sizes
     gradient_accumulation_steps: int = 1
 
@@ -142,15 +138,6 @@ class Trainer:
             num_training_steps=self.total_steps,
         )
 
-        # Validate mixed precision settings
-        if self.config.fp16 and self.config.bf16:
-            raise ValueError("Cannot enable both fp16 and bf16 simultaneously")
-
-        # Mixed precision
-        self.scaler = None
-        if config.fp16:
-            self.scaler = torch.amp.GradScaler("cuda")
-
         # Training state
         self.global_step = 0
         self.current_epoch = 0
@@ -207,8 +194,6 @@ class Trainer:
         logger.info(f"Warmup steps: {self.config.warmup_steps}")
         logger.info(f"Total training steps: {self.total_steps}")
         logger.info(f"Device: {self.config.device}")
-        logger.info(f"FP16: {self.config.fp16}")
-        logger.info(f"BF16: {self.config.bf16}")
         logger.info("=" * 60)
 
     def train(self) -> Dict[str, Any]:
@@ -288,10 +273,7 @@ class Trainer:
             loss = loss / self.config.gradient_accumulation_steps
 
             # Backward pass
-            if self.scaler is not None:
-                self.scaler.scale(loss).backward()
-            else:
-                loss.backward()
+            loss.backward()
 
             total_loss += loss.item() * self.config.gradient_accumulation_steps
             num_batches += 1
@@ -300,11 +282,7 @@ class Trainer:
             if (step + 1) % self.config.gradient_accumulation_steps == 0:
 
                 # Optimizer step
-                if self.scaler is not None:
-                    self.scaler.step(self.optimizer)
-                    self.scaler.update()
-                else:
-                    self.optimizer.step()
+                self.optimizer.step()
 
                 self.scheduler.step()
                 self.optimizer.zero_grad()
@@ -346,11 +324,7 @@ class Trainer:
         # After the for loop ends, apply accumulated gradients if any remain
         if len(self.train_dataloader) % self.config.gradient_accumulation_steps != 0:
 
-            if self.scaler is not None:
-                self.scaler.step(self.optimizer)
-                self.scaler.update()
-            else:
-                self.optimizer.step()
+            self.optimizer.step()
 
             self.scheduler.step()
             self.optimizer.zero_grad()
@@ -368,17 +342,8 @@ class Trainer:
         }
 
         # Forward pass
-        if self.config.fp16:
-            with torch.amp.autocast("cuda"):
-                outputs = self.model(**batch)
-                loss = outputs.loss
-        elif self.config.bf16:
-            with torch.amp.autocast("cuda", dtype=torch.bfloat16):
-                outputs = self.model(**batch)
-                loss = outputs.loss
-        else:
-            outputs = self.model(**batch)
-            loss = outputs.loss
+        outputs = self.model(**batch)
+        loss = outputs.loss
 
         return loss
 
