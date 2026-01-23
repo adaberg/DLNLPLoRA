@@ -292,7 +292,7 @@ def main():
         training_mode=args.mode,
         lora_dropout=config.get("lora", {}).get("dropout", 0.0),
         early_stopping_patience=args.early_stopping_patience
-        or config.get("training", {}).get("early_stopping_patience"),  # Add this line
+        or config.get("training", {}).get("early_stopping_patience"),
     )
 
     # Setup model
