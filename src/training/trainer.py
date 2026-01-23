@@ -269,13 +269,18 @@ class Trainer:
         for step, batch in enumerate(progress_bar):
             loss = self._training_step(batch)
 
+            # Store original loss for logging before scaling
+            loss_value = loss.item()  # Add this line
+
             # Scale loss for gradient accumulation
             loss = loss / self.config.gradient_accumulation_steps
 
             # Backward pass
             loss.backward()
 
-            total_loss += loss.item() * self.config.gradient_accumulation_steps
+            total_loss += (
+                loss_value  # Use unscaled loss, not loss.item() * accumulation_steps
+            )
             num_batches += 1
 
             # Gradient accumulation
@@ -304,7 +309,6 @@ class Trainer:
                 ):
                     eval_loss = self.evaluate()
                     logger.info(f"Step {self.global_step} - Eval Loss: {eval_loss:.4f}")
-                    self.model.train()
 
                 # Save checkpoint
                 if (
@@ -368,7 +372,12 @@ class Trainer:
             total_loss += outputs.loss.item()
             num_batches += 1
 
-        return total_loss / num_batches if num_batches > 0 else float("inf")
+        avg_loss = total_loss / num_batches if num_batches > 0 else float("inf")
+
+        # Restore training mode (add this line)
+        self.model.train()
+
+        return avg_loss  # Changed variable name for clarity
 
     def save_checkpoint(self, name: str) -> str:
         """Save model checkpoint."""
