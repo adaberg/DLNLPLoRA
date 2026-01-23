@@ -43,7 +43,7 @@ class TrainingConfig:
     warmup_steps: int = 500
 
     # LoRA specific
-    lora_dropout: float = 0.0
+    lora_dropout: float = 0.1
 
     # Logging and checkpointing
     output_dir: str = "./results"
