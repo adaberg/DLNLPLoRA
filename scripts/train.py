@@ -249,7 +249,7 @@ def main():
         bf16=args.bf16,
         seed=seed,
         training_mode=args.mode,
-        lora_dropout=config.get('lora', {}).get('dropout', 0.0),
+        lora_dropout=config.get('lora', {}).get('dropout', 0.1),
     )
     
     # Setup model

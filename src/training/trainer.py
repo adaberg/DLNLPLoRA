@@ -42,7 +42,7 @@ class TrainingConfig:
     max_grad_norm: float = 1.0
     
     # LoRA specific
-    lora_dropout: float = 0.0
+    lora_dropout: float = 0.1
     
     # Logging and checkpointing
     output_dir: str = "./results"
