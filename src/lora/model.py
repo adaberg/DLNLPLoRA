@@ -9,11 +9,15 @@ from .layer import LoRALayer
 class LoRALinear(nn.Module):
 
     def __init__(
-        self, base_layer: Union[nn.Linear, Conv1D], rank: int, alpha: float, dropout: float = 0.0
+        self,
+        base_layer: Union[nn.Linear, Conv1D],
+        rank: int,
+        alpha: float,
+        dropout: float = 0.1,
     ) -> None:
         super().__init__()
         self.base_layer = base_layer
-        
+
         # Handle both Linear and Conv1D if in feature we test other models
         if isinstance(base_layer, nn.Linear):
             in_features = base_layer.in_features
@@ -21,7 +25,7 @@ class LoRALinear(nn.Module):
         else:
             in_features = base_layer.weight.shape[0]
             out_features = base_layer.nf
-        
+
         self.lora = LoRALayer(in_features, out_features, rank, alpha, dropout)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -38,26 +42,26 @@ class LoRAGPT2(nn.Module):
         rank: int,
         alpha: float,
         target_modules: List[str],
-        dropout: float = 0.0,
+        dropout: float = 0.1,
     ) -> None:
         super().__init__()
         self.base_model = base_model
 
         for param in base_model.parameters():
             param.requires_grad = False
-        
+
         self.lora_modules = []
         for name, module in base_model.named_modules():
             if isinstance(module, (nn.Linear, Conv1D)):
                 if any(target in name for target in target_modules):
                     self._inject_lora(name, module, rank, alpha, dropout)
-        
+
         assert len(self.lora_modules) > 0, f"No modules matched {target_modules}"
 
     def _inject_lora(
         self, name: str, module: nn.Linear, rank: int, alpha: float, dropout: float
     ) -> None:
-        
+
         parent_name, child_name = name.rsplit(".", 1)
         parent = self.base_model.get_submodule(parent_name)
 
@@ -76,6 +80,10 @@ class LoRAGPT2(nn.Module):
         return self.base_model(
             input_ids=input_ids, attention_mask=attention_mask, labels=labels, **kwargs
         )
+
+    def generate(self, *args, **kwargs):
+        """Delegate text generation to the base model."""
+        return self.base_model.generate(*args, **kwargs)
 
     def get_lora_parameters(self) -> List[nn.Parameter]:
         """Return A and B"""
