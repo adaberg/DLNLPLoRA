@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from transformers import PreTrainedTokenizer
 import numpy as np
 import evaluate
+from tqdm import trange
 from transformers import GPT2TokenizerFast
 import logging
 
@@ -117,7 +118,8 @@ def compute_generation_metrics(
     predictions: List[str], references: List[str]
 ) -> Dict[str, float]:
     """
-    Compute BLEU and ROUGE using HuggingFace evaluate library.
+    Compute BLEU and ROUGE F1 scores using HuggingFace evaluate library
+    (fast, single-pass metrics for monitoring).
     """
     if len(predictions) != len(references):
         raise ValueError(
@@ -127,40 +129,118 @@ def compute_generation_metrics(
     
     predictions = [str(p).strip() for p in predictions]
     references = [str(r).strip() for r in references]
-
     results = {}
 
-    # 1. Compute BLEU
+    # 1. Compute BLEU score (corpus-level):
     try:
         bleu = evaluate.load("bleu")
         references_list = [[ref] for ref in references]
         bleu_result = bleu.compute(predictions=predictions, references=references_list)
-        results["bleu"] = bleu_result["bleu"]
+        results["bleu"] = bleu_result["bleu"] # corpus BLEU
+        logger.info("BLEU (corpus-level, precision-based)")
     except Exception as e:
         logger.warning(f"BLEU computation failed: {e}")
         results["bleu"] = 0.0
 
-    # 2. Compute ROUGE
+    # 2. Compute ROUGE F1 scores:
+    #    (returns the F1 score by default) 
     try:
         rouge = evaluate.load("rouge")
         rouge_result = rouge.compute(
-            predictions=predictions, references=references, use_stemmer=True
+            predictions=predictions,
+            references=references,
+            use_stemmer=True
         )
-        results["rouge1"] = rouge_result["rouge1"]
-        results["rouge2"] = rouge_result["rouge2"]
-        results["rougeL"] = rouge_result["rougeL"]
+        results["rouge1_f1"] = rouge_result["rouge1"]
+        results["rouge2_f1"] = rouge_result["rouge2"]
+        results["rougeL_f1"] = rouge_result["rougeL"]
     except Exception as e:
-        logger.warning(f"ROUGE computation failed: {e}")
-        results.update({"rouge1": 0.0, "rouge2": 0.0, "rougeL": 0.0})
+        logger.warning(f"ROUGE F1 computation failed: {e}")
+        results.update({"rouge1_f1": 0.0, "rouge2_f1": 0.0, "rougeL_f1": 0.0})
+
+    # 3. Compute BERTScore F1:
+    #    (measures the semantic similarity between generated and reference text)
+    try:
+        bertscore = evaluate.load("bertscore")
+        bert_result = bertscore.compute(
+            predictions=predictions,
+            references=references,
+            lang="en"
+        )
+        results["bertscore_f1"] = float(np.mean(bert_result["f1"]))
+    except Exception as e:
+        logger.warning(f"ROUGE F1 computation failed: {e}")
+        results.update({"bertscore_f1": 0.0})
 
     logger.info(
         f"Generation metrics: BLEU={results.get('bleu', 0):.4f}, "
-        f"ROUGE-1={results.get('rouge1', 0):.4f}, "
-        f"ROUGE-2={results.get('rouge2', 0):.4f}, "
-        f"ROUGE-L={results.get('rougeL', 0):.4f}"
+        f"ROUGE-1 F1={results.get('rouge1_f1', 0):.4f}, "
+        f"ROUGE-2 F1={results.get('rouge2_f1', 0):.4f}, "
+        f"ROUGE-L F1={results.get('rougeL_f1', 0):.4f}"
     )
 
     return results
+
+
+def compute_bootstrap_generation_metrics(
+    predictions: list[str],
+    references: list[str],
+    num_samples: int = 1000,
+    confidence: float = 0.95,
+    seed: int = 42,
+) -> dict:
+    """
+    Compute bootstrapped BLEU and ROUGE F1 scores with confidence intervals
+    (slow, statistical evaluation with CI).
+
+    Returns mean and CI bounds.
+    """
+
+    rng = np.random.default_rng(seed)
+
+    bleu = evaluate.load("bleu")
+    rouge = evaluate.load("rouge")
+
+    bleu_scores = []
+    rouge1_scores = []
+    rouge2_scores = []
+    rougeL_scores = []
+
+    n = len(predictions)
+    assert n == len(references)
+
+    for _ in trange(num_samples, desc="Bootstrapping metrics"):
+        idx = rng.integers(0, n, size=n)
+
+        preds_sample = [predictions[i] for i in idx]
+        refs_sample = [references[i] for i in idx]
+
+        bleu_result = bleu.compute(
+            predictions=preds_sample,
+            references=[[r] for r in refs_sample]
+        )
+        rouge_result = rouge.compute(
+            predictions=preds_sample,
+            references=refs_sample,
+            use_stemmer=True
+        )
+
+        bleu_scores.append(bleu_result["bleu"])
+        rouge1_scores.append(rouge_result["rouge1"])
+        rouge2_scores.append(rouge_result["rouge2"])
+        rougeL_scores.append(rouge_result["rougeL"])
+
+    def ci(scores):
+        lower = np.percentile(scores, (1.0 - confidence) / 2.0 * 100.0)
+        upper = np.percentile(scores, (1.0 + confidence) / 2.0 * 100.0)
+        return float(np.mean(scores)), float(lower), float(upper)
+
+    return {
+        "boot_bleu": ci(bleu_scores),
+        "boot_rouge1_f1": ci(rouge1_scores),
+        "boot_rouge2_f1": ci(rouge2_scores),
+        "boot_rougeL_f1": ci(rougeL_scores)
+    }
 
 
 # Additional utility function (not in original spec but useful)
@@ -171,6 +251,7 @@ def evaluate_model_comprehensive(
     test_dataset,
     device: str = "cuda",
     num_samples: int = 10,
+    do_bootstrap_eval = False
 ) -> Dict[str, float]:
     """
     Comprehensive evaluation combining perplexity and generation metrics.
@@ -219,9 +300,16 @@ def evaluate_model_comprehensive(
         )
         
         logger.info("Computing generation metrics...")
-        gen_metrics = compute_generation_metrics(predictions, references)
-        results.update(gen_metrics)
-        
+        metrics = compute_generation_metrics(predictions, references)
+        if do_bootstrap_eval:
+            metrics["bootstrap"] = compute_bootstrap_generation_metrics(
+                predictions,
+                references,
+                num_samples=num_samples
+            )
+
+        results.update(metrics)
+
         results["_examples"] = []
         for i in range(min(3, len(prompts))):
             results["_examples"].append(

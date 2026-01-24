@@ -42,7 +42,7 @@ Compute BLEU and ROUGE scores using HuggingFace evaluate library.
 
 ```python
 metrics = compute_generation_metrics(predictions, references)
-# Returns: {"bleu": float, "rouge1": float, "rouge2": float, "rougeL": float}
+# Returns: {"bleu": float, "rouge1_f1": float, "rouge2_f1": float, "rougeL_f1": float, "bertscore_f1": float}
 ```
 
 #4. evaluate_model_comprehensive(model, tokenizer, test_loader, test_dataset, device="cuda", num_samples=10)
@@ -55,7 +55,7 @@ results = evaluate_model_comprehensive(
     model, tokenizer, test_loader, test_dataset, 
     device="cuda", num_samples=20
 )
-# Returns: Dict with perplexity, BLEU, ROUGE scores, and example generations
+# Returns: Dict with perplexity, BLEU, ROUGE F1 and BERTScore as well as example generations
 ```
 
 ## Quick Example
@@ -67,7 +67,7 @@ predictions = ["The restaurant serves French food"]
 references = ["This restaurant serves French cuisine"]
 
 metrics = compute_generation_metrics(predictions, references)
-print(f"BLEU: {metrics['bleu']:.4f}, ROUGE-L: {metrics['rougeL']:.4f}")
+print(f"BLEU: {metrics['bleu']:.4f}, ROUGE-L F1: {metrics['rougeL_f1']:.4f}")
 ```
 
 ## Standalone Evaluation Script

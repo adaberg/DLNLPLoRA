@@ -15,7 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class E2EDataset(Dataset):
-    """E2E NLG dataset for language modeling."""
+    """E2E NLG dataset for language modeling.
+       Note: The labels are unshifted; causal shift is
+             handled by the model.
+    """
     
     def __init__(
         self,
@@ -73,16 +76,21 @@ class E2EDataset(Dataset):
         
         encoding = self.tokenizer(
             text,
-            max_length=self.max_length,
-            padding="max_length",
             truncation=True,
+            padding="max_length",
+            max_length=self.max_length,
             return_tensors="pt"
         )
+        attention_mask = encoding["attention_mask"].squeeze(0)
+        labels = encoding["input_ids"].squeeze(0).clone()
+
+        # Ignore padding tokens:
+        labels[attention_mask == 0] = -100
         
         item = {
             "input_ids": encoding["input_ids"].squeeze(0),
-            "attention_mask": encoding["attention_mask"].squeeze(0),
-            "labels": encoding["input_ids"].squeeze(0).clone()
+            "attention_mask": attention_mask,
+            "labels": labels
         }
         
         if self.device:

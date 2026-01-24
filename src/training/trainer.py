@@ -31,6 +31,8 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TrainingConfig:
     """Training configuration following LoRA paper Table 11."""
+
+    _DEBUG = False
     
     # Training hyperparameters
     #  (reused from paper! TODO: Possibly adapt to better fit our data changes if necessary!)
@@ -108,7 +110,11 @@ class Trainer:
         train_dataloader: DataLoader,
         eval_dataloader: Optional[DataLoader] = None,
         tokenizer: Any = None,
+        debug_mode = False
     ) -> None:
+        if debug_mode:
+            self._DEBUG = True
+
         self.model = model
         self.config = config
         self.train_dataloader = train_dataloader
@@ -166,14 +172,22 @@ class Trainer:
         logger.info(f"Total parameters: {total_params:,}")
         logger.info(f"Trainable parameters: {trainable_count:,}")
         logger.info(f"Trainable percentage: {100 * trainable_count / total_params:.2f}%")
-        
-        return AdamW(
-            trainable_params,
-            lr=self.config.learning_rate,
-            weight_decay=self.config.weight_decay,
-            betas=(0.9, 0.999),
-            eps=1e-8
+
+        optimizer = AdamW(
+            filter(lambda p: p.requires_grad, model.parameters()),
+            lr=config.learning_rate,
+            weight_decay=config.weight_decay
         )
+
+        return optimizer
+        
+        # return AdamW(
+        #     trainable_params,
+        #     lr=self.config.learning_rate,
+        #     weight_decay=self.config.weight_decay,
+        #     betas=(0.9, 0.999),
+        #     eps=1e-8
+        # )
     
     def _log_config(self) -> None:
         """Log training configuration."""
@@ -207,12 +221,14 @@ class Trainer:
         
         for epoch in range(self.config.num_epochs):
             self.current_epoch = epoch
-            epoch_loss = self._train_epoch(epoch)
-            self.train_losses.append(epoch_loss)
+
+            train_loss = self._train_epoch(epoch)
+            self.train_losses.append(train_loss)
             
-            logger.info(f"Epoch {epoch + 1}/{self.config.num_epochs} - Train Loss: {epoch_loss:.4f}")
+            logger.info(f"Epoch {epoch + 1}/{self.config.num_epochs} - Train Loss: {train_loss:.4f}")
             
-            # Evaluation
+            ## Evaluation:
+            eval_loss = None
             if self.eval_dataloader is not None:
                 eval_loss = self.evaluate()
                 self.eval_losses.append(eval_loss)
@@ -234,6 +250,7 @@ class Trainer:
             
             # Save checkpoint at end of epoch
             self.save_checkpoint(f"checkpoint_epoch_{epoch + 1}")
+            self.model.train()
         
         # Save final model
         self.save_checkpoint("final_model")
@@ -245,39 +262,59 @@ class Trainer:
             "total_steps": self.global_step,
             "epochs_completed": self.current_epoch + 1
         }
-    
+
     def _train_epoch(self, epoch: int) -> float:
         """Train for one epoch."""
-        self.model.train()
+        if self._DEBUG:
+            batch_losses = []
+            token_losses = []
+
+        if not self.model.training:
+            self.model.train()
+
         total_loss = 0.0
-        num_batches = 0
-        
+        total_tokens = 0
+
         progress_bar = tqdm(
             self.train_dataloader,
             desc=f"Epoch {epoch + 1}",
             disable=False
         )
-        
+
         self.optimizer.zero_grad()
-        
+
         for step, batch in enumerate(progress_bar):
-            loss = self._training_step(batch)
-            
-            # Scale loss for gradient accumulation
+            loss, num_tokens = self._training_step(batch)
+
+            if self._DEBUG:
+                batch_losses.append(loss.item())
+                token_losses.append(loss.item() * num_tokens)
+                token_counts.append(num_tokens)
+
+            ## Gradient Accumulation:
+            # Scale loss for gradient accumulation:
             loss = loss / self.config.gradient_accumulation_steps
-            
-            # Backward pass
+
+            # Backward pass:
             if self.scaler is not None:
                 self.scaler.scale(loss).backward()
             else:
                 loss.backward()
-            
-            total_loss += loss.item() * self.config.gradient_accumulation_steps
-            num_batches += 1
-            
-            # Gradient accumulation
+
+            # Debug mode: Check gradient flow
+            # (The base weights must not have a gradient.)
+            if self._DEBUG:
+                for name, param in model.named_parameters():
+                    if param.requires_grad:
+                        if param.grad is None:
+                            print(f"No grad for {name}")
+
+            # Token-weighted accumulation:
+            total_loss += loss.item() * num_tokens * self.config.gradient_accumulation_steps
+            total_tokens += num_tokens
+
+            # Accumlation of the gradients:
             if (step + 1) % self.config.gradient_accumulation_steps == 0:
-                # Gradient clipping
                 if self.config.max_grad_norm > 0:
                     if self.scaler is not None:
                         self.scaler.unscale_(self.optimizer)
@@ -285,87 +322,229 @@ class Trainer:
                         self.model.parameters(),
                         self.config.max_grad_norm
                     )
-                
-                # Optimizer step
+
+                # Optimizer step:
                 if self.scaler is not None:
                     self.scaler.step(self.optimizer)
                     self.scaler.update()
                 else:
                     self.optimizer.step()
-                
+
                 self.scheduler.step()
                 self.optimizer.zero_grad()
                 self.global_step += 1
-                
-                # Logging
+
+                # Logging of the average loss and LR:
                 if self.global_step % self.config.logging_steps == 0:
-                    avg_loss = total_loss / num_batches
+                    avg_loss = total_loss / total_tokens
                     lr = self.scheduler.get_last_lr()[0]
                     logger.info(
-                        f"Step {self.global_step} - Loss: {avg_loss:.4f} - LR: {lr:.2e}"
+                        f"Step {self.global_step} - Token Loss: {avg_loss:.4f} - LR: {lr:.2e}"
                     )
-                
-                # Evaluation during training
-                if (self.config.eval_steps > 0 and 
-                    self.global_step % self.config.eval_steps == 0 and
-                    self.eval_dataloader is not None):
-                    eval_loss = self.evaluate()
-                    logger.info(f"Step {self.global_step} - Eval Loss: {eval_loss:.4f}")
-                    self.model.train()
-                
-                # Save checkpoint
-                if (self.config.save_steps > 0 and 
-                    self.global_step % self.config.save_steps == 0):
-                    self.save_checkpoint(f"checkpoint_step_{self.global_step}")
-            
-            # Update progress bar
+                # Note: The evaluation part is moved to a clearly defined, epoch-based position.
+                #       Here, the evaluation would be calculated in the middle of the gradient
+                #       flow and at the step level.
+
+                if self._DEBUG:
+                    batch_loss = sum(batch_losses) / len(batch_losses)
+                    token_loss = sum(token_losses) / sum(token_counts)
+
+                    print(f"Batch-loss: {batch_loss:.4f}")
+                    print(f"Token-loss: {token_loss:.4f}")
+                    print(f"Δ: {batch_loss - token_loss:.4f}")
+
+            # Update progress bar:
             progress_bar.set_postfix({
-                'loss': f'{total_loss / num_batches:.4f}',
-                'lr': f'{self.scheduler.get_last_lr()[0]:.2e}'
+                "token_loss": f"{total_loss / total_tokens:.4f}",
+                "lr": f"{self.scheduler.get_last_lr()[0]:.2e}"
             })
-        
-        return total_loss / num_batches if num_batches > 0 else 0.0
+
+        return total_loss / total_tokens
     
-    def _training_step(self, batch: Dict[str, torch.Tensor]) -> torch.Tensor:
-        """Perform a single training step."""
-        # Move batch to device
-        batch = {k: v.to(self.config.device) for k, v in batch.items() 
-                 if isinstance(v, torch.Tensor)}
+    # def _train_epoch(self, epoch: int) -> float:
+    #     """Train for one epoch."""
+    #     self.model.train()
+    #     total_loss = 0.0
+    #     num_batches = 0
         
-        # Forward pass
+    #     progress_bar = tqdm(
+    #         self.train_dataloader,
+    #         desc=f"Epoch {epoch + 1}",
+    #         disable=False
+    #     )
+        
+    #     self.optimizer.zero_grad()
+        
+    #     for step, batch in enumerate(progress_bar):
+    #         loss = self._training_step(batch)
+            
+    #         # Scale loss for gradient accumulation
+    #         loss = loss / self.config.gradient_accumulation_steps
+            
+    #         # Backward pass
+    #         if self.scaler is not None:
+    #             self.scaler.scale(loss).backward()
+    #         else:
+    #             loss.backward()
+            
+    #         total_loss += loss.item() * self.config.gradient_accumulation_steps
+    #         num_batches += 1
+            
+    #         # Gradient accumulation
+    #         if (step + 1) % self.config.gradient_accumulation_steps == 0:
+    #             # Gradient clipping
+    #             if self.config.max_grad_norm > 0:
+    #                 if self.scaler is not None:
+    #                     self.scaler.unscale_(self.optimizer)
+    #                 torch.nn.utils.clip_grad_norm_(
+    #                     self.model.parameters(),
+    #                     self.config.max_grad_norm
+    #                 )
+                
+    #             # Optimizer step
+    #             if self.scaler is not None:
+    #                 self.scaler.step(self.optimizer)
+    #                 self.scaler.update()
+    #             else:
+    #                 self.optimizer.step()
+                
+    #             self.scheduler.step()
+    #             self.optimizer.zero_grad()
+    #             self.global_step += 1
+                
+    #             # Logging
+    #             if self.global_step % self.config.logging_steps == 0:
+    #                 avg_loss = total_loss / num_batches
+    #                 lr = self.scheduler.get_last_lr()[0]
+    #                 logger.info(
+    #                     f"Step {self.global_step} - Loss: {avg_loss:.4f} - LR: {lr:.2e}"
+    #                 )
+                
+    #             # Evaluation during training
+    #             if (self.config.eval_steps > 0 and 
+    #                 self.global_step % self.config.eval_steps == 0 and
+    #                 self.eval_dataloader is not None):
+    #                 eval_loss = self.evaluate()
+    #                 logger.info(f"Step {self.global_step} - Eval Loss: {eval_loss:.4f}")
+    #                 self.model.train()
+                
+    #             # Save checkpoint
+    #             if (self.config.save_steps > 0 and 
+    #                 self.global_step % self.config.save_steps == 0):
+    #                 self.save_checkpoint(f"checkpoint_step_{self.global_step}")
+            
+    #         # Update progress bar
+    #         progress_bar.set_postfix({
+    #             'loss': f'{total_loss / num_batches:.4f}',
+    #             'lr': f'{self.scheduler.get_last_lr()[0]:.2e}'
+    #         })
+        
+    #     return total_loss / num_batches if num_batches > 0 else 0.0
+
+    def _training_step(self, batch: Dict[str, torch.Tensor]) -> tuple[torch.Tensor, int]:
+        """Perform a single training step."""
+
+        # Move batch to device:
+        batch = {k: v.to(self.config.device) for k, v in batch.items()
+                if isinstance(v, torch.Tensor)}
+
+        if self._DEBUG:
+            assert "labels" in batch
+            assert (batch["labels"][batch["attention_mask"] == 0] == -100).all()
+
+        attention_mask = batch.get("attention_mask", None)
+
+        # Forward pass:
         if self.config.fp16:
-            with torch.amp.autocast('cuda'):
+            with torch.amp.autocast("cuda"):
                 outputs = self.model(**batch)
                 loss = outputs.loss
         elif self.config.bf16:
-            with torch.amp.autocast('cuda', dtype=torch.bfloat16):
+            with torch.amp.autocast("cuda", dtype=torch.bfloat16):
                 outputs = self.model(**batch)
                 loss = outputs.loss
         else:
             outputs = self.model(**batch)
             loss = outputs.loss
+
+        # Determine the number of valid tokens:
+        if attention_mask is not None:
+            num_tokens = attention_mask.sum().item()
+        else:
+            # Fallback: count all tokens
+            num_tokens = batch["input_ids"].numel()
+
+        return loss, num_tokens
+
+    # def _training_step(self, batch: Dict[str, torch.Tensor]) -> torch.Tensor:
+    #     """Perform a single training step."""
+    #     # Move batch to device
+    #     batch = {k: v.to(self.config.device) for k, v in batch.items() 
+    #              if isinstance(v, torch.Tensor)}
         
-        return loss
+    #     # Forward pass
+    #     if self.config.fp16:
+    #         with torch.amp.autocast('cuda'):
+    #             outputs = self.model(**batch)
+    #             loss = outputs.loss
+    #     elif self.config.bf16:
+    #         with torch.amp.autocast('cuda', dtype=torch.bfloat16):
+    #             outputs = self.model(**batch)
+    #             loss = outputs.loss
+    #     else:
+    #         outputs = self.model(**batch)
+    #         loss = outputs.loss
+        
+    #     return loss
     
     @torch.no_grad()
     def evaluate(self) -> float:
         """Evaluate the model on the evaluation dataset."""
         if self.eval_dataloader is None:
-            return float('inf')
-        
+            return float("inf")
+
         self.model.eval()
         total_loss = 0.0
-        num_batches = 0
-        
+        total_tokens = 0
+
         for batch in tqdm(self.eval_dataloader, desc="Evaluating"):
             batch = {k: v.to(self.config.device) for k, v in batch.items()
-                     if isinstance(v, torch.Tensor)}
-            
+                    if isinstance(v, torch.Tensor)}
+
+            attention_mask = batch.get("attention_mask", None)
+
             outputs = self.model(**batch)
-            total_loss += outputs.loss.item()
-            num_batches += 1
+            loss = outputs.loss
+
+            if attention_mask is not None:
+                num_tokens = attention_mask.sum().item()
+            else:
+                num_tokens = batch["input_ids"].numel()
+
+            total_loss += loss.item() * num_tokens
+            total_tokens += num_tokens
+
+        return total_loss / total_tokens
+
+    # @torch.no_grad()
+    # def evaluate(self) -> float:
+    #     """Evaluate the model on the evaluation dataset."""
+    #     if self.eval_dataloader is None:
+    #         return float('inf')
         
-        return total_loss / num_batches if num_batches > 0 else float('inf')
+    #     self.model.eval()
+    #     total_loss = 0.0
+    #     num_batches = 0
+        
+    #     for batch in tqdm(self.eval_dataloader, desc="Evaluating"):
+    #         batch = {k: v.to(self.config.device) for k, v in batch.items()
+    #                  if isinstance(v, torch.Tensor)}
+            
+    #         outputs = self.model(**batch)
+    #         total_loss += outputs.loss.item()
+    #         num_batches += 1
+        
+    #     return total_loss / num_batches if num_batches > 0 else float('inf')
     
     def save_checkpoint(self, name: str) -> str:
         """Save model checkpoint."""
