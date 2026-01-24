@@ -66,9 +66,32 @@ def generate_texts(
     prompts: List[str],
     max_new_tokens: int = 50,
     device: str = "cuda",
+    num_beams: int = 10,
+    length_penalty: float = 0.9,
+    no_repeat_ngram_size: int = 4,
+    do_sample: bool = False,
 ) -> List[str]:
     """
     Generate text completions for given prompts.
+    
+    Uses beam search by default (as specified in LoRA paper Table 11/Section D.3):
+    - num_beams: 10
+    - length_penalty: 0.9 (for E2E)
+    - no_repeat_ngram_size: 4
+    
+    Args:
+        model: The language model
+        tokenizer: Tokenizer for encoding/decoding
+        prompts: List of input prompts
+        max_new_tokens: Maximum tokens to generate
+        device: Device to run on
+        num_beams: Number of beams for beam search (paper: 10)
+        length_penalty: Length penalty for beam search (paper: 0.9 for E2E)
+        no_repeat_ngram_size: Prevent n-gram repetition (paper: 4)
+        do_sample: Use sampling instead of beam search (default: False for deterministic output)
+    
+    Returns:
+        List of generated text completions
     """
     model.eval()
     generated_texts = []
@@ -80,20 +103,20 @@ def generate_texts(
         for prompt in prompts:
             try:
                 inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
-
-                # modificaiont: add attention_mask
                 attention_mask = torch.ones_like(inputs)
                 
-                # Generate text
+                # Generate text using beam search (paper-specified parameters)
                 outputs = model.generate(
                     inputs,
-                    # add
                     attention_mask=attention_mask,
                     max_new_tokens=max_new_tokens,
                     min_new_tokens=1,
-                    do_sample=True,
-                    temperature=0.8,
-                    top_p=0.9,
+                    # paper states reuse of params of https://arxiv.org/pdf/2101.00190 (beam size = 5)
+                    num_beams=num_beams,
+                    length_penalty=length_penalty,
+                    no_repeat_ngram_size=no_repeat_ngram_size,
+                    do_sample=do_sample,
+                    early_stopping=True,
                     pad_token_id=tokenizer.pad_token_id,
                     eos_token_id=tokenizer.eos_token_id,
                 )
@@ -182,6 +205,7 @@ def evaluate_model_comprehensive(
     test_dataset,
     device: str = "cuda",
     num_samples: int = -1,
+    generation_config: Dict = None,
 ) -> Dict[str, float]:
     """
     Comprehensive evaluation combining perplexity and generation metrics.
@@ -191,7 +215,31 @@ def evaluate_model_comprehensive(
     - Generate one prediction per unique MR
     - Compute multi-reference BLEU
         (validate output against ALL references for each MR)
+    
+    Args:
+        model: The language model to evaluate
+        tokenizer: Tokenizer for encoding/decoding
+        test_loader: DataLoader for perplexity computation
+        test_dataset: Dataset with get_grouped_data() method
+        device: Device to run on
+        num_samples: Number of unique MRs to evaluate (-1 for all)
+        generation_config: Dict with generation parameters:
+            - max_new_tokens (default: 50)
+            - num_beams (default: 10, from LoRA paper)
+            - length_penalty (default: 0.9, from LoRA paper for E2E)
+            - no_repeat_ngram_size (default: 4, from LoRA paper)
+            - do_sample (default: False for beam search)
     """
+    if generation_config is None:
+        generation_config = {}
+    
+    # Default generation parameters from LoRA paper (Table 11 / Section D.3)
+    max_new_tokens = generation_config.get("max_new_tokens", 50)
+    num_beams = generation_config.get("num_beams", generation_config.get("beam_size", 10))
+    length_penalty = generation_config.get("length_penalty", 0.9)
+    no_repeat_ngram_size = generation_config.get("no_repeat_ngram_size", 4)
+    do_sample = generation_config.get("do_sample", False)
+    
     results = {}
 
     # 1. Compute perplexity
@@ -217,6 +265,7 @@ def evaluate_model_comprehensive(
     
     logger.info(f"E2E Evaluation: {num_samples} unique MRs (out of {total_unique_mrs} total)")
     logger.info(f"Total test samples: {len(test_dataset)}, Average refs per MR: {len(test_dataset)/total_unique_mrs:.1f}")
+    logger.info(f"Generation config: num_beams={num_beams}, length_penalty={length_penalty}, no_repeat_ngram_size={no_repeat_ngram_size}, do_sample={do_sample}")
 
     # 3. Generate texts for evaluation (ONE per unique MR)
     prompts = []
@@ -237,8 +286,12 @@ def evaluate_model_comprehensive(
             model=model,
             tokenizer=tokenizer,
             prompts=prompts,
-            max_new_tokens=50,
+            max_new_tokens=max_new_tokens,
             device=device,
+            num_beams=num_beams,
+            length_penalty=length_penalty,
+            no_repeat_ngram_size=no_repeat_ngram_size,
+            do_sample=do_sample,
         )
         
         logger.info("Computing generation metrics with multi-reference BLEU...")

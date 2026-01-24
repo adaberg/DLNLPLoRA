@@ -158,13 +158,31 @@ def main() -> None:
     
     print("Starting comprehensive evaluation...")
     
+    # Extract generation config from config file (inference parameters from LoRA paper)
+    eval_config = config.get("evaluation", {})
+    inference_config = eval_config.get("inference", {})
+    generation_config = eval_config.get("generation", {})
+    
+    # Merge inference config into generation config (inference params take precedence)
+    # This maps beam_size -> num_beams for compatibility
+    merged_generation_config = {
+        "max_new_tokens": generation_config.get("max_new_tokens", 50),
+        "num_beams": inference_config.get("beam_size", 10),
+        "length_penalty": inference_config.get("length_penalty", 0.9),
+        "no_repeat_ngram_size": inference_config.get("no_repeat_ngram_size", 4),
+        "do_sample": False,  # Use beam search, not sampling
+    }
+    
+    print(f"Generation config: {merged_generation_config}")
+    
     results = evaluate_model_comprehensive(
         model=model,
         tokenizer=tokenizer,
         test_loader=test_loader,
         test_dataset=test_dataset,
         device=device,
-        num_samples=args.num_samples
+        num_samples=args.num_samples,
+        generation_config=merged_generation_config
     )
     
     print("\n" + "="*60)
