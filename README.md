@@ -195,3 +195,12 @@ pytest tests/test_dora.py -v -m linear  # Only linear tests
 pytest tests/test_dora.py -v -m model   # Only model tests
 pytest tests/test_dora.py -v -m learning
 ```
+
+# Extention: QLoRA
+
+## Setup
+
+```bash
+nvidia-smi  # Shows driver version and CUDA version at top
+
+```
