@@ -196,6 +196,7 @@ class TestDoRALearning:
             base_model=base_model,
             rank=4,
             alpha=16.0,
+            dropout=0.0,
             target_modules=["c_attn"],
         )
 
@@ -209,12 +210,12 @@ class TestDoRALearning:
         return model, inputs
 
     @pytest.mark.learning
-    def test_only_lora_receives_gradients(self, model_and_inputs):
+    def test_only_dora_receives_gradients(self, model_and_inputs):
         model, inputs = model_and_inputs
 
-        lora_params = model.get_lora_parameters()
-        optimizer = torch.optim.SGD(lora_params, lr=1e-3)
-
+        dora_params = model.get_lora_parameters()
+        optimizer = torch.optim.SGD(dora_params, lr=1e-3)
+        
         # warmup step if we want gradient to pass the B
         optimizer.zero_grad()
         model(**inputs).loss.backward()
