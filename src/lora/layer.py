@@ -79,7 +79,7 @@ class LoRALayer(nn.Module):
             f"rank={self.rank}, "
             f"alpha={self.alpha}, "
             f"scaling={self.scaling:.4f}, "
-            f"dropout={self.dropout.p}"
+            f"dropout={self.dropout.p if isinstance(self.dropout, nn.Dropout) else 0.0}"
         )
 
     # this decorator makes it possible to access weight as a property
@@ -136,7 +136,7 @@ class DoRALayer(LoRALayer):
             f"alpha={self.alpha}, "
             f"scaling={self.scaling:.4f}, "
             f"magnitude={self.magnitude}, "
-            f"dropout={self.dropout.p}"
+            f"dropout={self.dropout.p if isinstance(self.dropout, nn.Dropout) else 0.0}"
         )
 
     def get_num_parameters(self) -> tuple[int, int]:

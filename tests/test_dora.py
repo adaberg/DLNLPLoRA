@@ -82,20 +82,28 @@ class TestDoRALinear:
     @pytest.mark.linear
     def test_wraps_base_layer(self):
         base = nn.Linear(128, 64)
-        dora_linear = DoRALinear(base, rank=8, alpha=16)
+        dora_linear = DoRALinear(base, rank=8, alpha=16, dropout=0.0)
 
         assert dora_linear.base_layer is base
-        assert isinstance(dora_linear.dora, DoRALayer)
+        assert isinstance(dora_linear.lora, DoRALayer)
 
     @pytest.mark.linear
-    def test_forward_combines_base_and_dora(self):
+    def test_forward_applies_dora_formula(self):
         base = nn.Linear(128, 64)
-        dora_linear = DoRALinear(base, rank=8, alpha=16)
+        dora_linear = DoRALinear(base, rank=8, alpha=16, dropout=0.0)
 
         x = torch.randn(2, 10, 128)
 
         output = dora_linear(x)
-        expected = base(x) + dora_linear.lora(x)
+        # Manually compute DoRA formula
+        merged = (
+            base.weight
+            + (dora_linear.lora.lora_B @ dora_linear.lora.lora_A)
+            * dora_linear.lora.scaling
+        )
+        norm = torch.norm(merged, dim=0, keepdim=True)
+        W = dora_linear.lora.magnitude * merged / norm
+        expected = x @ W.T
 
         assert torch.allclose(output, expected)
 

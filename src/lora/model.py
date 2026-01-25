@@ -99,7 +99,7 @@ class DoRALinear(LoRALinear):
             else self.base_layer.weight.T
         )
         in_f, out_f = self.lora.lora_A.shape[1], self.lora.lora_B.shape[0]
-        self.lora = DoRALayer(in_f, out_f, rank, alpha, dropout, base_w)
+        self.lora = DoRALayer(in_f, out_f, rank, alpha, base_w, dropout)
 
     def forward(self, x):
         base_w = (
