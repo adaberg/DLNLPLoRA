@@ -202,11 +202,13 @@ class TestLoRALearning:
           llm_int8_skip_modules=["lm_head"]  # Explicitly skip LM head
         )
 
-        model = GPT2LMHeadModel.from_pretrained(
+        base_model = GPT2LMHeadModel.from_pretrained(
             "gpt2-medium",
             quantization_config=bnb_config,
-            dtype=torch.float16  # Non-quantized params use fp16
+            torch_dtype=torch.float16
         )
+    
+        model = LoRAGPT2(base_model, rank=8, alpha=16, target_modules=["c_attn", "c_proj"])
         
         tokenizer = GPT2Tokenizer.from_pretrained("gpt2-medium")
         tokenizer.pad_token = tokenizer.eos_token
@@ -214,6 +216,9 @@ class TestLoRALearning:
         text = ["The students love deep learning for nlp"]
         inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
         inputs["labels"] = inputs["input_ids"].clone()
+        
+        # Move inputs to CUDA (quantized model is on CUDA)
+        inputs = {k: v.to("cuda") for k, v in inputs.items()}
         
         return model, inputs
     
