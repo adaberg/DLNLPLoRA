@@ -3,7 +3,7 @@ E2E NLG Challenge dataset loader.
 Format: "meaning_representation: <mr> | reference: <ref>"
 """
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 import torch
 from torch.utils.data import Dataset, DataLoader
 from datasets import load_dataset
@@ -102,6 +102,22 @@ class E2EDataset(Dataset):
             "meaning_representation": sample["meaning_representation"],
             "human_reference": sample["human_reference"]
         }
+    
+    def get_grouped_data(self) -> Dict[str, List[str]]:
+        """
+        Group references by meaning representation.
+        
+        Returns:
+            Dictionary mapping each unique MR to a list of all its references.
+            NB: Needed for multi-reference BLEU evaluation.
+        """
+        from collections import defaultdict
+        grouped = defaultdict(list)
+        for sample in self.dataset:
+            mr = sample["meaning_representation"]
+            ref = sample["human_reference"]
+            grouped[mr].append(ref)
+        return dict(grouped)
 
 
 def get_dataloader(

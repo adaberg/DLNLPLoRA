@@ -1,8 +1,14 @@
-# As a mvp we are going to restric our reproduction on one model and one dataset,
-# with 3 configurations:
+# ============================================================================
+# Configuration
+# ============================================================================
+# Hyperparameters from LoRA Paper (arXiv 2106.09685) Table 11 (GPT-2 on E2E NLG)
+# TODO: Possibly adapt to better fit our data changes if necessary!
+#
+# Training modes:
 #   - "none": baseline (no finetuning, zero-shot evaluation)
 #   - "full": full finetuning (all parameters trainable)
 #   - "lora": LoRA finetuning (only adaptation matrices trainable)
+# ============================================================================
 
 experiment_name: "lora_gpt2_e2e"
 seed: 42
@@ -11,21 +17,54 @@ output_dir: "./results"
 model_name: "gpt2-medium"  # ~355M parameters
 
 dataset_name: "e2e_nlg"
-sample_percentage: 0.1      # Use 10% of dataset
+sample_percentage: 0.1      # Use 10% of dataset (for quick experiments)
+                            # Set to 1.0 for full dataset training
+max_length: 256             # Maximum sequence length
 
+# ============================================================================
+# Training Hyperparameters (from LoRA paper Table 11)
+# ============================================================================
+training:
+  # Optimizer: AdamW (paper specification)
+  learning_rate: 2e-4       # Learning rate for LoRA (paper: 0.0002)
+  weight_decay: 0.01        # Weight decay (paper: 0.01)
+  
+  # Training schedule
+  num_epochs: 5             # Number of epochs (paper: 5)
+  batch_size: 8             # Batch size (paper: 8)
+  warmup_steps: 500         # Linear warmup steps (paper: 500)
+  
+  # Gradient handling
+  max_grad_norm: 1.0        # Gradient clipping
+  gradient_accumulation_steps: 1  # Increase for larger effective batch size
+  
+  # Checkpointing and logging
+  logging_steps: 100        # Log every N steps
+  eval_steps: 500           # Evaluate every N steps
+  save_steps: 500           # Save checkpoint every N steps
+  save_total_limit: 3       # Keep only last N checkpoints
+  
+  # Early stopping (optional)
+  early_stopping_patience: null  # Set to integer to enable
+
+# ============================================================================
 # LoRA Hyperparameters
+# ============================================================================
 lora:
-  rank: 8                   # Rank of adaptation matrices
+  rank: 4                   # Rank of adaptation matrices (paper: rq=rv=4 for E2E)
                             # Paper tests: 1, 2, 4, 8, 16, 32, 64
-  alpha: 16                 # Scaling factor
-                            # Typically α = 2×rank
-  dropout: 0.1              # Dropout applied to LoRA layers
+  alpha: 32                 # Scaling factor (paper: 32)
+                            # Scaling = alpha/rank
+  dropout: 0.1              # Dropout on LoRA layers (paper: 0.1 for LoRA)
   target_modules:           # GPT-2 attention modules to adapt
     - "c_attn"              # Fused QKV projection (in_features=1024, out_features=3072)
     - "c_proj"              # Output projection (in_features=1024, out_features=1024)
   # Note: GPT-2 uses fused attention (c_attn), not separate q/k/v projections
   # Applying LoRA to both c_attn and c_proj per layer = 24 layers × 2 = 48 LoRA modules
 
+# ============================================================================
+# Evaluation Configuration
+# ============================================================================
 evaluation:
   metrics:
     - "perplexity"
@@ -38,11 +77,16 @@ evaluation:
     temperature: 1.0
     top_p: 0.9
     do_sample: true
+    
+  # Inference parameters (from paper Table 11 / Section D.3)
+  inference: # Values from table in paper
+    beam_size: 10           # Beam search size (paper: 10)
+    length_penalty: 0.9     # Length penalty for beam search (paper: 0.9 for E2E)
+    no_repeat_ngram_size: 4 # Prevent n-gram repetition (paper: 4)
 
 # ============================================================================
 # Expected Results (from LoRA paper, GPT-2 Medium on E2E)
 # ============================================================================
 # Baseline (no finetuning): ~high perplexity, poor BLEU
 # Full finetuning (~355M params): BLEU ~68-70
-# LoRA r=8 (~1.2M params, 0.3% of base): BLEU ~68-70 (comparable to full)
 # ============================================================================

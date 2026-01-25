@@ -33,7 +33,8 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
             batch = {k: v.to(device) for k, v in batch.items() 
                     if isinstance(v, torch.Tensor)}
             
-            outputs = model(**batch)
+            # Modifiction
+            outputs = model(**batch, loss_type="ForCausalLMLoss")
 
             if not hasattr(outputs, "loss") or outputs.loss is None:
                 raise ValueError(
@@ -51,8 +52,6 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
         raise ValueError("No valid batches processed for perplexity computation")
     
     avg_loss = total_loss / total_samples
-
-    # Perplexity = exp(average_loss)
     perplexity = np.exp(avg_loss)
 
     logger.info(
@@ -67,9 +66,32 @@ def generate_texts(
     prompts: List[str],
     max_new_tokens: int = 50,
     device: str = "cuda",
+    num_beams: int = 10,
+    length_penalty: float = 0.9,
+    no_repeat_ngram_size: int = 4,
+    do_sample: bool = False,
 ) -> List[str]:
     """
     Generate text completions for given prompts.
+    
+    Uses beam search by default (as specified in LoRA paper Table 11/Section D.3):
+    - num_beams: 10
+    - length_penalty: 0.9 (for E2E)
+    - no_repeat_ngram_size: 4
+    
+    Args:
+        model: The language model
+        tokenizer: Tokenizer for encoding/decoding
+        prompts: List of input prompts
+        max_new_tokens: Maximum tokens to generate
+        device: Device to run on
+        num_beams: Number of beams for beam search (paper: 10)
+        length_penalty: Length penalty for beam search (paper: 0.9 for E2E)
+        no_repeat_ngram_size: Prevent n-gram repetition (paper: 4)
+        do_sample: Use sampling instead of beam search (default: False for deterministic output)
+    
+    Returns:
+        List of generated text completions
     """
     model.eval()
     generated_texts = []
@@ -81,15 +103,20 @@ def generate_texts(
         for prompt in prompts:
             try:
                 inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
-
-                # Generate text
+                attention_mask = torch.ones_like(inputs)
+                
+                # Generate text using beam search (paper-specified parameters)
                 outputs = model.generate(
                     inputs,
+                    attention_mask=attention_mask,
                     max_new_tokens=max_new_tokens,
                     min_new_tokens=1,
-                    do_sample=True,
-                    temperature=0.8,
-                    top_p=0.9,
+                    # paper states reuse of params of https://arxiv.org/pdf/2101.00190 (beam size = 5)
+                    num_beams=num_beams,
+                    length_penalty=length_penalty,
+                    no_repeat_ngram_size=no_repeat_ngram_size,
+                    do_sample=do_sample,
+                    early_stopping=True,
                     pad_token_id=tokenizer.pad_token_id,
                     eos_token_id=tokenizer.eos_token_id,
                 )
@@ -110,10 +137,18 @@ def generate_texts(
 
 
 def compute_generation_metrics(
-    predictions: List[str], references: List[str]
+    predictions: List[str], references: List[List[str]]
 ) -> Dict[str, float]:
     """
     Compute BLEU and ROUGE using HuggingFace evaluate library.
+    
+    Args:
+        predictions: List of generated texts (one per unique MR)
+        references: List of reference lists (multiple references per MR)
+                   Format: [[ref1_mr1, ref2_mr1, ...], [ref1_mr2, ref2_mr2, ...], ...]
+    
+    Returns:
+        Dictionary with BLEU and ROUGE scores
     """
     if len(predictions) != len(references):
         raise ValueError(
@@ -122,25 +157,29 @@ def compute_generation_metrics(
         )
     
     predictions = [str(p).strip() for p in predictions]
-    references = [str(r).strip() for r in references]
+    # Clean up references (each is a list of strings)
+    references = [[str(r).strip() for r in ref_list] for ref_list in references]
 
     results = {}
 
-    # 1. Compute BLEU
+    # 1. Compute BLEU with multiple references
     try:
         bleu = evaluate.load("bleu")
-        references_list = [[ref] for ref in references]
-        bleu_result = bleu.compute(predictions=predictions, references=references_list)
+        # references is already in correct format: List[List[str]]
+        bleu_result = bleu.compute(predictions=predictions, references=references)
         results["bleu"] = bleu_result["bleu"]
     except Exception as e:
         logger.warning(f"BLEU computation failed: {e}")
         results["bleu"] = 0.0
 
-    # 2. Compute ROUGE
+    # 2. Compute ROUGE (use first reference from each list for ROUGE)
+    # ROUGE doesn't natively support multiple references well
     try:
         rouge = evaluate.load("rouge")
+        # Use first reference for ROUGE computation
+        first_references = [ref_list[0] for ref_list in references]
         rouge_result = rouge.compute(
-            predictions=predictions, references=references, use_stemmer=True
+            predictions=predictions, references=first_references, use_stemmer=True
         )
         results["rouge1"] = rouge_result["rouge1"]
         results["rouge2"] = rouge_result["rouge2"]
@@ -159,18 +198,48 @@ def compute_generation_metrics(
     return results
 
 
-# Additional utility function (not in original spec but useful)
 def evaluate_model_comprehensive(
     model: nn.Module,
     tokenizer: PreTrainedTokenizer,
     test_loader: DataLoader,
     test_dataset,
     device: str = "cuda",
-    num_samples: int = 10,
+    num_samples: int = -1,
+    generation_config: Dict = None,
 ) -> Dict[str, float]:
     """
     Comprehensive evaluation combining perplexity and generation metrics.
+    
+    E2E NLG evaluation methodology:
+    - Test samples are grouped by unique meaning representation (MR)
+    - Generate one prediction per unique MR
+    - Compute multi-reference BLEU
+        (validate output against ALL references for each MR)
+    
+    Args:
+        model: The language model to evaluate
+        tokenizer: Tokenizer for encoding/decoding
+        test_loader: DataLoader for perplexity computation
+        test_dataset: Dataset with get_grouped_data() method
+        device: Device to run on
+        num_samples: Number of unique MRs to evaluate (-1 for all)
+        generation_config: Dict with generation parameters:
+            - max_new_tokens (default: 50)
+            - num_beams (default: 10, from LoRA paper)
+            - length_penalty (default: 0.9, from LoRA paper for E2E)
+            - no_repeat_ngram_size (default: 4, from LoRA paper)
+            - do_sample (default: False for beam search)
     """
+    if generation_config is None:
+        generation_config = {}
+    
+    # Default generation parameters from LoRA paper (Table 11 / Section D.3)
+    max_new_tokens = generation_config.get("max_new_tokens", 50)
+    num_beams = generation_config.get("num_beams", generation_config.get("beam_size", 10))
+    length_penalty = generation_config.get("length_penalty", 0.9)
+    no_repeat_ngram_size = generation_config.get("no_repeat_ngram_size", 4)
+    do_sample = generation_config.get("do_sample", False)
+    
     results = {}
 
     # 1. Compute perplexity
@@ -182,55 +251,72 @@ def evaluate_model_comprehensive(
         logger.error(f"Perplexity computation failed: {e}")
         results["perplexity"] = float("inf")
 
-    # 2. Generate texts for evaluation
-    logger.info(f"Generating texts for {num_samples} samples...")
+    # 2. Get grouped data (unique MRs with all their references)
+    if not hasattr(test_dataset, 'get_grouped_data'):
+        logger.error("test_dataset must have get_grouped_data() method for proper E2E evaluation")
+        return results
+    
+    grouped_data = test_dataset.get_grouped_data()
+    total_unique_mrs = len(grouped_data)
+    
+    # Determine how many MRs to evaluate
+    if num_samples == -1 or num_samples > total_unique_mrs:
+        num_samples = total_unique_mrs
+    
+    logger.info(f"E2E Evaluation: {num_samples} unique MRs (out of {total_unique_mrs} total)")
+    logger.info(f"Total test samples: {len(test_dataset)}, Average refs per MR: {len(test_dataset)/total_unique_mrs:.1f}")
+    logger.info(f"Generation config: num_beams={num_beams}, length_penalty={length_penalty}, no_repeat_ngram_size={no_repeat_ngram_size}, do_sample={do_sample}")
 
+    # 3. Generate texts for evaluation (ONE per unique MR)
     prompts = []
-    references = []
-
-    for i in range(min(num_samples, len(test_dataset))):
-        if hasattr(test_dataset, 'get_raw_sample'):
-            raw = test_dataset.get_raw_sample(i)
-            mr = raw.get("meaning_representation", "")
-            ref = raw.get("human_reference", "")
-        else:
-            try:
-                mr = test_dataset.dataset[i]["meaning_representation"]
-                ref = test_dataset.dataset[i]["human_reference"]
-            except:
-                logger.warning(f"Could not extract sample {i}, skipping")
-                continue
-        
+    all_references = []  # List[List[str]] - multiple refs per MR
+    mr_list = []  # Keep track of MRs for examples
+    
+    for i, (mr, refs) in enumerate(grouped_data.items()):
+        if i >= num_samples:
+            break
         prompt = f"meaning_representation: {mr} | reference:"
         prompts.append(prompt)
-        references.append(ref)
+        all_references.append(refs)  # All references for this MR
+        mr_list.append(mr)
 
     if len(prompts) > 0:
+        logger.info(f"Generating {len(prompts)} predictions (one per unique MR)...")
         predictions = generate_texts(
             model=model,
             tokenizer=tokenizer,
             prompts=prompts,
-            max_new_tokens=50,
+            max_new_tokens=max_new_tokens,
             device=device,
+            num_beams=num_beams,
+            length_penalty=length_penalty,
+            no_repeat_ngram_size=no_repeat_ngram_size,
+            do_sample=do_sample,
         )
         
-        logger.info("Computing generation metrics...")
-        gen_metrics = compute_generation_metrics(predictions, references)
+        logger.info("Computing generation metrics with multi-reference BLEU...")
+        gen_metrics = compute_generation_metrics(predictions, all_references)
         results.update(gen_metrics)
         
+        # Store some examples for inspection
         results["_examples"] = []
         for i in range(min(3, len(prompts))):
             results["_examples"].append(
                 {
-                    "prompt": (
-                        prompts[i][:100] + "..."
-                        if len(prompts[i]) > 100
-                        else prompts[i]
-                    ),
+                    "mr": mr_list[i][:100] + "..." if len(mr_list[i]) > 100 else mr_list[i],
                     "prediction": predictions[i],
-                    "reference": references[i],
+                    "num_references": len(all_references[i]),
+                    "sample_reference": all_references[i][0],  # Show first reference
                 }
             )
+        
+        # Add evaluation metadata
+        results["_eval_info"] = {
+            "unique_mrs_evaluated": len(prompts),
+            "total_unique_mrs": total_unique_mrs,
+            "total_test_samples": len(test_dataset),
+            "avg_refs_per_mr": len(test_dataset) / total_unique_mrs,
+        }
     else:
         logger.warning("No valid prompts extracted for generation evaluation")
 
@@ -272,9 +358,13 @@ def _test_metrics():
     generated = generate_texts(model, tokenizer, prompts, device="cpu")
     print(f"Generated: {generated}")
     
-    print("\nTesting compute_generation_metrics...")
+    print("\nTesting compute_generation_metrics with multi-reference BLEU...")
     predictions = ["The cat sits on the mat", "I love programming"]
-    references = ["The cat sits on the mat", "I enjoy coding"]
+    # NB: Multi-reference format: List[List[str]]
+    references = [
+        ["The cat sits on the mat", "A cat is sitting on the mat", "The cat sat on the mat"],
+        ["I enjoy coding", "I love programming", "Programming is fun"]
+    ]
 
     metrics = compute_generation_metrics(predictions, references)
     print(f"Metrics: {metrics}")
