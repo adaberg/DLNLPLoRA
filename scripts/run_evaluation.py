@@ -95,7 +95,8 @@ def setup_test_data(config: Dict, tokenizer):
     print("Setting up test data...")
     
     # Get max_length from config, supporting both config.yaml and training_config.json formats
-    max_length = config.get("max_length", 256)  # Default from config.yaml
+    #max_length = config.get("max_length", 256)  # Default from config.yaml
+    max_length = config.get("max_length", 128)  # Default from config.yaml
     
     # Get sample_percentage, checking both top-level and nested 'dataset' key
     sample_percentage = config.get("sample_percentage") or config.get("dataset", {}).get("sample_percentage", 1.0)
@@ -164,7 +165,8 @@ def main() -> None:
         test_loader=test_loader,
         test_dataset=test_dataset,
         device=device,
-        num_samples=args.num_samples
+        num_samples=args.num_samples,
+        use_greedy=True
     )
     
     print("\n" + "="*60)

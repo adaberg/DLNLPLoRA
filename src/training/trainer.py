@@ -32,8 +32,6 @@ logger = logging.getLogger(__name__)
 class TrainingConfig:
     """Training configuration following LoRA paper Table 11."""
 
-    _DEBUG = False
-    
     # Training hyperparameters
     #  (reused from paper! TODO: Possibly adapt to better fit our data changes if necessary!)
     learning_rate: float = 2e-4
@@ -102,7 +100,9 @@ class Trainer:
     Trainer class for LoRA fine-tuning.
     Implements the training procedure from the LoRA paper.
     """
-    
+
+    _DEBUG = False
+
     def __init__(
         self,
         model: nn.Module,
@@ -110,7 +110,7 @@ class Trainer:
         train_dataloader: DataLoader,
         eval_dataloader: Optional[DataLoader] = None,
         tokenizer: Any = None,
-        debug_mode = False
+        debug_mode: bool = False
     ) -> None:
         if debug_mode:
             self._DEBUG = True
@@ -174,20 +174,15 @@ class Trainer:
         logger.info(f"Trainable percentage: {100 * trainable_count / total_params:.2f}%")
 
         optimizer = AdamW(
-            filter(lambda p: p.requires_grad, model.parameters()),
-            lr=config.learning_rate,
-            weight_decay=config.weight_decay
+            trainable_params,
+            lr=self.config.learning_rate,
+            weight_decay=self.config.weight_decay,
+            betas=(0.9, 0.999),
+            eps=1e-8
         )
 
         return optimizer
-        
-        # return AdamW(
-        #     trainable_params,
-        #     lr=self.config.learning_rate,
-        #     weight_decay=self.config.weight_decay,
-        #     betas=(0.9, 0.999),
-        #     eps=1e-8
-        # )
+
     
     def _log_config(self) -> None:
         """Log training configuration."""
@@ -268,12 +263,14 @@ class Trainer:
         if self._DEBUG:
             batch_losses = []
             token_losses = []
+            token_counts = []
 
         if not self.model.training:
             self.model.train()
 
         total_loss = 0.0
-        total_tokens = 0
+        #total_tokens = 0
+        num_batches = 0
 
         progress_bar = tqdm(
             self.train_dataloader,
@@ -284,7 +281,7 @@ class Trainer:
         self.optimizer.zero_grad()
 
         for step, batch in enumerate(progress_bar):
-            loss, num_tokens = self._training_step(batch)
+            loss, num_tokens = self._training_step(batch) # loss: mean CE per token (returned by model)
 
             if self._DEBUG:
                 batch_losses.append(loss.item())
@@ -294,8 +291,14 @@ class Trainer:
             ## Gradient Accumulation:
             # Scale loss for gradient accumulation:
             loss = loss / self.config.gradient_accumulation_steps
+            #loss_scaled = loss / self.config.gradient_accumulation_steps # only for backward pass
+            
+            # Backward pass (scaled):
+            #if self.scaler is not None:
+            #    self.scaler.scale(loss_scaled).backward()
+            #else:
+            #    loss_scaled.backward()
 
-            # Backward pass:
             if self.scaler is not None:
                 self.scaler.scale(loss).backward()
             else:
@@ -304,14 +307,19 @@ class Trainer:
             # Debug mode: Check gradient flow
             # (The base weights must not have a gradient.)
             if self._DEBUG:
-                for name, param in model.named_parameters():
+                for name, param in self.model.named_parameters():
                     if param.requires_grad:
                         if param.grad is None:
                             print(f"No grad for {name}")
 
             # Token-weighted accumulation:
-            total_loss += loss.item() * num_tokens * self.config.gradient_accumulation_steps
-            total_tokens += num_tokens
+            #total_loss += loss.item() * num_tokens * self.config.gradient_accumulation_steps # wrong --> leads to inconsistencies
+            #total_loss += loss.item() * num_tokens # is more consistent
+            #total_tokens += num_tokens
+
+            # Batch-weighted accumulation:
+            total_loss += loss.item() * self.config.gradient_accumulation_steps
+            num_batches += 1
 
             # Accumlation of the gradients:
             if (step + 1) % self.config.gradient_accumulation_steps == 0:
@@ -336,7 +344,8 @@ class Trainer:
 
                 # Logging of the average loss and LR:
                 if self.global_step % self.config.logging_steps == 0:
-                    avg_loss = total_loss / total_tokens
+                    #avg_loss = total_loss / total_tokens
+                    avg_loss = total_loss / num_batches
                     lr = self.scheduler.get_last_lr()[0]
                     logger.info(
                         f"Step {self.global_step} - Token Loss: {avg_loss:.4f} - LR: {lr:.2e}"
@@ -355,11 +364,13 @@ class Trainer:
 
             # Update progress bar:
             progress_bar.set_postfix({
-                "token_loss": f"{total_loss / total_tokens:.4f}",
+                #"token_loss": f"{total_loss / total_tokens:.4f}",
+                "batch_loss": f"{total_loss / num_batches:.4f}",
                 "lr": f"{self.scheduler.get_last_lr()[0]:.2e}"
             })
 
-        return total_loss / total_tokens
+        #return total_loss / total_tokens if total_tokens > 0 else 0.0
+        return total_loss / num_batches if num_batches > 0 else 0.0
     
     # def _train_epoch(self, epoch: int) -> float:
     #     """Train for one epoch."""
@@ -497,54 +508,54 @@ class Trainer:
         
     #     return loss
     
-    @torch.no_grad()
-    def evaluate(self) -> float:
-        """Evaluate the model on the evaluation dataset."""
-        if self.eval_dataloader is None:
-            return float("inf")
-
-        self.model.eval()
-        total_loss = 0.0
-        total_tokens = 0
-
-        for batch in tqdm(self.eval_dataloader, desc="Evaluating"):
-            batch = {k: v.to(self.config.device) for k, v in batch.items()
-                    if isinstance(v, torch.Tensor)}
-
-            attention_mask = batch.get("attention_mask", None)
-
-            outputs = self.model(**batch)
-            loss = outputs.loss
-
-            if attention_mask is not None:
-                num_tokens = attention_mask.sum().item()
-            else:
-                num_tokens = batch["input_ids"].numel()
-
-            total_loss += loss.item() * num_tokens
-            total_tokens += num_tokens
-
-        return total_loss / total_tokens
-
     # @torch.no_grad()
     # def evaluate(self) -> float:
     #     """Evaluate the model on the evaluation dataset."""
     #     if self.eval_dataloader is None:
-    #         return float('inf')
-        
+    #         return float("inf")
+
     #     self.model.eval()
     #     total_loss = 0.0
-    #     num_batches = 0
-        
+    #     total_tokens = 0
+
     #     for batch in tqdm(self.eval_dataloader, desc="Evaluating"):
     #         batch = {k: v.to(self.config.device) for k, v in batch.items()
-    #                  if isinstance(v, torch.Tensor)}
-            
+    #                 if isinstance(v, torch.Tensor)}
+
+    #         attention_mask = batch.get("attention_mask", None)
+
     #         outputs = self.model(**batch)
-    #         total_loss += outputs.loss.item()
-    #         num_batches += 1
+    #         loss = outputs.loss
+
+    #         if attention_mask is not None:
+    #             num_tokens = attention_mask.sum().item()
+    #         else:
+    #             num_tokens = batch["input_ids"].numel()
+
+    #         total_loss += loss.item() * num_tokens
+    #         total_tokens += num_tokens
+
+    #     return total_loss / total_tokens
+    
+    @torch.no_grad()
+    def evaluate(self) -> float:
+        """Evaluate the model on the evaluation dataset."""
+        if self.eval_dataloader is None:
+            return float('inf')
         
-    #     return total_loss / num_batches if num_batches > 0 else float('inf')
+        self.model.eval()
+        total_loss = 0.0
+        num_batches = 0
+        
+        for batch in tqdm(self.eval_dataloader, desc="Evaluating"):
+            batch = {k: v.to(self.config.device) for k, v in batch.items()
+                     if isinstance(v, torch.Tensor)}
+            
+            outputs = self.model(**batch)
+            total_loss += outputs.loss.item()
+            num_batches += 1
+        
+        return total_loss / num_batches if num_batches > 0 else float('inf')
     
     def save_checkpoint(self, name: str) -> str:
         """Save model checkpoint."""

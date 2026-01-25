@@ -101,7 +101,8 @@ def setup_data(config: dict, tokenizer, training_config: TrainingConfig):
     """Setup datasets and dataloaders."""
     logger.info("Setting up datasets...")
     
-    max_length = config.get('max_length', 256)
+    #max_length = config.get('max_length', 256)
+    max_length = config.get('max_length', 128)
     sample_percentage = config.get('sample_percentage', 1.0)
     
     train_dataset = E2EDataset(
@@ -195,6 +196,7 @@ def parse_args():
 def main():
     """Main training function."""
     args = parse_args()
+    DEBUG_MODE = True
     
     # Load configuration
     logger.info(f"Loading configuration from {args.config}")
@@ -264,7 +266,8 @@ def main():
         config=training_config,
         train_dataloader=train_loader,
         eval_dataloader=val_loader,
-        tokenizer=tokenizer
+        tokenizer=tokenizer,
+        debug_mode=DEBUG_MODE
     )
     
     # Resume from checkpoint if specified

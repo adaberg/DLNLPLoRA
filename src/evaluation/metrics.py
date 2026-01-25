@@ -35,7 +35,10 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
                     if isinstance(v, torch.Tensor)}
             
             # Modifiction
-            outputs = model(**batch, loss_type="ForCausalLMLoss")
+            # the standard HuggingFace GPT-2 model does not support the "loss_type" parameter.
+            # this will likely lead to an error or incorrect loss calculation.
+            #outputs = model(**batch, loss_type="ForCausalLMLoss")
+            outputs = model(**batch)
 
             if not hasattr(outputs, "loss") or outputs.loss is None:
                 raise ValueError(
@@ -65,15 +68,17 @@ def generate_texts(
     model: nn.Module,
     tokenizer: PreTrainedTokenizer,
     prompts: List[str],
-    max_new_tokens: int = 50,
+    max_new_tokens: int = 30, # reduced from 50
+    length_penalty: float = 0.9, # model applies a penalty based on the sequence length
     device: str = "cuda",
+    use_greedy: bool = True
 ) -> List[str]:
     """
     Generate text completions for given prompts.
     """
     model.eval()
     generated_texts = []
-    
+
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -81,24 +86,41 @@ def generate_texts(
         for prompt in prompts:
             try:
                 inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
-
-                # modificaiont: add attention_mask
+                # Attention mask:
                 attention_mask = torch.ones_like(inputs)
-                
+
                 # Generate text
-                outputs = model.generate(
-                    inputs,
-                    # add
-                    attention_mask=attention_mask,
-                    max_new_tokens=max_new_tokens,
-                    min_new_tokens=1,
-                    do_sample=True,
-                    temperature=0.8,
-                    top_p=0.9,
-                    pad_token_id=tokenizer.pad_token_id,
-                    eos_token_id=tokenizer.eos_token_id,
-                )
-                
+                if use_greedy:
+                    # Greedy decoding (deterministic and better for BLEU evaluation)
+                    outputs = model.generate(
+                        inputs,
+                        attention_mask=attention_mask,
+                        do_sample=False, # activates greedy
+                        min_new_tokens=1,
+                        max_new_tokens=max_new_tokens,
+                        length_penalty=length_penalty,
+                        no_repeat_ngram_size=4,
+                        #num_beams=10,
+                        pad_token_id=tokenizer.pad_token_id,
+                        eos_token_id=tokenizer.eos_token_id
+                    )
+                else:
+                    # Non-deterministic sampling (nucleus sampling for diversity),
+                    # not recommended for BLEU (BLEU/ROUGE fluctuate from run to run)
+                    outputs = model.generate(
+                        inputs,
+                        attention_mask=attention_mask,
+                        do_sample=True,
+                        min_new_tokens=1,
+                        max_new_tokens=max_new_tokens,
+                        length_penalty=length_penalty,
+                        no_repeat_ngram_size=4,
+                        temperature=0.8,
+                        top_p=0.9,
+                        pad_token_id=tokenizer.pad_token_id,
+                        eos_token_id=tokenizer.eos_token_id
+                    )
+
                 generated = tokenizer.decode(
                     outputs[0][len(inputs[0]) :], skip_special_tokens=True
                 ).strip()
@@ -251,7 +273,9 @@ def evaluate_model_comprehensive(
     test_dataset,
     device: str = "cuda",
     num_samples: int = 10,
-    do_bootstrap_eval = False
+    max_new_tokens = 30,
+    do_bootstrap_eval: bool = False,
+    use_greedy: bool = True
 ) -> Dict[str, float]:
     """
     Comprehensive evaluation combining perplexity and generation metrics.
@@ -295,8 +319,9 @@ def evaluate_model_comprehensive(
             model=model,
             tokenizer=tokenizer,
             prompts=prompts,
-            max_new_tokens=50,
+            max_new_tokens=max_new_tokens,
             device=device,
+            use_greedy=use_greedy
         )
         
         logger.info("Computing generation metrics...")
@@ -361,9 +386,16 @@ def _test_metrics():
     model = MockModel()
 
     print("Testing generate_texts...")
-    generated = generate_texts(model, tokenizer, prompts, device="cpu")
+    generated = generate_texts(
+        model=model,
+        tokenizer=tokenizer,
+        prompts=prompts,
+        max_new_tokens=30,
+        device="cpu",
+        use_greedy=True # always true during testing
+    )
     print(f"Generated: {generated}")
-    
+
     print("\nTesting compute_generation_metrics...")
     predictions = ["The cat sits on the mat", "I love programming"]
     references = ["The cat sits on the mat", "I enjoy coding"]

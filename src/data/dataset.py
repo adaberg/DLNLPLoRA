@@ -1,6 +1,5 @@
 """
-E2E NLG Challenge dataset loader.
-Format: "meaning_representation: <mr> | reference: <ref>"
+E2E NLG Challenge dataset loader with proper EOS handling.
 """
 
 from typing import Dict, Optional
@@ -15,23 +14,30 @@ logger = logging.getLogger(__name__)
 
 
 class E2EDataset(Dataset):
-    """E2E NLG dataset for language modeling.
-       Note: The labels are unshifted; causal shift is
-             handled by the model.
+    """
+    E2E NLG dataset for language modeling.
+    
+    IMPORTANT: Adds EOS token after reference text so model learns to stop!
     """
     
     def __init__(
         self,
         split: str,
         tokenizer: PreTrainedTokenizer,
-        max_length: int = 256,
+        max_length: int = 128,  # reduced by half from 256, E2E samples are short!
         sample_percentage: float = 1.0,
-        device: Optional[str] = None
+        device: Optional[str] = None,
+        add_eos_token: bool = True  # add EOS after reference
     ) -> None:
         self.split = split
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.device = device
+        self.add_eos_token = add_eos_token
+        
+        # Ensure tokenizer has EOS token
+        if tokenizer.eos_token is None:
+            raise ValueError("Tokenizer must have an EOS token!")
         
         # Local CSV file paths
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -61,7 +67,10 @@ class E2EDataset(Dataset):
             dataset = dataset.select(range(num_samples))
         
         self.dataset = dataset
+        
         logger.info(f"Loaded {len(self.dataset)} samples from {split}")
+        if add_eos_token:
+            logger.info(f"EOS token will be added after references")
     
     def __len__(self) -> int:
         return len(self.dataset)
@@ -71,8 +80,11 @@ class E2EDataset(Dataset):
         meaning_rep = sample["meaning_representation"]
         reference = sample["human_reference"]
         
-        # Format the text
-        text = f"meaning_representation: {meaning_rep} | reference: {reference}"
+        # Format with EOS token
+        if self.add_eos_token:
+            text = f"meaning_representation: {meaning_rep} | reference: {reference}{self.tokenizer.eos_token}"
+        else:
+            text = f"meaning_representation: {meaning_rep} | reference: {reference}"
         
         encoding = self.tokenizer(
             text,
@@ -81,10 +93,11 @@ class E2EDataset(Dataset):
             max_length=self.max_length,
             return_tensors="pt"
         )
+        
         attention_mask = encoding["attention_mask"].squeeze(0)
         labels = encoding["input_ids"].squeeze(0).clone()
 
-        # Ignore padding tokens:
+        # Ignore padding tokens in loss
         labels[attention_mask == 0] = -100
         
         item = {
@@ -99,9 +112,9 @@ class E2EDataset(Dataset):
         return item
     
     @staticmethod
-    def format_sample(meaning_rep: str, reference: str) -> str:
+    def format_sample(meaning_rep: str, reference: str, eos_token: str = "") -> str:
         """Format a single sample for language modeling."""
-        return f"meaning_representation: {meaning_rep.strip()} | reference: {reference.strip()}"
+        return f"meaning_representation: {meaning_rep.strip()} | reference: {reference.strip()}{eos_token}"
     
     def get_raw_sample(self, idx: int) -> Dict[str, str]:
         """Get raw sample for inspection."""
@@ -142,17 +155,22 @@ def create_datasets_and_loaders(
     tokenizer: PreTrainedTokenizer,
     train_batch_size: int = 8,
     val_batch_size: int = 16,
-    max_length: int = 256,
+    max_length: int = 128,  # reduced from 256
     sample_percentage: float = 1.0,
-    device: Optional[str] = None
+    device: Optional[str] = None,
+    add_eos_token: bool = True
 ) -> dict:
     """Create all datasets and dataloaders."""
+    
+    logger.info(f"Creating datasets with max_length={max_length}, add_eos_token={add_eos_token}")
+    
     train_dataset = E2EDataset(
         split="train",
         tokenizer=tokenizer,
         max_length=max_length,
         sample_percentage=sample_percentage,
-        device=device
+        device=device,
+        add_eos_token=add_eos_token
     )
     
     val_dataset = E2EDataset(
@@ -160,7 +178,8 @@ def create_datasets_and_loaders(
         tokenizer=tokenizer,
         max_length=max_length,
         sample_percentage=sample_percentage,
-        device=device
+        device=device,
+        add_eos_token=add_eos_token
     )
     
     test_dataset = E2EDataset(
@@ -168,12 +187,30 @@ def create_datasets_and_loaders(
         tokenizer=tokenizer,
         max_length=max_length,
         sample_percentage=sample_percentage,
-        device=device
+        device=device,
+        add_eos_token=add_eos_token
     )
     
     train_loader = get_dataloader(train_dataset, batch_size=train_batch_size, shuffle=True)
     val_loader = get_dataloader(val_dataset, batch_size=val_batch_size, shuffle=False)
     test_loader = get_dataloader(test_dataset, batch_size=val_batch_size, shuffle=False)
+    
+    # Log some statistics
+    logger.info("\n=== Dataset Statistics ===")
+    logger.info(f"Training samples: {len(train_dataset)}")
+    logger.info(f"Validation samples: {len(val_dataset)}")
+    logger.info(f"Test samples: {len(test_dataset)}")
+    
+    # Check average length
+    sample_lengths = []
+    for i in range(min(100, len(train_dataset))):
+        sample = train_dataset[i]
+        length = (sample["attention_mask"] == 1).sum().item()
+        sample_lengths.append(length)
+    
+    logger.info(f"Average token length (first 100 samples): {sum(sample_lengths)/len(sample_lengths):.1f}")
+    logger.info(f"Max token length (first 100 samples): {max(sample_lengths)}")
+    logger.info("=" * 50)
     
     return {
         "train": train_loader,
