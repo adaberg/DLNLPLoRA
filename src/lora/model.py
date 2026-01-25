@@ -28,6 +28,11 @@ class LoRALinear(nn.Module):
             out_features = base_layer.nf
 
         self.lora = LoRALayer(in_features, out_features, rank, alpha, dropout)
+        
+        if hasattr(base_layer.weight, 'quant_state'):  # Check if quantized
+          device = base_layer.weight.device
+          self.lora.lora_A.data = self.lora.lora_A.data.to(torch.float16).to(device)
+          self.lora.lora_B.data = self.lora.lora_B.data.to(torch.float16).to(device)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """W₀x + BAx più facile di così non si può"""
