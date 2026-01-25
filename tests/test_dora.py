@@ -67,26 +67,12 @@ class TestDoRALayer:
             rank=8,
             alpha=16,
             base_weight=base_weight,
+            dropout=0.0,
         )
-
+        print(f"Dropout in layer: {layer.dropout}")
         x = torch.randn(2, 10, 128)
-        # Manually replicate forward pass:
-        x_drop = layer.dropout(x)
-        merged = base_weight + (layer.lora_B @ layer.lora_A) * layer.scaling
-        norm = torch.norm(merged, dim=0, keepdim=True)
-
-        print(f"merged == base_weight: {torch.allclose(merged, base_weight)}")
-        print(f"norm shape: {norm.shape}")
-        print(f"norm[:,:5]: {norm[:,:5]}")
-        print(f"magnitude shape: {layer.magnitude.shape}")
-
-        W = layer.magnitude * merged / norm
-        print(f"W == base_weight: {torch.allclose(W, base_weight)}")
-        print(f"W[0,:5]: {W[0,:5]}")
-        print(f"base_weight[0,:5]: {base_weight[0,:5]}")
-
-        output = x_drop @ (layer.magnitude * merged / norm).T
-        expected = x_drop @ base_weight.T
+        output = layer(x, base_weight)
+        expected = F.linear(x, base_weight)
 
         assert torch.allclose(output, expected, atol=1e-6)
 

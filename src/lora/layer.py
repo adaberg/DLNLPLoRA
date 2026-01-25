@@ -120,9 +120,10 @@ class DoRALayer(LoRALayer):
         x = self.dropout(x)
         merged = base_weight + (self.lora_B @ self.lora_A) * self.scaling
         # epsilon for defensive programming
-        norm = torch.norm(merged, dim=0, keepdim=True)
+        norm = torch.norm(merged, dim=0, keepdim=True) + 1e-8
         # following the paper description
-        return x @ (self.magnitude * merged / norm).T
+        W = self.magnitude * merged / norm
+        return x @ W.T
 
     def extra_repr(self) -> str:
         """
