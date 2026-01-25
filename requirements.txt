@@ -14,5 +14,7 @@ tqdm
 
 pytest
 
+bitsandbytes
+
 # Optional: for extensions
 #bitsandbytes
