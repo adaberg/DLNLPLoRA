@@ -52,6 +52,26 @@ class TestLoRALayer:
 
 
 class TestLoRALinear:
+    
+    @pytest.mark.linear
+    def test_wraps_base_layer(self):
+        base = nn.Linear(128, 64)
+        lora_linear = LoRALinear(base, rank=8, alpha=16)
+
+        assert lora_linear.base_layer is base
+        assert isinstance(lora_linear.lora, LoRALayer)
+
+    @pytest.mark.linear
+    def test_forward_combines_base_and_lora(self):
+        base = nn.Linear(128, 64)
+        lora_linear = LoRALinear(base, rank=8, alpha=16)
+
+        x = torch.randn(2, 10, 128)
+
+        output = lora_linear(x)
+        expected = base(x) + lora_linear.lora(x)
+
+        assert torch.allclose(output, expected)
         
     @pytest.mark.linear
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="Quantization requires CUDA")
@@ -283,6 +303,8 @@ class TestLoRALearning:
             loss = model(**inputs).loss
             loss.backward()
             optimizer.step()
+            
+            torch.nn.utils.clip_grad_norm_(lora_params, max_norm=1.0)
         
         final_loss = model(**inputs).loss.item()
         
