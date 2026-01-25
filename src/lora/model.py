@@ -118,6 +118,13 @@ class DoRAGPT2(LoRAGPT2):
         dora_linear = DoRALinear(module, rank, alpha, dropout)
         setattr(parent, child_name, dora_linear)
         self.lora_modules.append(name)
+        
+    def get_lora_parameters(self) -> List[nn.Parameter]:
+        params = []
+        for module in self.base_model.modules():
+            if isinstance(module, DoRALinear):
+                params.extend([module.lora.lora_A, module.lora.lora_B, module.lora.magnitude])
+        return params
 
 
 if __name__ == "__main__":
