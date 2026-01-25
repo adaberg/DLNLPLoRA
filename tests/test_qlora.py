@@ -173,6 +173,7 @@ class TestLoRAGPT2:
 
         assert hasattr(output, "logits")
         assert output.logits.shape == (batch_size, seq_len, gpt2_model.config.vocab_size)
+        assert torch.isfinite(output.logits).all(), "Forward pass produces non-finite logits"
 
     @pytest.mark.model
     def test_fails_on_invalid_target_modules(self, gpt2_model):
@@ -290,6 +291,78 @@ class TestLoRALearning:
                 "LoRA parameters did not update after optimizer step"
     
     @pytest.mark.learning
+    def test_lora_params_on_cuda(self, model_and_inputs):
+        model, inputs = model_and_inputs
+        
+        lora_params = model.get_lora_parameters()
+        
+        for i, param in enumerate(lora_params):
+            assert param.device.type == "cuda", \
+                f"LoRA param {i} on {param.device}, expected CUDA"
+            assert param.dtype == torch.float16, \
+                f"LoRA param {i} has dtype {param.dtype}, expected fp16"
+                
+    @pytest.mark.learning
+    def test_gradients_are_finite(self, model_and_inputs):
+        model, inputs = model_and_inputs
+        lora_params = model.get_lora_parameters()
+        
+        loss = model(**inputs).loss
+        loss.backward()
+        
+        for param in lora_params:
+            assert param.grad is not None
+            assert torch.isfinite(param.grad).all()
+            
+    @pytest.mark.learning
+    def test_params_finite_after_step(self, model_and_inputs):
+        model, inputs = model_and_inputs
+        lora_params = model.get_lora_parameters()
+        optimizer = torch.optim.AdamW(lora_params, lr=1e-4)
+        
+        optimizer.zero_grad()
+        model(**inputs).loss.backward()
+        torch.nn.utils.clip_grad_norm_(lora_params, max_norm=1.0)
+        optimizer.step()
+        
+        for param in lora_params:
+            assert torch.isfinite(param).all()
+    
+    @pytest.mark.learning
+    def loss_first_step(self, model_and_inputs):
+        model, inputs = model_and_inputs
+        
+        lora_params = model.get_lora_parameters()
+        optimizer = torch.optim.AdamW(lora_params, lr=1e-3)
+        
+        optimizer.zero_grad()
+        loss = model(**inputs).loss
+        print(f"Loss before first backward: {loss.item()}")
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(lora_params, max_norm=1.0)
+        optimizer.step()
+
+        with torch.no_grad():
+            loss_after_step1 = model(**inputs).loss.item()
+            print(f"Loss after first step: {loss_after_step1}")
+            assert torch.isfinite(torch.tensor(loss_after_step1)), "Loss NaN after first step"
+    
+    @pytest.mark.learning
+    def test_loss_finite_after_step(self, model_and_inputs):
+        model, inputs = model_and_inputs
+        lora_params = model.get_lora_parameters()
+        optimizer = torch.optim.AdamW(lora_params, lr=1e-4)
+        
+        optimizer.zero_grad()
+        model(**inputs).loss.backward()
+        torch.nn.utils.clip_grad_norm_(lora_params, max_norm=1.0)
+        optimizer.step()
+        
+        with torch.no_grad():
+            new_loss = model(**inputs).loss.item()
+            assert torch.isfinite(torch.tensor(new_loss))
+    
+    @pytest.mark.learning
     def test_loss_decreases_on_overfit(self, model_and_inputs):
         model, inputs = model_and_inputs
         
@@ -297,7 +370,7 @@ class TestLoRALearning:
         optimizer = torch.optim.AdamW(lora_params, lr=1e-3)
         
         initial_loss = model(**inputs).loss.item()
-        
+    
         for _ in range(10):
             optimizer.zero_grad()
             loss = model(**inputs).loss
