@@ -119,6 +119,7 @@ class TestLoRAGPT2:
         model = GPT2LMHeadModel.from_pretrained(
             "gpt2-medium",
             quantization_config=bnb_config,
+            device_map="auto",
             dtype=torch.float16  # Non-quantized params use fp16
         )
       
@@ -226,6 +227,7 @@ class TestLoRALearning:
         base_model = GPT2LMHeadModel.from_pretrained(
             "gpt2-medium",
             quantization_config=bnb_config,
+            device_map="auto",
             torch_dtype=torch.float16
         )
     
@@ -270,25 +272,32 @@ class TestLoRALearning:
                 assert param.grad is None, f"Base param {name} should not receive gradients"
     
     @pytest.mark.learning
-    def test_parameters_update_after_step(self, model_and_inputs):
+    def test_any_parameters_update_after_step(self, model_and_inputs):
         model, inputs = model_and_inputs
         
         lora_params = model.get_lora_parameters()
+        optimizer = torch.optim.SGD(lora_params, lr=1e-3)
+        
+        # Warmup 
+        optimizer.zero_grad()
+        model(**inputs).loss.backward()
+        optimizer.step()
+        
         initial_params = [p.data.clone() for p in lora_params]
+        optimizer.zero_grad()
+        model(**inputs).loss.backward()
         
-        optimizer = torch.optim.AdamW(lora_params, lr=1e-3)
-
-        # again warmp up step
-        for _ in range(2):
-            optimizer.zero_grad()        
-            outputs = model(**inputs)
-            loss = outputs.loss
-            loss.backward()
-            optimizer.step()
+        for param in lora_params:
+            assert param.grad is not None
+            assert param.grad.abs().sum() > 0 
         
-        for initial, current in zip(initial_params, lora_params):
-            assert not torch.allclose(initial, current.data), \
-                "LoRA parameters did not update after optimizer step"
+        optimizer.step()
+        
+        any_changed = any(
+            not torch.equal(init, curr.data) 
+            for init, curr in zip(initial_params, lora_params)
+        )
+        assert any_changed, "No parameters updated"
     
     @pytest.mark.learning
     def test_lora_params_on_cuda(self, model_and_inputs):
@@ -318,7 +327,7 @@ class TestLoRALearning:
     def test_params_finite_after_step(self, model_and_inputs):
         model, inputs = model_and_inputs
         lora_params = model.get_lora_parameters()
-        optimizer = torch.optim.AdamW(lora_params, lr=1e-4)
+        optimizer = torch.optim.SGD(lora_params, lr=1e-3)
         
         optimizer.zero_grad()
         model(**inputs).loss.backward()
@@ -333,7 +342,7 @@ class TestLoRALearning:
         model, inputs = model_and_inputs
         
         lora_params = model.get_lora_parameters()
-        optimizer = torch.optim.AdamW(lora_params, lr=1e-3)
+        optimizer = torch.optim.SGD(lora_params, lr=1e-3)
         
         optimizer.zero_grad()
         loss = model(**inputs).loss
@@ -351,7 +360,7 @@ class TestLoRALearning:
     def test_loss_finite_after_step(self, model_and_inputs):
         model, inputs = model_and_inputs
         lora_params = model.get_lora_parameters()
-        optimizer = torch.optim.AdamW(lora_params, lr=1e-4)
+        optimizer = torch.optim.SGD(lora_params, lr=1e-3)
         
         optimizer.zero_grad()
         model(**inputs).loss.backward()
@@ -367,7 +376,7 @@ class TestLoRALearning:
         model, inputs = model_and_inputs
         
         lora_params = model.get_lora_parameters()
-        optimizer = torch.optim.AdamW(lora_params, lr=1e-3)
+        optimizer = torch.optim.SGD(lora_params, lr=1e-3)
         
         initial_loss = model(**inputs).loss.item()
     

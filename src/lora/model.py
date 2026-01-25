@@ -161,6 +161,7 @@ if __name__ == "__main__":
     model = GPT2LMHeadModel.from_pretrained(
         "gpt2-medium",
         quantization_config=bnb_config,
+        device_map="auto",
         dtype=torch.float16  # Non-quantized params use fp16
     )
   
