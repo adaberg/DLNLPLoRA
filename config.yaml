@@ -82,7 +82,7 @@ evaluation:
   # Inference parameters (from paper Table 11)
   inference:
     beam_size: 10           # Beam search size
-    length_penalty: 0.8     # Length penalty for beam search
+    length_penalty: 0.9     # Length penalty for beam search
     no_repeat_ngram_size: 4 # Prevent n-gram repetition
 
 # ============================================================================

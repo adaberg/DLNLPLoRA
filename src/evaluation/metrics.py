@@ -34,11 +34,9 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
             batch = {k: v.to(device) for k, v in batch.items() 
                     if isinstance(v, torch.Tensor)}
             
-            # Modifiction
-            # the standard HuggingFace GPT-2 model does not support the "loss_type" parameter.
-            # this will likely lead to an error or incorrect loss calculation.
-            #outputs = model(**batch, loss_type="ForCausalLMLoss")
             outputs = model(**batch)
+            # Note: The standard HuggingFace GPT-2 model does not support the "loss_type" parameter.
+            #       This will likely lead to an error or incorrect loss calculation.
 
             if not hasattr(outputs, "loss") or outputs.loss is None:
                 raise ValueError(
@@ -91,7 +89,7 @@ def generate_texts(
 
                 # Generate text
                 if use_greedy:
-                    # Greedy decoding (deterministic and better for BLEU evaluation)
+                    # Greedy decoding (deterministic and better for BLEU evaluation).
                     outputs = model.generate(
                         inputs,
                         attention_mask=attention_mask,
@@ -106,7 +104,7 @@ def generate_texts(
                     )
                 else:
                     # Non-deterministic sampling (nucleus sampling for diversity),
-                    # not recommended for BLEU (BLEU/ROUGE fluctuate from run to run)
+                    # not recommended for BLEU (BLEU/ROUGE fluctuate from run to run).
                     outputs = model.generate(
                         inputs,
                         attention_mask=attention_mask,
