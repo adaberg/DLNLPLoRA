@@ -1,7 +1,7 @@
 from typing import List, Union
 import torch
 import torch.nn as nn
-from transformers import GPT2LMHeadModel
+from transformers import GPT2LMHeadModel, BitsAndBytesConfig
 from transformers.pytorch_utils import Conv1D
 from .layer import LoRALayer, DoRALayer
 from bitsandbytes.nn import Params4bit
@@ -70,8 +70,8 @@ class LoRAGPT2(nn.Module):
         lora_linear = LoRALinear(module, rank, alpha, dropout)
         
         # make sure lora parameters are in float16
-        lora_linear.lora.lora_A = lora_linear.lora.lora_A.to(torch.float16)
-        lora_linear.lora.lora_B = lora_linear.lora.lora_B.to(torch.float16)
+        lora_linear.lora.lora_A = nn.Parameter(lora_linear.lora.lora_A.to(torch.float16))
+        lora_linear.lora.lora_B = nn.Parameter(lora_linear.lora.lora_B.to(torch.float16))
 
         # says to the parent "when you call child_name you get lora_linear"
         setattr(parent, child_name, lora_linear)
@@ -144,19 +144,38 @@ class DoRAGPT2(LoRAGPT2):
 
 
 if __name__ == "__main__":
-    lora_layer = LoRALayer(in_features=128, out_features=64, rank=8, alpha=16)
-    print(lora_layer)
-    print("--" * 40)
-    print(lora_layer.extra_repr)
-    print("--" * 40)
-    print()
-    dora_layer = DoRALayer(
-        in_features=128,
-        out_features=64,
-        rank=8,
-        alpha=16,
-        base_weight=torch.randn(64, 128),
+  
+    bnb_config = BitsAndBytesConfig(
+      load_in_4bit=True,
+      bnb_4bit_quant_type="nf4",
+      bnb_4bit_compute_dtype=torch.float16,
+      bnb_4bit_use_double_quant=True,
+      llm_int8_skip_modules=["lm_head"]  # Explicitly skip LM head
     )
-    print(dora_layer)
-    print("--" * 40)
-    print(dora_layer.extra_repr())
+
+    model = GPT2LMHeadModel.from_pretrained(
+        "gpt2-medium",
+        quantization_config=bnb_config,
+        dtype=torch.float16  # Non-quantized params use fp16
+    )
+  
+    lora = LoRAGPT2(
+      model, rank=8, alpha=16, target_modules=["c_attn", "c_proj"]
+    )
+    
+    for name, module in lora.named_modules():
+      if isinstance(module, nn.Linear):
+          has_4bit = any(isinstance(p, Params4bit) for p in module.parameters())
+          print(f"{name}: quantized={has_4bit}")
+          
+    #print()
+    #dora_layer = DoRALayer(
+    #    in_features=128,
+    #    out_features=64,
+    #    rank=8,
+    #    alpha=16,
+    #    base_weight=torch.randn(64, 128),
+    #)
+    #print(dora_layer)
+    #print("--" * 40)
+    #print(dora_layer.extra_repr())

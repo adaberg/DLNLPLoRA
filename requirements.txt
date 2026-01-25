@@ -15,6 +15,7 @@ tqdm
 pytest
 
 bitsandbytes
+accelerate
 
 # Optional: for extensions
 #bitsandbytes
