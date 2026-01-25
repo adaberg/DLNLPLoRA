@@ -11,7 +11,45 @@ from src.lora.layer import LoRALayer
 from src.lora.model import LoRALinear, LoRAGPT2
 
 
-# loralayer was not modified so they still apply
+class TestLoRALayer:
+
+    @pytest.mark.layer
+    def test_initialization(self):
+        layer = LoRALayer(in_features=128, out_features=64, rank=8, alpha=16)
+        assert not torch.allclose(layer.lora_A, torch.zeros_like(layer.lora_A))
+        assert torch.allclose(layer.lora_B, torch.zeros_like(layer.lora_B))
+
+    @pytest.mark.layer
+    def test_output_shape(self):
+        batch_size, seq_len, in_features = 2, 10, 128
+        out_features = 64
+
+        layer = LoRALayer(
+            in_features=in_features, out_features=out_features, rank=8, alpha=16
+        )
+        x = torch.randn(batch_size, seq_len, in_features)
+
+        output = layer(x)
+
+        assert output.shape == (batch_size, seq_len, out_features)
+
+    @pytest.mark.layer
+    def test_scaling_factor(self):
+        """Verify scaling factor alpha/rank is applied"""
+        rank, alpha = 8, 16
+        layer = LoRALayer(in_features=128, out_features=64, rank=rank, alpha=alpha)
+
+        assert layer.scaling == alpha / rank
+
+    @pytest.mark.layer
+    def test_zero_output_when_B_is_zero(self):
+        layer = LoRALayer(in_features=128, out_features=64, rank=8, alpha=16)
+        x = torch.randn(2, 10, 128)
+
+        output = layer(x)
+
+        assert torch.allclose(output, torch.zeros_like(output))
+
 
 class TestLoRALinear:
         
@@ -135,17 +173,39 @@ class TestLoRAGPT2:
         assert total / trainable > 50 # depends on rank and model size
 
 
+    @pytest.mark.model
+    def test_base_weights_quantized(self, gpt2_model):              
+        quantized_count = sum(1 for p in gpt2_model.parameters() if isinstance(p, Params4bit))
+        assert quantized_count > 0, "No quantized parameters found"
+        
+        for name, module in gpt2_model.named_modules():
+            if 'c_attn' in name or 'c_fc' in name:
+                assert isinstance(module.weight, Params4bit), f"{name} not quantized"
+                
+    @pytest.mark.model
+    def test_lora_params_fp16(self, gpt2_model): 
+        lora_model = LoRAGPT2(
+            gpt2_model, rank=8, alpha=16, target_modules=["c_attn", "c_proj"]
+        )
+        for param in  lora_model.get_lora_parameters():
+            assert param.dtype == torch.float16, f"LoRA param dtype is {param.dtype}, expected fp16"
+
 class TestLoRALearning:
     
     @pytest.fixture
     def model_and_inputs(self):
-        base_model = GPT2LMHeadModel.from_pretrained("gpt2-medium")
-        model = LoRAGPT2(
-            base_model=base_model,
-            rank=4,
-            alpha=16.0,
-            target_modules=["c_attn"],
-            dropout=0.0
+        bnb_config = BitsAndBytesConfig(
+          load_in_4bit=True,
+          bnb_4bit_quant_type="nf4",
+          bnb_4bit_compute_dtype=torch.float16,
+          bnb_4bit_use_double_quant=True,
+          llm_int8_skip_modules=["lm_head"]  # Explicitly skip LM head
+        )
+
+        model = GPT2LMHeadModel.from_pretrained(
+            "gpt2-medium",
+            quantization_config=bnb_config,
+            dtype=torch.float16  # Non-quantized params use fp16
         )
         
         tokenizer = GPT2Tokenizer.from_pretrained("gpt2-medium")
