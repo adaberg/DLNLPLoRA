@@ -123,13 +123,14 @@ python scripts/run_evaluation.py --checkpoint gpt2-medium --config config.yaml
 pytest tests/ -v
 
 # Run specific test modules
-pytest tests/test_lora.py -v  # LoRA layer tests
+pytest tests/test_lora.py -v  # LoRA tests
 pytest tests/test_data.py -v  # Dataset tests
 
 # Test with markers
 pytest tests/test_lora.py -v -m layer   # Only layer tests
 pytest tests/test_lora.py -v -m linear  # Only linear tests
 pytest tests/test_lora.py -v -m model   # Only model tests
+pytest tests/test_lora.py -v -m learning
 ```
 
 ## project structure 
@@ -180,3 +181,17 @@ now ordered by feasibility and easeness of implementation in the current project
 
 bonus:
 - LoRAFA : frozen A matrix (minimal change of code but almost full processing needed and maybe not that interesting compared to the others)
+
+# Extention: DoRA
+
+## Tests
+
+```bash
+pytest tests/test_dora.py -v
+
+# Test with markers
+pytest tests/test_dora.py -v -m layer   # Only layer tests
+pytest tests/test_dora.py -v -m linear  # Only linear tests
+pytest tests/test_dora.py -v -m model   # Only model tests
+pytest tests/test_dora.py -v -m learning
+```
