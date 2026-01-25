@@ -36,6 +36,14 @@ pytest tests/test_lora.py -v
 # pytest -m model  tests/test_lora.py -v
 ```
 
+#### LoRA
+
+```bash
+# can also use -m layer / linear / model / learning to split testing
+pytest tests/test_dora.py -v
+# pytest -m model  tests/test_dora.py -v
+```
+
 ## project structure 
 
 ```

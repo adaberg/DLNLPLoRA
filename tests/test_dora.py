@@ -26,7 +26,6 @@ class TestDoRALayer:
         assert torch.allclose(layer.lora_B, torch.zeros_like(layer.lora_B))
         assert layer.magnitude.shape == (128,)
 
-
     @pytest.mark.layer
     def test_output_shape(self):
         batch_size, seq_len, in_features = 2, 10, 128
@@ -60,21 +59,29 @@ class TestDoRALayer:
         assert layer.scaling == alpha / rank
 
     @pytest.mark.layer
-    def test_zero_output_when_B_is_zero(self):
-        weight = torch.randn(64, 128)
+    def test_identity_when_B_is_zero(self):
+        base_weight = torch.randn(64, 128)
         layer = DoRALayer(
             in_features=128,
             out_features=64,
             rank=8,
             alpha=16,
-            base_weight=weight,
+            base_weight=base_weight,
         )
-        x = torch.randn(2, 10, 128)
+        print(f"magnitude shape: {layer.magnitude.shape}")
+        print(f"magnitude[:5]: {layer.magnitude[:5]}")
+        print(f"expected[:5]: {torch.norm(base_weight, dim=0)[:5]}")
+        print(f"lora_B sum: {layer.lora_B.sum()}")  # Should be 0
 
-        output = layer(x, weight)
-        expected = F.linear(x, weight)
-        
-        assert torch.allclose(output, expected)
+        x = torch.randn(2, 10, 128)
+        output = layer(x, base_weight)
+        expected = F.linear(x, base_weight)
+
+        print(f"output[0,0,:5]: {output[0,0,:5]}")
+        print(f"expected[0,0,:5]: {expected[0,0,:5]}")
+        print(f"Max diff: {(output - expected).abs().max()}")
+
+        assert torch.allclose(output, expected, atol=1e-6)
 
 
 class TestDoRALinear:

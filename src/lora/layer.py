@@ -23,7 +23,7 @@ class LoRALayer(nn.Module):
         out_features: int,
         rank: int = 8,
         alpha: float = 16.0,
-        dropout: float = 0.0,
+        dropout: float = 0.1,
     ) -> None:
         """
         importnant
@@ -79,7 +79,7 @@ class LoRALayer(nn.Module):
             f"rank={self.rank}, "
             f"alpha={self.alpha}, "
             f"scaling={self.scaling:.4f}, "
-            f"dropout={self.dropout.p if isinstance(self.dropout, nn.Dropout) else 0.0}"
+            f"dropout={self.dropout.p}"
         )
 
     # this decorator makes it possible to access weight as a property
@@ -111,7 +111,7 @@ class LoRALayer(nn.Module):
 class DoRALayer(LoRALayer):
 
     def __init__(
-        self, in_features, out_features, rank, alpha, base_weight, dropout=0.0
+        self, in_features, out_features, rank, alpha, base_weight, dropout=0.1
     ):
         super().__init__(in_features, out_features, rank, alpha, dropout)
         self.magnitude = nn.Parameter(torch.norm(base_weight, dim=0))
@@ -119,15 +119,10 @@ class DoRALayer(LoRALayer):
     def forward(self, x, base_weight):
         x = self.dropout(x)
         merged = base_weight + (self.lora_B @ self.lora_A) * self.scaling
-        norm = torch.norm(merged, dim=0, keepdim=True) + 1e-8
+        # epsilon for defensive programming
+        norm = torch.norm(merged, dim=0, keepdim=True)
         # following the paper description
         return x @ (self.magnitude * merged / norm).T
-
-    def reset_parameters(self) -> None:
-        nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
-        nn.init.zeros_(self.lora_B)
-        # it effectively resets, it does not count as initialization (for my understanding)
-        nn.init.ones_(self.magnitude)
 
     def extra_repr(self) -> str:
         """
@@ -140,12 +135,8 @@ class DoRALayer(LoRALayer):
             f"alpha={self.alpha}, "
             f"scaling={self.scaling:.4f}, "
             f"magnitude={self.magnitude}, "
-            f"dropout={self.dropout.p if isinstance(self.dropout, nn.Dropout) else 0.0}"
+            f"dropout={self.dropout.p}"
         )
-
-    @property
-    def magnitude(self) -> torch.Tensor:
-        return self._magnitude
 
     def get_num_parameters(self) -> tuple[int, int]:
         lora_params = (

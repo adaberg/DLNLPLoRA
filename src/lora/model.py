@@ -13,7 +13,7 @@ class LoRALinear(nn.Module):
         base_layer: Union[nn.Linear, Conv1D],
         rank: int,
         alpha: float,
-        dropout: float = 0.0,
+        dropout: float = 0.1,
     ) -> None:
         super().__init__()
         self.base_layer = base_layer
@@ -42,7 +42,7 @@ class LoRAGPT2(nn.Module):
         rank: int,
         alpha: float,
         target_modules: List[str],
-        dropout: float = 0.0,
+        dropout: float = 0.1,
     ) -> None:
         super().__init__()
         self.base_model = base_model
@@ -91,7 +91,7 @@ class LoRAGPT2(nn.Module):
 
 
 class DoRALinear(LoRALinear):
-    def __init__(self, base_layer, rank, alpha, dropout=0.0):
+    def __init__(self, base_layer, rank, alpha, dropout):
         super().__init__(base_layer, rank, alpha, dropout)
         base_w = (
             self.base_layer.weight
