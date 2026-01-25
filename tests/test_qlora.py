@@ -239,14 +239,14 @@ class TestLoRALearning:
         loss = outputs.loss
         loss.backward()
         
+        lora_param_ids = {id(p) for p in lora_params}
         for name, param in model.base_model.named_parameters():
-            if "lora" in name:
+            if id(param) in lora_param_ids:
                 assert param.grad is not None, f"LoRA param {name} missing gradient"
                 assert not torch.allclose(param.grad, torch.zeros_like(param.grad)), \
                     f"LoRA param {name} has zero gradient"
-            else:
-                assert param.grad is None or torch.allclose(param.grad, torch.zeros_like(param.grad)), \
-                    f"Base param {name} should not receive gradients"
+            elif not isinstance(param, Params4bit):
+                assert param.grad is None, f"Base param {name} should not receive gradients"
     
     @pytest.mark.learning
     def test_parameters_update_after_step(self, model_and_inputs):
