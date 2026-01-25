@@ -252,7 +252,6 @@ class TestLoRALearning:
         lora_params = model.get_lora_parameters()
         optimizer = torch.optim.SGD(lora_params, lr=1e-3)
         
-        # warmup step if we want gradient to pass the B
         optimizer.zero_grad()
         model(**inputs).loss.backward()
         optimizer.step()
@@ -278,7 +277,6 @@ class TestLoRALearning:
         lora_params = model.get_lora_parameters()
         optimizer = torch.optim.SGD(lora_params, lr=1e-3)
         
-        # Warmup 
         optimizer.zero_grad()
         model(**inputs).loss.backward()
         optimizer.step()
@@ -287,10 +285,6 @@ class TestLoRALearning:
         optimizer.zero_grad()
         model(**inputs).loss.backward()
         
-        for param in lora_params:
-            assert param.grad is not None
-            assert param.grad.abs().sum() > 0 
-        
         optimizer.step()
         
         any_changed = any(
@@ -298,7 +292,24 @@ class TestLoRALearning:
             for init, curr in zip(initial_params, lora_params)
         )
         assert any_changed, "No parameters updated"
+        
+    @pytest.mark.learning
+    def test_all_lora_params_get_gradients(self, model_and_inputs):
+        model, inputs = model_and_inputs
+        lora_params = model.get_lora_parameters()
+        optimizer = torch.optim.SGD(lora_params, lr=1e-3)
     
+        optimizer.zero_grad()
+        model(**inputs).loss.backward()
+        optimizer.step()
+        
+        optimizer.zero_grad()
+        model(**inputs).loss.backward()
+        
+        for param in lora_params:
+            assert param.grad is not None
+            assert param.grad.abs().sum() > 0
+            
     @pytest.mark.learning
     def test_lora_params_on_cuda(self, model_and_inputs):
         model, inputs = model_and_inputs
