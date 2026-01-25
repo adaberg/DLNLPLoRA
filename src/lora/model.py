@@ -4,6 +4,7 @@ import torch.nn as nn
 from transformers import GPT2LMHeadModel
 from transformers.pytorch_utils import Conv1D
 from .layer import LoRALayer, DoRALayer
+from bitsandbytes.nn import Params4bit
 
 
 class LoRALinear(nn.Module):
@@ -48,6 +49,7 @@ class LoRAGPT2(nn.Module):
         self.base_model = base_model
 
         for param in base_model.parameters():
+          if not isinstance(param, Params4bit):
             param.requires_grad = False
 
         self.lora_modules = []
@@ -66,6 +68,11 @@ class LoRAGPT2(nn.Module):
         parent = self.base_model.get_submodule(parent_name)
 
         lora_linear = LoRALinear(module, rank, alpha, dropout)
+        
+        # make sure lora parameters are in float16
+        lora_linear.lora.lora_A = lora_linear.lora.lora_A.to(torch.float16)
+        lora_linear.lora.lora_B = lora_linear.lora.lora_B.to(torch.float16)
+
         # says to the parent "when you call child_name you get lora_linear"
         setattr(parent, child_name, lora_linear)
         self.lora_modules.append(name)
@@ -91,6 +98,11 @@ class LoRAGPT2(nn.Module):
         for module in self.base_model.modules():
             if isinstance(module, LoRALinear):
                 params.extend([module.lora.lora_A, module.lora.lora_B])
+                
+        for param in params:
+          assert param.dtype in [torch.float16, torch.float32], \
+              f"LoRA param has wrong dtype: {param.dtype}"
+        
         return params
 
 
