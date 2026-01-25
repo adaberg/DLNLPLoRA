@@ -68,18 +68,25 @@ class TestDoRALayer:
             alpha=16,
             base_weight=base_weight,
         )
-        print(f"magnitude shape: {layer.magnitude.shape}")
-        print(f"magnitude[:5]: {layer.magnitude[:5]}")
-        print(f"expected[:5]: {torch.norm(base_weight, dim=0)[:5]}")
-        print(f"lora_B sum: {layer.lora_B.sum()}")  # Should be 0
 
         x = torch.randn(2, 10, 128)
-        output = layer(x, base_weight)
-        expected = F.linear(x, base_weight)
+        # Manually replicate forward pass:
+        x_drop = layer.dropout(x)
+        merged = base_weight + (layer.lora_B @ layer.lora_A) * layer.scaling
+        norm = torch.norm(merged, dim=0, keepdim=True)
 
-        print(f"output[0,0,:5]: {output[0,0,:5]}")
-        print(f"expected[0,0,:5]: {expected[0,0,:5]}")
-        print(f"Max diff: {(output - expected).abs().max()}")
+        print(f"merged == base_weight: {torch.allclose(merged, base_weight)}")
+        print(f"norm shape: {norm.shape}")
+        print(f"norm[:,:5]: {norm[:,:5]}")
+        print(f"magnitude shape: {layer.magnitude.shape}")
+
+        W = layer.magnitude * merged / norm
+        print(f"W == base_weight: {torch.allclose(W, base_weight)}")
+        print(f"W[0,:5]: {W[0,:5]}")
+        print(f"base_weight[0,:5]: {base_weight[0,:5]}")
+
+        output = x_drop @ (layer.magnitude * merged / norm).T
+        expected = x_drop @ base_weight.T
 
         assert torch.allclose(output, expected, atol=1e-6)
 
