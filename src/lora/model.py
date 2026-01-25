@@ -81,10 +81,6 @@ class LoRAGPT2(nn.Module):
             input_ids=input_ids, attention_mask=attention_mask, labels=labels, **kwargs
         )
 
-    def generate(self, *args, **kwargs):
-        """Delegate text generation to the base model."""
-        return self.base_model.generate(*args, **kwargs)
-
     def get_lora_parameters(self) -> List[nn.Parameter]:
         """Return A and B"""
         params = []
@@ -122,12 +118,14 @@ class DoRAGPT2(LoRAGPT2):
         dora_linear = DoRALinear(module, rank, alpha, dropout)
         setattr(parent, child_name, dora_linear)
         self.lora_modules.append(name)
-        
+
     def get_lora_parameters(self) -> List[nn.Parameter]:
         params = []
         for module in self.base_model.modules():
             if isinstance(module, DoRALinear):
-                params.extend([module.lora.lora_A, module.lora.lora_B, module.lora.magnitude])
+                params.extend(
+                    [module.lora.lora_A, module.lora.lora_B, module.lora.magnitude]
+                )
         return params
 
 
