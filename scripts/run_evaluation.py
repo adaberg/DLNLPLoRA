@@ -96,8 +96,7 @@ def setup_test_data(config: Dict, tokenizer):
     print("Setting up test data...")
 
     # Get max_length from config, supporting both config.yaml and training_config.json formats
-    #max_length = config.get("max_length", 256)  # Default from config.yaml
-    max_length = config.get("max_length", 128)  # Default from config.yaml
+    max_length = config.get("max_length", 128) # Default from config.yaml
 
     # Get sample_percentage, checking both top-level and nested 'dataset' key
     sample_percentage = config.get("sample_percentage") or config.get("dataset", {}).get("sample_percentage", 1.0)
@@ -122,9 +121,9 @@ def setup_test_data(config: Dict, tokenizer):
 def print_bootstrap_metrics(boot_metrics: Dict[str, Dict[str, float]]) -> None:
     table_data = [[
         key, round(value["mean"], 4), round(value["lower"], 4), round(value["upper"], 4)
-    ] for key, value in boot_metrics]
+    ] for key, value in boot_metrics.items()]
 
-    print(tabulate(table_data, headers=["Bootstrap Metrics", "Mean", "Lower", "Upper"]))
+    print("\n" + tabulate(table_data, headers=["Bootstrap Metrics (CI)", "Mean", "Lower", "Upper"]))
 
 
 def main() -> None:
@@ -193,7 +192,7 @@ def main() -> None:
         device=device,
         num_samples=args.num_samples,
         generation_config=merged_generation_config,
-        do_bootstrap_eval=False
+        do_bootstrap_eval=True
     )
 
     print("\n" + "="*60)
@@ -205,8 +204,8 @@ def main() -> None:
         if not metric.startswith("_"):
             if metric == "bootstrap":
                 print_bootstrap_metrics(value)
-
-            print(f"{metric:15}: {value:.4f}")
+            else:
+                print(f"{metric:15}: {value:.4f}")
 
     # Print evaluation info (multi-reference BLEU context)
     if "_eval_info" in results:

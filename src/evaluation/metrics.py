@@ -68,12 +68,11 @@ def generate_texts(
     prompts: List[str],
     max_new_tokens: int = 30, # reduced from 50
     length_penalty: float = 0.9, # model applies a penalty based on the sequence length
-    device: str = "cuda",
-    num_beams: int = 10,
-    length_penalty: float = 0.9,
     no_repeat_ngram_size: int = 4,
+    num_beams: int = 10,
     use_beam_search: bool = True,
-    use_greedy: bool = True
+    use_greedy: bool = True,
+    device: str = "cuda"
 ) -> List[str]:
     """
     Generate text completions for given prompts.
@@ -424,12 +423,12 @@ def evaluate_model_comprehensive(
             tokenizer=tokenizer,
             prompts=prompts,
             max_new_tokens=max_new_tokens,
-            device=device,
-            num_beams=num_beams,
             length_penalty=length_penalty,
             no_repeat_ngram_size=no_repeat_ngram_size,
+            num_beams=num_beams,
             use_beam_search=use_beam_search,
-            use_greedy=use_greedy
+            use_greedy=use_greedy,
+            device=device
         )
 
         logger.info("Computing generation metrics with multi-reference BLEU...")
@@ -503,9 +502,9 @@ def _test_metrics():
         tokenizer=tokenizer,
         prompts=prompts,
         max_new_tokens=30,
-        device="cpu",
         use_beam_search=True,
-        use_greedy=True # always true during testing
+        use_greedy=True, # always true during testing
+        device="cpu"
     )
     print(f"Generated: {generated}")
 

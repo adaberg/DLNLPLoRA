@@ -12,6 +12,7 @@ pyyaml
 # Utilities
 numpy
 tqdm
+tabulate
 
 pytest
 
