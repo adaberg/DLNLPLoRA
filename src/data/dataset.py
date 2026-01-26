@@ -24,7 +24,7 @@ class E2EDataset(Dataset):
         self,
         split: str,
         tokenizer: PreTrainedTokenizer,
-        max_length: int = 128,  # reduced by half from 256, E2E samples are short!
+        max_length: int = 128, # reduced by half from 256, E2E samples are short!
         sample_percentage: float = 1.0,
         device: Optional[str] = None,
         add_eos_token: bool = True  # add EOS after reference
@@ -80,11 +80,12 @@ class E2EDataset(Dataset):
         meaning_rep = sample["meaning_representation"]
         reference = sample["human_reference"]
 
-        # Format with EOS token
+        # Format with EOS token:
+        prompt = f"MR: {meaning_rep}\nREF:"
         if self.add_eos_token:
-            text = f"meaning_representation: {meaning_rep} | reference: {reference}{self.tokenizer.eos_token}"
+            text = f"{prompt} {reference}{self.tokenizer.eos_token}" # see (**) 
         else:
-            text = f"meaning_representation: {meaning_rep} | reference: {reference}"
+            text = f"{prompt} {reference}"
 
         encoding = self.tokenizer(
             text,
@@ -97,7 +98,7 @@ class E2EDataset(Dataset):
         attention_mask = encoding["attention_mask"].squeeze(0)
         labels = encoding["input_ids"].squeeze(0).clone()
 
-        # Ignore padding tokens in loss
+        # Ignore padding tokens in loss:
         labels[attention_mask == 0] = -100
 
         item = {
@@ -114,7 +115,13 @@ class E2EDataset(Dataset):
     @staticmethod
     def format_sample(meaning_rep: str, reference: str, eos_token: str = "") -> str:
         """Format a single sample for language modeling."""
-        return f"meaning_representation: {meaning_rep.strip()} | reference: {reference.strip()}{eos_token}"
+        # (**) Note: Do not use the rarely used pipe character "|", it is a strong
+        #            and rare token and GPT-2 has hardly been trained on it.
+        #            --> It strongly influences the BLEU score.
+        # return f"meaning_representation: {meaning_rep.strip()} | reference: {reference.strip()}{eos_token}"
+        prompt = f"MR: {meaning_rep.strip()}\nREF:"
+        text = f"{prompt} {reference.strip()}{eos_token}"
+        return text
 
     def get_raw_sample(self, idx: int) -> Dict[str, str]:
         """Get raw sample for inspection."""
@@ -171,7 +178,7 @@ def create_datasets_and_loaders(
     tokenizer: PreTrainedTokenizer,
     train_batch_size: int = 8,
     val_batch_size: int = 16,
-    max_length: int = 128,  # reduced from 256
+    max_length: int = 128, # reduced from 256
     sample_percentage: float = 1.0,
     device: Optional[str] = None,
     add_eos_token: bool = True

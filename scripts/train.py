@@ -127,7 +127,7 @@ def setup_data(config: dict, tokenizer, training_config: TrainingConfig):
 
     val_loader = get_dataloader(
         val_dataset,
-        batch_size=training_config.batch_size * 2,  # Larger batch for evaluation
+        batch_size=training_config.batch_size * 2, # Larger batch for evaluation
         shuffle=False
     )
 

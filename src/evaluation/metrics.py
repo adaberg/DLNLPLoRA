@@ -18,13 +18,16 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) -> float:
+def compute_perplexity_batch_weighted(model: nn.Module, dataloader: DataLoader, device: str) -> float:
     """
-    Compute perplexity: exp(average_cross_entropy_loss)
+    Compute perplexity with batch-weighted aggregation: exp(average_cross_entropy_loss)
 
     Returns:
         Perplexity score (float)
     """
+    # Note: This method is poor for the E2E dataset because batch lengths
+    #       vary significantly. This means sequences have different lengths,
+    #       the padding skews the result, and long sequences are underweighted.
     model.eval()
     total_loss = 0.0
     total_samples = 0
@@ -45,7 +48,6 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
                 )
 
             loss = outputs.loss
-
             batch_size = batch["input_ids"].size(0)
             total_loss += loss.item() * batch_size
             total_samples += batch_size
@@ -53,11 +55,54 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
     if total_samples == 0:
         raise ValueError("No valid batches processed for perplexity computation")
 
-    avg_loss = total_loss / total_samples
-    perplexity = np.exp(avg_loss)
+    avg_batch_loss = total_loss / total_samples
+    perplexity = np.exp(avg_batch_loss)
 
     logger.info(
-        f"Perplexity computation: avg_loss={avg_loss:.4f}, perplexity={perplexity:.2f}"
+        f"Perplexity computation (batch-weighted): avg_batch_loss={avg_batch_loss:.4f}, perplexity={perplexity:.2f}"
+    )
+    return float(perplexity)
+
+
+def compute_perplexity_token_weighted(model: nn.Module, dataloader: DataLoader, device: str) -> float:
+    """
+    Compute perplexity with token-weighted aggregation: exp(average_cross_entropy_loss)
+
+    Returns:
+        Perplexity score (float)
+    """
+    model.eval()
+    total_loss = 0.0
+    total_tokens = 0
+
+    with torch.no_grad():
+        for batch in dataloader:
+            batch = {k: v.to(device) for k, v in batch.items()
+                    if isinstance(v, torch.Tensor)}
+
+            outputs = model(**batch)
+            # Note: The standard HuggingFace GPT-2 model does not support the "loss_type" parameter.
+            #       This will likely lead to an error or incorrect loss calculation.
+
+            if not hasattr(outputs, "loss") or outputs.loss is None:
+                raise ValueError(
+                    "Model must return loss in forward pass. "
+                    "Ensure model is a language model with LM head."
+                )
+
+            loss = outputs.loss
+            num_tokens = (batch["labels"] != -100).sum().item()
+            total_loss += loss.item() * num_tokens
+            total_tokens += num_tokens
+
+    if total_tokens == 0:
+        raise ValueError("No valid tokens processed for perplexity computation")
+
+    avg_token_loss = total_loss / total_tokens
+    perplexity = np.exp(avg_token_loss)
+
+    logger.info(
+        f"Perplexity computation (token-weighted): avg_token_loss={avg_token_loss:.4f}, perplexity={perplexity:.2f}"
     )
     return float(perplexity)
 
@@ -131,6 +176,7 @@ def generate_texts(
                         no_repeat_ngram_size=no_repeat_ngram_size,
                         # paper states reuse of params of https://arxiv.org/pdf/2101.00190 (beam size = 5)
                         num_beams=num_beams,
+                        num_return_sequences = 1, # to avoid unnecessary internal competition between the bars
                         pad_token_id=tokenizer.pad_token_id,
                         eos_token_id=tokenizer.eos_token_id
                     )
@@ -161,9 +207,88 @@ def generate_texts(
                 logger.error(
                     f"Error generating text for prompt '{prompt[:50]}...': {e}"
                 )
-                generated_texts.append("")  # Return empty string on error
+                generated_texts.append("") # Return empty string on error
 
     return generated_texts
+
+
+def compute_rouge_multi_ref(
+    predictions: List[str], references: List[List[str]]    
+) -> Dict[str, float]:
+    """
+    Computes ROUGE-1, ROUGE-2, and ROUGE-L F1 scores by evaluating each prediction
+    against all references and selecting the maximum score per example.
+    """
+    try:
+        rouge = evaluate.load("rouge")
+    except Exception as e:
+        logger.warning(f"ROUGE F1 calculation failed: {e}")
+        return {"rouge1_f1": 0.0, "rouge2_f1": 0.0, "rougeL_f1": 0.0}
+
+    rouge1_scores = []
+    rouge2_scores = []
+    rougeL_scores = []
+
+    # Select the best ROUGE values ​​from each reference example:
+    for pred, refs in zip(predictions, references):
+        # one prediction and N references
+        best_r1 = 0.0
+        best_r2 = 0.0
+        best_rL = 0.0
+
+        for ref in refs:
+            scores = rouge.compute(
+                predictions=[pred],
+                references=[ref],
+                use_stemmer=True
+            )
+            best_r1 = max(best_r1, scores["rouge1"])
+            best_r2 = max(best_r2, scores["rouge2"])
+            best_rL = max(best_rL, scores["rougeL"])
+
+        rouge1_scores.append(best_r1)
+        rouge2_scores.append(best_r2)
+        rougeL_scores.append(best_rL)
+
+    # Calculate and return the arithmetic mean of the
+    # ROUGE F1 scores across all examples:
+    return {
+        "rouge1_f1": sum(rouge1_scores) / len(rouge1_scores),
+        "rouge2_f1": sum(rouge2_scores) / len(rouge2_scores),
+        "rougeL_f1": sum(rougeL_scores) / len(rougeL_scores),
+    }
+
+
+def compute_bertscore_multi_ref(
+    predictions: List[str], references: List[List[str]], lang: str = "en"
+) -> Dict[str, float]:
+    """
+    Computes BERTScore F1 by scoring each prediction against all references
+    and taking the maximum score per example.
+    """
+    best_scores = []
+    try:
+        bertscore = evaluate.load("bertscore")
+    except Exception as e:
+        logger.warning(f"BERTScore F1 calculation failed: {e}")
+        return {"bertscore_f1": 0.0}
+
+    for pred, refs in zip(predictions, references):
+        # one prediction and N references
+        P, R, F1 = bertscore.compute(
+            [pred] * len(refs), # duplicate by the number of references
+            refs,
+            lang=lang,
+            verbose=False
+        )
+        # Select the best matching reference:
+        best_scores.append(F1.max().item())
+
+    # Calculate and return the arithmetic mean of the
+    # BERTScore F1 values across all examples:
+    return {
+        "bertscore_f1": sum(best_scores) / len(best_scores)
+    }
 
 
 def compute_generation_metrics(
@@ -198,7 +323,7 @@ def compute_generation_metrics(
     # 1. Compute BLEU score with multiple references (corpus-level):
     try:
         bleu = evaluate.load("bleu")
-        # references is already in correct format: List[List[str]]
+        # 'references' is already in the correct format: List[List[str]]
         bleu_result = bleu.compute(predictions=predictions, references=references)
         results["bleu"] = bleu_result["bleu"] # corpus BLEU
         logger.info("BLEU (corpus-level, precision-based)")
@@ -206,43 +331,25 @@ def compute_generation_metrics(
         logger.warning(f"BLEU calculation failed: {e}")
         results["bleu"] = 0.0
 
-    # 2. Compute ROUGE F1 scores (use first reference from each list for ROUGE):
-    #    Note: ROUGE F1 doesn't natively support multiple references well.
-    try:
-        rouge = evaluate.load("rouge")
-        # Use first reference for ROUGE computation
-        first_references = [ref_list[0] for ref_list in references]
-        rouge_result = rouge.compute(
-            predictions=predictions,
-            references=first_references,
-            use_stemmer=True
-        )
-        results["rouge1_f1"] = rouge_result["rouge1"]
-        results["rouge2_f1"] = rouge_result["rouge2"]
-        results["rougeL_f1"] = rouge_result["rougeL"]
-    except Exception as e:
-        logger.warning(f"ROUGE F1 calculation failed: {e}")
-        results.update({"rouge1_f1": 0.0, "rouge2_f1": 0.0, "rougeL_f1": 0.0})
+    # 2. Compute ROUGE F1 scores (mean of the best scores):
+    #    Note: ROUGE F1 does not natively support multiple references well, therefore the
+    #          ROUGE values ​​must be calculated as the arithmetic mean across all references.
+    rouge_scores = compute_rouge_multi_ref(predictions, references)
+    results.update(rouge_scores)
 
-    # 3. Compute BERTScore F1:
-    #    (measures the semantic similarity between generated and reference text)
-    try:
-        bertscore = evaluate.load("bertscore")
-        bert_result = bertscore.compute(
-            predictions=predictions,
-            references=references,
-            lang="en"
-        )
-        results["bertscore_f1"] = float(np.mean(bert_result["f1"]))
-    except Exception as e:
-        logger.warning(f"BERTScore F1 calculation failed: {e}")
-        results.update({"bertscore_f1": 0.0})
+    # 3. Compute BERTScore F1 (mean of the best matching scores):
+    #    (Measures the semantic similarity between generated and reference text.)
+    #    Note: In the case of multiple references, as with the ROUGE values, the
+    #          BertScore must be calculated as the arithmetic mean across all references.
+    bert_score = compute_bertscore_multi_ref(predictions, references)
+    results.update(bert_score)
 
     logger.info(
-        f"Generation metrics: BLEU={results.get('bleu', 0):.4f}, "
-        f"ROUGE-1 F1={results.get('rouge1_f1', 0):.4f}, "
-        f"ROUGE-2 F1={results.get('rouge2_f1', 0):.4f}, "
-        f"ROUGE-L F1={results.get('rougeL_f1', 0):.4f}"
+        f"Generation metrics: BLEU={results.get('bleu', 0.0):.4f}, "
+        f"ROUGE-1 F1={results.get('rouge1_f1', 0.0):.4f}, "
+        f"ROUGE-2 F1={results.get('rouge2_f1', 0.0):.4f}, "
+        f"ROUGE-L F1={results.get('rougeL_f1', 0.0):.4f}, "
+        f"BERTScore F1={results.get('bertscore_f1', 0.0):.4f}, "
     )
 
     if num_samples and do_bootstrap_eval:
@@ -378,8 +485,8 @@ def evaluate_model_comprehensive(
     # 1. Compute perplexity
     logger.info("Computing perplexity...")
     try:
-        perplexity = compute_perplexity(model, test_loader, device)
-        results["perplexity"] = perplexity
+        #perplexity = compute_perplexity_batch_weighted(model, test_loader, device)
+        perplexity = compute_perplexity_token_weighted(model, test_loader, device) # paper-conform
     except Exception as e:
         logger.error(f"Perplexity computation failed: {e}")
         results["perplexity"] = float("inf")
@@ -448,7 +555,7 @@ def evaluate_model_comprehensive(
                     "mr": mr_list[i][:100] + "..." if len(mr_list[i]) > 100 else mr_list[i],
                     "prediction": predictions[i],
                     "num_references": len(all_references[i]),
-                    "sample_reference": all_references[i][0],  # Show first reference
+                    "sample_reference": all_references[i][0], # Show first reference
                 }
             )
 
