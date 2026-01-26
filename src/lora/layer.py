@@ -106,3 +106,43 @@ class LoRALayer(nn.Module):
         lora_params = self.rank * (self.lora_A.shape[1] + self.lora_B.shape[0])
         full_params = self.lora_A.shape[1] * self.lora_B.shape[0]
         return lora_params, full_params
+
+
+class DoRALayer(LoRALayer):
+
+    def __init__(
+        self, in_features, out_features, rank, alpha, base_weight, dropout=0.1
+    ):
+        super().__init__(in_features, out_features, rank, alpha, dropout)
+        self.magnitude = nn.Parameter(torch.norm(base_weight, dim=0))
+
+    def forward(self, x, base_weight):
+        x = self.dropout(x)
+        merged = base_weight + (self.lora_B @ self.lora_A) * self.scaling
+        # epsilon for defensive programming
+        norm = torch.norm(merged, dim=0, keepdim=True) + 1e-8
+        # following the paper description
+        W = self.magnitude * merged / norm
+        return x @ W.T
+
+    def extra_repr(self) -> str:
+        """
+        String representation for debugging and logging.
+        """
+        return (
+            f"in_features={self.lora_A.shape[1]}, "
+            f"out_features={self.lora_B.shape[0]}, "
+            f"rank={self.rank}, "
+            f"alpha={self.alpha}, "
+            f"scaling={self.scaling:.4f}, "
+            f"magnitude={self.magnitude}, "
+            f"dropout={self.dropout.p if isinstance(self.dropout, nn.Dropout) else 0.0}"
+        )
+
+    def get_num_parameters(self) -> tuple[int, int]:
+        lora_params = (
+            self.rank * (self.lora_A.shape[1] + self.lora_B.shape[0])
+            + self.magnitude.numel()
+        )
+        full_params = self.lora_A.shape[1] * self.lora_B.shape[0]
+        return lora_params, full_params

@@ -51,23 +51,23 @@ def test_dataset_length():
     """Test sample_percentage correctly reduces dataset size."""
     tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
-    
+
     full_dataset = E2EDataset(
         split="validation", tokenizer=tokenizer, max_length=128, sample_percentage=1.0
     )
     full_size = len(full_dataset)
-    
+
     partial_dataset = E2EDataset(
         split="validation", tokenizer=tokenizer, max_length=128, sample_percentage=0.1
     )
     partial_size = len(partial_dataset)
-    
+
     expected_size = int(full_size * 0.1)
     tolerance = max(1, expected_size * 0.1)
-    
+
     assert abs(partial_size - expected_size) <= tolerance, \
         f"Expected ~{expected_size} samples, got {partial_size}"
-    
+
     print(f"Dataset sampling: full={full_size}, 10%={partial_size}")
 
 
@@ -99,7 +99,7 @@ def test_tokenization_length():
         actual_length = sample["attention_mask"].sum().item()
         assert actual_length <= max_length, \
             f"Actual length {actual_length} > max_length {max_length}"
-    
+
     print("Tokenization length test passed")
 
 
@@ -116,14 +116,14 @@ def test_dataloader():
     dataloader = get_dataloader(dataset, batch_size=batch_size, shuffle=False)
 
     first_batch = next(iter(dataloader))
-    
+
     assert first_batch["input_ids"].shape == (batch_size, 128), \
         f"Batch input IDs shape: {first_batch['input_ids'].shape}"
     assert first_batch["attention_mask"].shape == (batch_size, 128), \
         f"Batch attention mask shape: {first_batch['attention_mask'].shape}"
     assert first_batch["labels"].shape == (batch_size, 128), \
         f"Batch labels shape: {first_batch['labels'].shape}"
-    
+
     print("DataLoader test passed")
 
 
@@ -148,7 +148,7 @@ def test_raw_sample():
         "meaning_representation should not be empty"
     assert len(raw["human_reference"]) > 0, \
         "human_reference should not be empty"
-    
+
     print("Raw sample test passed")
 
 

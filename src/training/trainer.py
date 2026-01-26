@@ -40,36 +40,36 @@ class TrainingConfig:
     batch_size: int = 8
     warmup_steps: int = 500
     max_grad_norm: float = 1.0
-    
+
     # LoRA specific
     lora_dropout: float = 0.1
-    
+
     # Logging and checkpointing
     output_dir: str = "./results"
     logging_steps: int = 100
     eval_steps: int = 500
     save_steps: int = 500
     save_total_limit: int = 3
-    
+
     # Device
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
-    
+
     # Mixed precision
     fp16: bool = False
     bf16: bool = False
-    
+
     # Gradient accumulation for larger effective batch sizes
     gradient_accumulation_steps: int = 1
-    
+
     # Seed
     seed: int = 42
-    
+
     # Training mode: "lora", "full", or "none" (evaluation only)
     training_mode: str = "lora"
-    
+
     # Early stopping
     early_stopping_patience: Optional[int] = None
-    
+
     def effective_batch_size(self) -> int:
         return self.batch_size * self.gradient_accumulation_steps
 
@@ -88,10 +88,10 @@ def get_linear_schedule_with_warmup(
             return float(current_step) / float(max(1, num_warmup_steps))
         return max(
             0.0,
-            float(num_training_steps - current_step) / 
+            float(num_training_steps - current_step) /
             float(max(1, num_training_steps - num_warmup_steps))
         )
-    
+
     return LambdaLR(optimizer, lr_lambda, last_epoch=last_epoch)
 
 
@@ -120,55 +120,55 @@ class Trainer:
         self.train_dataloader = train_dataloader
         self.eval_dataloader = eval_dataloader
         self.tokenizer = tokenizer
-        
+
         # Move model to device
         self.model.to(config.device)
-        
+
         # Setup optimizer (only for trainable parameters)
         self.optimizer = self._create_optimizer()
-        
+
         # Calculate total training steps
         self.total_steps = (
             len(train_dataloader) // config.gradient_accumulation_steps
         ) * config.num_epochs
-        
+
         # Setup scheduler
         self.scheduler = get_linear_schedule_with_warmup(
             self.optimizer,
             num_warmup_steps=config.warmup_steps,
             num_training_steps=self.total_steps
         )
-        
+
         # Mixed precision
         self.scaler = None
         if config.fp16:
             self.scaler = torch.amp.GradScaler('cuda')
-        
+
         # Training state
         self.global_step = 0
         self.current_epoch = 0
         self.best_eval_loss = float('inf')
         self.patience_counter = 0
-        
+
         # History
         self.train_losses: List[float] = []
         self.eval_losses: List[float] = []
-        
+
         # Create output directory
         os.makedirs(config.output_dir, exist_ok=True)
-        
+
         # Log configuration
         self._log_config()
-    
+
     def _create_optimizer(self) -> AdamW:
         """Create AdamW optimizer for trainable parameters only."""
         # Get trainable parameters
         trainable_params = [p for p in self.model.parameters() if p.requires_grad]
-        
+
         # Log parameter counts
         total_params = sum(p.numel() for p in self.model.parameters())
         trainable_count = sum(p.numel() for p in trainable_params)
-        
+
         logger.info(f"Total parameters: {total_params:,}")
         logger.info(f"Trainable parameters: {trainable_count:,}")
         logger.info(f"Trainable percentage: {100 * trainable_count / total_params:.2f}%")
@@ -183,7 +183,7 @@ class Trainer:
 
         return optimizer
 
-    
+
     def _log_config(self) -> None:
         """Log training configuration."""
         logger.info("=" * 60)
@@ -202,35 +202,35 @@ class Trainer:
         logger.info(f"FP16: {self.config.fp16}")
         logger.info(f"BF16: {self.config.bf16}")
         logger.info("=" * 60)
-    
+
     def train(self) -> Dict[str, Any]:
         """
         Main training loop.
-        
+
         Returns:
             Dictionary with training results and metrics.
         """
         logger.info("Starting training...")
-        
+
         self.model.train()
-        
+
         for epoch in range(self.config.num_epochs):
             self.current_epoch = epoch
 
-            #train_loss = self._train_epoch(epoch) # batch-weighted 
+            #train_loss = self._train_epoch_batch_weighted(epoch)
             train_loss = self._train_epoch_token_weighted(epoch) # paper-conform
             self.train_losses.append(train_loss)
-            
+
             logger.info(f"Epoch {epoch + 1}/{self.config.num_epochs} - Train Loss: {train_loss:.4f}")
-            
+
             ## Evaluation:
             eval_loss = None
             if self.eval_dataloader is not None:
-                #eval_loss = self.evaluate() # batch-weighted
+                #eval_loss = self.evaluate_batch_weighted()
                 eval_loss = self.evaluate_token_weighted() # paper-conform
                 self.eval_losses.append(eval_loss)
                 logger.info(f"Epoch {epoch + 1}/{self.config.num_epochs} - Eval Loss: {eval_loss:.4f}")
-                
+
                 # Save best model
                 if eval_loss < self.best_eval_loss:
                     self.best_eval_loss = eval_loss
@@ -238,20 +238,20 @@ class Trainer:
                     self.patience_counter = 0
                 else:
                     self.patience_counter += 1
-                
+
                 # Early stopping
-                if (self.config.early_stopping_patience is not None and 
+                if (self.config.early_stopping_patience is not None and
                     self.patience_counter >= self.config.early_stopping_patience):
                     logger.info(f"Early stopping after {epoch + 1} epochs")
                     break
-            
+
             # Save checkpoint at end of epoch
             self.save_checkpoint(f"checkpoint_epoch_{epoch + 1}")
             self.model.train()
-        
+
         # Save final model
         self.save_checkpoint("final_model")
-        
+
         return {
             "train_losses": self.train_losses,
             "eval_losses": self.eval_losses,
@@ -260,12 +260,12 @@ class Trainer:
             "epochs_completed": self.current_epoch + 1
         }
 
-    def _train_epoch(self, epoch: int) -> float:
+    def _train_epoch_batch_weighted(self, epoch: int) -> float:
         """
         Train for one epoch with batch-weighted averaging (each batch
         contributes equally to the average.).
         Returns:
-            Average loss per batch for the entire epoch.        
+            Average loss per batch for the entire epoch.
         """
         if self._DEBUG:
             batch_losses = []
@@ -286,7 +286,7 @@ class Trainer:
 
         for step, batch in enumerate(progress_bar):
             # Forward pass:
-            loss = self._training_step(batch)
+            loss = self._training_step_batch_weighted(batch)
 
             if self._DEBUG:
                 batch_losses.append(loss.item())
@@ -362,7 +362,7 @@ class Trainer:
         Train for one epoch with token-weighted loss averaging (each token
         contributes equally to the average).
         Returns:
-            Average loss per token for the entire epoch. 
+            Average loss per token for the entire epoch.
         """
         if self._DEBUG:
             batch_losses = []
@@ -386,7 +386,7 @@ class Trainer:
         for step, batch in enumerate(progress_bar):
             # Forward pass:
             # (loss: mean CE per token, returned by the model)
-            loss, num_tokens = self._training_step_token_weighted(batch) 
+            loss, num_tokens = self._training_step_token_weighted(batch)
 
             if self._DEBUG:
                 batch_losses.append(loss.item())
@@ -394,9 +394,9 @@ class Trainer:
                 token_counts.append(num_tokens)
 
             # Scale loss for gradient accumulation:
-            # (This eliminates the need for a multiplication to scale back the total loss.)
+            # (*) This eliminates the need for a multiplication to scale back the total loss.
             loss_scaled = loss / self.config.gradient_accumulation_steps # only for backward pass
-            
+
             # Backward pass (scaled):
             if self.scaler is not None:
                 self.scaler.scale(loss_scaled).backward()
@@ -412,9 +412,9 @@ class Trainer:
                             print(f"No grad for {name}")
 
             # Token-weighted accumulation (is more consistent):
-            # (Multiplication by 'gradient_accumulation_steps' to reverse the scaling.)
-            #total_loss += loss.item() * num_tokens * self.config.gradient_accumulation_steps
-            total_loss += loss.item() * num_tokens
+            # (Multiplication by 'gradient_accumulation_steps' to reverse the scaling:
+            #  total_loss += loss.item() * num_tokens * self.config.gradient_accumulation_steps)
+            total_loss += loss.item() * num_tokens # see (*)
             total_tokens += num_tokens
 
             # Accumlation of the gradients:
@@ -505,12 +505,12 @@ class Trainer:
 
         return loss, num_tokens
 
-    def _training_step(self, batch: Dict[str, torch.Tensor]) -> torch.Tensor:
+    def _training_step_batch_weighted(self, batch: Dict[str, torch.Tensor]) -> torch.Tensor:
         """Perform a single training step and returns the loss."""
         # Move batch to device
-        batch = {k: v.to(self.config.device) for k, v in batch.items() 
+        batch = {k: v.to(self.config.device) for k, v in batch.items()
                  if isinstance(v, torch.Tensor)}
-        
+
         # Forward pass
         if self.config.fp16:
             with torch.amp.autocast('cuda'):
@@ -523,9 +523,9 @@ class Trainer:
         else:
             outputs = self.model(**batch)
             loss = outputs.loss
-        
+
         return loss
-    
+
     @torch.no_grad()
     def evaluate_token_weighted(self) -> float:
         """
@@ -558,36 +558,36 @@ class Trainer:
             total_loss += loss.item() * num_tokens
             total_tokens += num_tokens
 
-        return total_loss / total_tokens
-    
+        return total_loss / total_tokens if total_tokens > 0 else float('inf')
+
     @torch.no_grad()
-    def evaluate(self) -> float:
+    def evaluate_batch_weighted(self) -> float:
         """
         Evaluate the model on the evaluation dataset with
         batch-weighted averaging.
         """
         if self.eval_dataloader is None:
             return float('inf')
-        
+
         self.model.eval()
         total_loss = 0.0
         num_batches = 0
-        
+
         for batch in tqdm(self.eval_dataloader, desc="Evaluating"):
             batch = {k: v.to(self.config.device) for k, v in batch.items()
                      if isinstance(v, torch.Tensor)}
-            
+
             outputs = self.model(**batch)
             total_loss += outputs.loss.item()
             num_batches += 1
-        
+
         return total_loss / num_batches if num_batches > 0 else float('inf')
-    
+
     def save_checkpoint(self, name: str) -> str:
         """Save model checkpoint."""
         checkpoint_dir = os.path.join(self.config.output_dir, name)
         os.makedirs(checkpoint_dir, exist_ok=True)
-        
+
         # Save model state
         checkpoint = {
             'model_state_dict': self.model.state_dict(),
@@ -607,27 +607,27 @@ class Trainer:
                 'training_mode': self.config.training_mode,
             }
         }
-        
+
         checkpoint_path = os.path.join(checkpoint_dir, 'checkpoint.pt')
         torch.save(checkpoint, checkpoint_path)
-        
+
         # Save config as JSON
         config_path = os.path.join(checkpoint_dir, 'config.json')
         with open(config_path, 'w') as f:
             json.dump(checkpoint['config'], f, indent=2)
-        
+
         logger.info(f"Checkpoint saved to {checkpoint_dir}")
-        
+
         # Cleanup old checkpoints if needed
         self._cleanup_checkpoints()
-        
+
         return checkpoint_dir
-    
+
     def _cleanup_checkpoints(self) -> None:
         """Remove old checkpoints if exceeding save_total_limit."""
         if self.config.save_total_limit is None or self.config.save_total_limit <= 0:
             return
-        
+
         checkpoints = []
         for name in os.listdir(self.config.output_dir):
             path = os.path.join(self.config.output_dir, name)
@@ -637,21 +637,21 @@ class Trainer:
                     checkpoints.append((step, path))
                 except ValueError:
                     continue
-        
+
         # Sort by step number
         checkpoints.sort(key=lambda x: x[0])
-        
+
         # Remove oldest checkpoints
         while len(checkpoints) > self.config.save_total_limit:
             _, path = checkpoints.pop(0)
             logger.info(f"Removing old checkpoint: {path}")
             import shutil
             shutil.rmtree(path)
-    
+
     def load_checkpoint(self, checkpoint_path: str) -> None:
         """Load model from checkpoint."""
         checkpoint = torch.load(checkpoint_path, map_location=self.config.device)
-        
+
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
@@ -660,6 +660,6 @@ class Trainer:
         self.best_eval_loss = checkpoint.get('best_eval_loss', float('inf'))
         self.train_losses = checkpoint.get('train_losses', [])
         self.eval_losses = checkpoint.get('eval_losses', [])
-        
+
         logger.info(f"Loaded checkpoint from {checkpoint_path}")
         logger.info(f"Resuming from epoch {self.current_epoch}, step {self.global_step}")

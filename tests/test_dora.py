@@ -4,31 +4,43 @@ import pytest
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 import sys
 from pathlib import Path
+from torch.nn import functional as F
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from src.lora.layer import LoRALayer
-from src.lora.model import LoRALinear, LoRAGPT2
+from src.lora.layer import DoRALayer
+from src.lora.model import DoRALinear, DoRAGPT2
 
 
-class TestLoRALayer:
+class TestDoRALayer:
 
     @pytest.mark.layer
     def test_initialization(self):
-        layer = LoRALayer(in_features=128, out_features=64, rank=8, alpha=16)
+        layer = DoRALayer(
+            in_features=128,
+            out_features=64,
+            rank=8,
+            alpha=16,
+            base_weight=torch.randn(64, 128),
+        )
         assert not torch.allclose(layer.lora_A, torch.zeros_like(layer.lora_A))
         assert torch.allclose(layer.lora_B, torch.zeros_like(layer.lora_B))
+        assert layer.magnitude.shape == (128,)
 
     @pytest.mark.layer
     def test_output_shape(self):
         batch_size, seq_len, in_features = 2, 10, 128
         out_features = 64
 
-        layer = LoRALayer(
-            in_features=in_features, out_features=out_features, rank=8, alpha=16
+        layer = DoRALayer(
+            in_features=in_features,
+            out_features=out_features,
+            rank=8,
+            alpha=16,
+            base_weight=torch.randn(64, 128),
         )
         x = torch.randn(batch_size, seq_len, in_features)
 
-        output = layer(x)
+        output = layer(x, torch.randn(64, 128))
 
         assert output.shape == (batch_size, seq_len, out_features)
 
@@ -36,45 +48,67 @@ class TestLoRALayer:
     def test_scaling_factor(self):
         """Verify scaling factor alpha/rank is applied"""
         rank, alpha = 8, 16
-        layer = LoRALayer(in_features=128, out_features=64, rank=rank, alpha=alpha)
+        layer = DoRALayer(
+            in_features=128,
+            out_features=64,
+            rank=rank,
+            alpha=alpha,
+            base_weight=torch.randn(64, 128),
+        )
 
         assert layer.scaling == alpha / rank
 
     @pytest.mark.layer
-    def test_zero_output_when_B_is_zero(self):
-        layer = LoRALayer(in_features=128, out_features=64, rank=8, alpha=16)
+    def test_identity_when_B_is_zero(self):
+        base_weight = torch.randn(64, 128)
+        layer = DoRALayer(
+            in_features=128,
+            out_features=64,
+            rank=8,
+            alpha=16,
+            base_weight=base_weight,
+            dropout=0.0,
+        )
+        print(f"Dropout in layer: {layer.dropout}")
         x = torch.randn(2, 10, 128)
+        output = layer(x, base_weight)
+        expected = F.linear(x, base_weight)
 
-        output = layer(x)
-
-        assert torch.allclose(output, torch.zeros_like(output))
+        assert torch.allclose(output, expected, atol=1e-6)
 
 
-class TestLoRALinear:
+class TestDoRALinear:
 
     @pytest.mark.linear
     def test_wraps_base_layer(self):
         base = nn.Linear(128, 64)
-        lora_linear = LoRALinear(base, rank=8, alpha=16)
+        dora_linear = DoRALinear(base, rank=8, alpha=16, dropout=0.0)
 
-        assert lora_linear.base_layer is base
-        assert isinstance(lora_linear.lora, LoRALayer)
+        assert dora_linear.base_layer is base
+        assert isinstance(dora_linear.lora, DoRALayer)
 
     @pytest.mark.linear
-    def test_forward_combines_base_and_lora(self):
+    def test_forward_applies_dora_formula(self):
         base = nn.Linear(128, 64)
-        lora_linear = LoRALinear(base, rank=8, alpha=16)
+        dora_linear = DoRALinear(base, rank=8, alpha=16, dropout=0.0)
 
         x = torch.randn(2, 10, 128)
 
-        output = lora_linear(x)
-        expected = base(x) + lora_linear.lora(x)
+        output = dora_linear(x)
+        # Manually compute DoRA formula
+        merged = (
+            base.weight
+            + (dora_linear.lora.lora_B @ dora_linear.lora.lora_A)
+            * dora_linear.lora.scaling
+        )
+        norm = torch.norm(merged, dim=0, keepdim=True)
+        W = dora_linear.lora.magnitude * merged / norm
+        expected = x @ W.T
 
         assert torch.allclose(output, expected)
 
 
-class TestLoRAGPT2:
-    """Test LoRAGPT2 model"""
+class TestDoRAGPT2:
 
     # this annotation makes it so that evert test with gpt2_model as paramether
     # gets the initialized gpt2 model without writing it explicitly every time
@@ -84,41 +118,40 @@ class TestLoRAGPT2:
 
     @pytest.mark.model
     def test_freezes_base_parameters(self, gpt2_model):
-        lora_model = LoRAGPT2(
+        dora_model = DoRAGPT2(
             gpt2_model, rank=8, alpha=16, target_modules=["c_attn", "c_proj"]
         )
 
-        lora_param_ids = {id(p) for p in lora_model.get_lora_parameters()}
+        dora_param_ids = {id(p) for p in dora_model.get_lora_parameters()}
         for param in gpt2_model.parameters():
-            if id(param) not in lora_param_ids:
+            if id(param) not in dora_param_ids:
                 assert param.requires_grad == False
 
     @pytest.mark.model
     def test_injects_lora_modules(self, gpt2_model):
-        lora_model = LoRAGPT2(
+        dora_model = DoRAGPT2(
             gpt2_model, rank=8, alpha=16, target_modules=["c_attn", "c_proj"]
         )
 
-        assert len(lora_model.lora_modules) > 0
+        assert len(dora_model.lora_modules) > 0
 
-        for name in lora_model.lora_modules:
+        for name in dora_model.lora_modules:
             assert any(target in name for target in ["c_attn", "c_proj"])
 
     @pytest.mark.model
     def test_only_lora_parameters_trainable(self, gpt2_model):
-        lora_model = LoRAGPT2(
+        dora_model = DoRAGPT2(
             gpt2_model, rank=8, alpha=16, target_modules=["c_attn", "c_proj"]
         )
 
-        lora_params = lora_model.get_lora_parameters()
-
-        assert len(lora_params) > 0
-        for param in lora_params:
+        dora_params = dora_model.get_lora_parameters()
+        assert len(dora_params) > 0
+        for param in dora_params:
             assert param.requires_grad == True
 
     @pytest.mark.model
     def test_forward_pass(self, gpt2_model):
-        lora_model = LoRAGPT2(
+        dora_model = DoRAGPT2(
             gpt2_model, rank=8, alpha=16, target_modules=["c_attn", "c_proj"]
         )
 
@@ -126,7 +159,7 @@ class TestLoRAGPT2:
         batch_size, seq_len = 2, 10
         input_ids = torch.randint(0, 1000, (batch_size, seq_len))
 
-        output = lora_model(input_ids=input_ids)
+        output = dora_model(input_ids=input_ids)
 
         assert hasattr(output, "logits")
         assert output.logits.shape == (
@@ -138,33 +171,33 @@ class TestLoRAGPT2:
     @pytest.mark.model
     def test_fails_on_invalid_target_modules(self, gpt2_model):
         with pytest.raises(AssertionError):
-            LoRAGPT2(
+            DoRAGPT2(
                 gpt2_model, rank=8, alpha=16, target_modules=["invalid_module_name"]
             )
 
     @pytest.mark.model
     def test_parameter_count(self, gpt2_model):
-        lora_model = LoRAGPT2(
+        dora_model = DoRAGPT2(
             gpt2_model, rank=8, alpha=16, target_modules=["c_attn", "c_proj"]
         )
 
         total = sum(p.numel() for p in gpt2_model.parameters())
-        trainable = sum(p.numel() for p in lora_model.get_lora_parameters())
+        trainable = sum(p.numel() for p in dora_model.get_lora_parameters())
 
         assert total / trainable > 100
 
 
-class TestLoRALearning:
+class TestDoRALearning:
 
     @pytest.fixture
     def model_and_inputs(self):
         base_model = GPT2LMHeadModel.from_pretrained("gpt2-medium")
-        model = LoRAGPT2(
+        model = DoRAGPT2(
             base_model=base_model,
             rank=4,
             alpha=16.0,
+            dropout=0.0,
             target_modules=["c_attn"],
-            dropout=0.0
         )
 
         tokenizer = GPT2Tokenizer.from_pretrained("gpt2-medium")
@@ -177,11 +210,11 @@ class TestLoRALearning:
         return model, inputs
 
     @pytest.mark.learning
-    def test_only_lora_receives_gradients(self, model_and_inputs):
+    def test_only_dora_receives_gradients(self, model_and_inputs):
         model, inputs = model_and_inputs
 
-        lora_params = model.get_lora_parameters()
-        optimizer = torch.optim.SGD(lora_params, lr=1e-3)
+        dora_params = model.get_lora_parameters()
+        optimizer = torch.optim.SGD(dora_params, lr=1e-3)
 
         # warmup step if we want gradient to pass the B
         optimizer.zero_grad()
@@ -196,11 +229,13 @@ class TestLoRALearning:
         for name, param in model.base_model.named_parameters():
             if "lora" in name:
                 assert param.grad is not None, f"LoRA param {name} missing gradient"
-                assert not torch.allclose(param.grad, torch.zeros_like(param.grad)), \
-                    f"LoRA param {name} has zero gradient"
+                assert not torch.allclose(
+                    param.grad, torch.zeros_like(param.grad)
+                ), f"LoRA param {name} has zero gradient"
             else:
-                assert param.grad is None or torch.allclose(param.grad, torch.zeros_like(param.grad)), \
-                    f"Base param {name} should not receive gradients"
+                assert param.grad is None or torch.allclose(
+                    param.grad, torch.zeros_like(param.grad)
+                ), f"Base param {name} should not receive gradients"
 
     @pytest.mark.learning
     def test_parameters_update_after_step(self, model_and_inputs):
@@ -220,8 +255,9 @@ class TestLoRALearning:
             optimizer.step()
 
         for initial, current in zip(initial_params, lora_params):
-            assert not torch.allclose(initial, current.data), \
-                "LoRA parameters did not update after optimizer step"
+            assert not torch.allclose(
+                initial, current.data
+            ), "LoRA parameters did not update after optimizer step"
 
     @pytest.mark.learning
     def test_loss_decreases_on_overfit(self, model_and_inputs):
@@ -240,8 +276,9 @@ class TestLoRALearning:
 
         final_loss = model(**inputs).loss.item()
 
-        assert final_loss < initial_loss, \
-            f"Loss did not decrease: {initial_loss:.4f} -> {final_loss:.4f}"
+        assert (
+            final_loss < initial_loss
+        ), f"Loss did not decrease: {initial_loss:.4f} -> {final_loss:.4f}"
 
 
 # tagging of tests definetlye not required but i am flexing

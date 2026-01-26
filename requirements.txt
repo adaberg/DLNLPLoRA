@@ -4,6 +4,7 @@ transformers
 datasets
 evaluate
 rouge-score
+bert-score
 
 # Configuration
 pyyaml

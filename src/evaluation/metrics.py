@@ -2,7 +2,7 @@
 Evaluation metrics for LoRA project.
 """
 
-from typing import List, Dict
+from typing import List, Dict, Any
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO)
 def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) -> float:
     """
     Compute perplexity: exp(average_cross_entropy_loss)
-        
+
     Returns:
         Perplexity score (float)
     """
@@ -31,9 +31,9 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
 
     with torch.no_grad():
         for batch in dataloader:
-            batch = {k: v.to(device) for k, v in batch.items() 
+            batch = {k: v.to(device) for k, v in batch.items()
                     if isinstance(v, torch.Tensor)}
-            
+
             outputs = model(**batch)
             # Note: The standard HuggingFace GPT-2 model does not support the "loss_type" parameter.
             #       This will likely lead to an error or incorrect loss calculation.
@@ -45,14 +45,14 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
                 )
 
             loss = outputs.loss
-            
+
             batch_size = batch["input_ids"].size(0)
             total_loss += loss.item() * batch_size
             total_samples += batch_size
 
     if total_samples == 0:
         raise ValueError("No valid batches processed for perplexity computation")
-    
+
     avg_loss = total_loss / total_samples
     perplexity = np.exp(avg_loss)
 
@@ -69,12 +69,40 @@ def generate_texts(
     max_new_tokens: int = 30, # reduced from 50
     length_penalty: float = 0.9, # model applies a penalty based on the sequence length
     device: str = "cuda",
+    num_beams: int = 10,
+    length_penalty: float = 0.9,
+    no_repeat_ngram_size: int = 4,
+    use_beam_search: bool = True,
     use_greedy: bool = True
 ) -> List[str]:
     """
     Generate text completions for given prompts.
+
+    Uses beam search by default (as specified in LoRA paper Table 11/Section D.3):
+    - num_beams: 10
+    - length_penalty: 0.9 (for E2E)
+    - no_repeat_ngram_size: 4
+
+    Args:
+        model: The language model
+        tokenizer: Tokenizer for encoding/decoding
+        prompts: List of input prompts
+        max_new_tokens: Maximum tokens to generate
+        device: Device to run on
+        num_beams: Number of beams for beam search (paper: 10)
+        length_penalty: Length penalty for beam search (paper: 0.9 for E2E)
+        no_repeat_ngram_size: Prevent n-gram repetition (paper: 4)
+        use_beam_search: If True, the model uses beam search if use_greedy is also
+                         set to True. If 'use_greedy' is set to False, the model
+                         uses sampling instead of beam search (default: True).
+        use_greedy: If True, the model generates a deterministic output (greedy decoding);
+                    otherwise, the model uses non-deterministic sampling (default: True).
+
+    Returns:
+        List of generated text completions
     """
     model.eval()
+    outputs = None
     generated_texts = []
 
     if tokenizer.pad_token is None:
@@ -84,21 +112,26 @@ def generate_texts(
         for prompt in prompts:
             try:
                 inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
-                # Attention mask:
+
+                # Attention mask for the inputs:
                 attention_mask = torch.ones_like(inputs)
 
-                # Generate text
-                if use_greedy:
-                    # Greedy decoding (deterministic and better for BLEU evaluation).
+                # Generate text:
+                if use_beam_search:
+                    # Generate text using beam search (paper-specified parameters)
+                    # When greedy decoding is enabled, the model is deterministic,
+                    # which is better for BLEU evaluation.
                     outputs = model.generate(
                         inputs,
                         attention_mask=attention_mask,
-                        do_sample=False, # activates greedy
+                        do_sample=False if use_greedy else True,
+                        early_stopping=True,
                         min_new_tokens=1,
                         max_new_tokens=max_new_tokens,
                         length_penalty=length_penalty,
-                        no_repeat_ngram_size=4,
-                        #num_beams=10,
+                        no_repeat_ngram_size=no_repeat_ngram_size,
+                        # paper states reuse of params of https://arxiv.org/pdf/2101.00190 (beam size = 5)
+                        num_beams=num_beams,
                         pad_token_id=tokenizer.pad_token_id,
                         eos_token_id=tokenizer.eos_token_id
                     )
@@ -112,7 +145,7 @@ def generate_texts(
                         min_new_tokens=1,
                         max_new_tokens=max_new_tokens,
                         length_penalty=length_penalty,
-                        no_repeat_ngram_size=4,
+                        no_repeat_ngram_size=no_repeat_ngram_size,
                         temperature=0.8,
                         top_p=0.9,
                         pad_token_id=tokenizer.pad_token_id,
@@ -135,47 +168,61 @@ def generate_texts(
 
 
 def compute_generation_metrics(
-    predictions: List[str], references: List[str]
+    predictions: List[str],
+    references: List[List[str]],
+    num_samples: int | None = None,
+    do_bootstrap_eval: bool = False
 ) -> Dict[str, float]:
     """
     Compute BLEU and ROUGE F1 scores using HuggingFace evaluate library
     (fast, single-pass metrics for monitoring).
+
+    Args:
+        predictions: List of generated texts (one per unique MR)
+        references: List of reference lists (multiple references per MR)
+                   Format: [[ref1_mr1, ref2_mr1, ...], [ref1_mr2, ref2_mr2, ...], ...]
+
+    Returns:
+        Dictionary with BLEU and ROUGE F1 scores
     """
     if len(predictions) != len(references):
         raise ValueError(
             f"Length mismatch: predictions ({len(predictions)}) != "
             f"references ({len(references)})"
         )
-    
+
     predictions = [str(p).strip() for p in predictions]
-    references = [str(r).strip() for r in references]
+    # Clean up references (each is a list of strings):
+    references = [[str(r).strip() for r in ref_list] for ref_list in references]
     results = {}
 
-    # 1. Compute BLEU score (corpus-level):
+    # 1. Compute BLEU score with multiple references (corpus-level):
     try:
         bleu = evaluate.load("bleu")
-        references_list = [[ref] for ref in references]
-        bleu_result = bleu.compute(predictions=predictions, references=references_list)
+        # references is already in correct format: List[List[str]]
+        bleu_result = bleu.compute(predictions=predictions, references=references)
         results["bleu"] = bleu_result["bleu"] # corpus BLEU
         logger.info("BLEU (corpus-level, precision-based)")
     except Exception as e:
-        logger.warning(f"BLEU computation failed: {e}")
+        logger.warning(f"BLEU calculation failed: {e}")
         results["bleu"] = 0.0
 
-    # 2. Compute ROUGE F1 scores:
-    #    (returns the F1 score by default) 
+    # 2. Compute ROUGE F1 scores (use first reference from each list for ROUGE):
+    #    Note: ROUGE F1 doesn't natively support multiple references well.
     try:
         rouge = evaluate.load("rouge")
+        # Use first reference for ROUGE computation
+        first_references = [ref_list[0] for ref_list in references]
         rouge_result = rouge.compute(
             predictions=predictions,
-            references=references,
+            references=first_references,
             use_stemmer=True
         )
         results["rouge1_f1"] = rouge_result["rouge1"]
         results["rouge2_f1"] = rouge_result["rouge2"]
         results["rougeL_f1"] = rouge_result["rougeL"]
     except Exception as e:
-        logger.warning(f"ROUGE F1 computation failed: {e}")
+        logger.warning(f"ROUGE F1 calculation failed: {e}")
         results.update({"rouge1_f1": 0.0, "rouge2_f1": 0.0, "rougeL_f1": 0.0})
 
     # 3. Compute BERTScore F1:
@@ -189,7 +236,7 @@ def compute_generation_metrics(
         )
         results["bertscore_f1"] = float(np.mean(bert_result["f1"]))
     except Exception as e:
-        logger.warning(f"ROUGE F1 computation failed: {e}")
+        logger.warning(f"BERTScore F1 calculation failed: {e}")
         results.update({"bertscore_f1": 0.0})
 
     logger.info(
@@ -199,27 +246,38 @@ def compute_generation_metrics(
         f"ROUGE-L F1={results.get('rougeL_f1', 0):.4f}"
     )
 
+    if num_samples and do_bootstrap_eval:
+        boot_result = compute_bootstrap_generation_metrics(
+            predictions=predictions,
+            references=references,
+            num_samples=num_samples
+        )
+        results["bootstrap"] = boot_result
+
     return results
 
 
 def compute_bootstrap_generation_metrics(
-    predictions: list[str],
-    references: list[str],
-    num_samples: int = 1000,
+    predictions: List[str],
+    references: List[str],
+    num_samples: int,
     confidence: float = 0.95,
     seed: int = 42,
-) -> dict:
+) -> Dict[str, Dict[str, float]]:
     """
     Compute bootstrapped BLEU and ROUGE F1 scores with confidence intervals
     (slow, statistical evaluation with CI).
 
     Returns mean and CI bounds.
     """
-
     rng = np.random.default_rng(seed)
 
-    bleu = evaluate.load("bleu")
-    rouge = evaluate.load("rouge")
+    try:
+        bleu = evaluate.load("bleu")
+        rouge = evaluate.load("rouge")
+    except Exception as e:
+        logger.warning(f"Bootstrap metrics calculation failed: {e}")
+        return {}
 
     bleu_scores = []
     rouge1_scores = []
@@ -250,10 +308,15 @@ def compute_bootstrap_generation_metrics(
         rouge2_scores.append(rouge_result["rouge2"])
         rougeL_scores.append(rouge_result["rougeL"])
 
+    # Calculation of the confidence intervalls:
     def ci(scores):
         lower = np.percentile(scores, (1.0 - confidence) / 2.0 * 100.0)
         upper = np.percentile(scores, (1.0 + confidence) / 2.0 * 100.0)
-        return float(np.mean(scores)), float(lower), float(upper)
+        return {
+            "mean": float(np.mean(scores)),
+            "lower": float(lower),
+            "upper": float(upper)
+        }
 
     return {
         "boot_bleu": ci(bleu_scores),
@@ -263,21 +326,54 @@ def compute_bootstrap_generation_metrics(
     }
 
 
-# Additional utility function (not in original spec but useful)
 def evaluate_model_comprehensive(
     model: nn.Module,
     tokenizer: PreTrainedTokenizer,
     test_loader: DataLoader,
     test_dataset,
     device: str = "cuda",
-    num_samples: int = 10,
+    num_samples: int = -1,
     max_new_tokens = 30,
-    do_bootstrap_eval: bool = False,
-    use_greedy: bool = True
+    generation_config: Dict[str, Any] | None = None,
+    do_bootstrap_eval: bool = False
 ) -> Dict[str, float]:
     """
     Comprehensive evaluation combining perplexity and generation metrics.
+
+    E2E NLG evaluation methodology:
+    - Test samples are grouped by unique meaning representation (MR)
+    - Generate one prediction per unique MR
+    - Compute multi-reference BLEU
+        (validate output against ALL references for each MR)
+
+    Args:
+        model: The language model to evaluate
+        tokenizer: Tokenizer for encoding/decoding
+        test_loader: DataLoader for perplexity computation
+        test_dataset: Dataset with get_grouped_data() method
+        device: Device to run on
+        num_samples: Number of unique MRs to evaluate (-1 for all)
+        generation_config: Dict with generation parameters:
+            - max_new_tokens (default: 30)
+            - num_beams (default: 10, from LoRA paper)
+            - length_penalty (default: 0.9, from LoRA paper for E2E)
+            - no_repeat_ngram_size (default: 4, from LoRA paper)
+            - use_beam_search (default: True)
+            - use_greedy (default: True)
+        do_bootstrap_eval: Compute bootstrapped BLEU and ROUGE F1 with
+                           confidence intervals
     """
+    if generation_config is None:
+        generation_config = {}
+
+    # Default generation parameters from LoRA paper (Table 11 / Section D.3)
+    max_new_tokens = generation_config.get("max_new_tokens", 30)
+    num_beams = generation_config.get("num_beams", generation_config.get("beam_size", 10))
+    length_penalty = generation_config.get("length_penalty", 0.9)
+    no_repeat_ngram_size = generation_config.get("no_repeat_ngram_size", 4)
+    use_beam_search = generation_config.get("use_beam_search", True)
+    use_greedy = generation_config.get("use_greedy", True)
+
     results = {}
 
     # 1. Compute perplexity
@@ -289,63 +385,81 @@ def evaluate_model_comprehensive(
         logger.error(f"Perplexity computation failed: {e}")
         results["perplexity"] = float("inf")
 
-    # 2. Generate texts for evaluation
-    logger.info(f"Generating texts for {num_samples} samples...")
+    # 2. Get grouped data (unique MRs with all their references)
+    if not hasattr(test_dataset, 'get_grouped_data'):
+        logger.error("test_dataset must have get_grouped_data() method for proper E2E evaluation")
+        return results
 
+    grouped_data = test_dataset.get_grouped_data()
+    total_unique_mrs = len(grouped_data)
+
+    # Determine how many MRs to evaluate
+    if num_samples == -1 or num_samples > total_unique_mrs:
+        num_samples = total_unique_mrs
+
+    logger.info(f"E2E Evaluation: {num_samples} unique MRs (out of {total_unique_mrs} total)")
+    logger.info(f"Total test samples: {len(test_dataset)}, Average refs per MR: {len(test_dataset)/total_unique_mrs:.1f}")
+    logger.info(
+        f"Generation config: num_beams={num_beams}, length_penalty={length_penalty}, no_repeat_ngram_size={no_repeat_ngram_size}, "
+        f"use_beam_search={use_beam_search}, use_greedy={use_greedy}"
+    )
+
+    # 3. Generate texts for evaluation (ONE per unique MR)
     prompts = []
-    references = []
+    all_references = []  # List[List[str]] - multiple refs per MR
+    mr_list = []  # Keep track of MRs for examples
 
-    for i in range(min(num_samples, len(test_dataset))):
-        if hasattr(test_dataset, 'get_raw_sample'):
-            raw = test_dataset.get_raw_sample(i)
-            mr = raw.get("meaning_representation", "")
-            ref = raw.get("human_reference", "")
-        else:
-            try:
-                mr = test_dataset.dataset[i]["meaning_representation"]
-                ref = test_dataset.dataset[i]["human_reference"]
-            except:
-                logger.warning(f"Could not extract sample {i}, skipping")
-                continue
-        
+    for i, (mr, refs) in enumerate(grouped_data.items()):
+        if i >= num_samples:
+            break
         prompt = f"meaning_representation: {mr} | reference:"
         prompts.append(prompt)
-        references.append(ref)
+        all_references.append(refs)  # All references for this MR
+        mr_list.append(mr)
 
     if len(prompts) > 0:
+        logger.info(f"Generating {len(prompts)} predictions (one per unique MR)...")
         predictions = generate_texts(
             model=model,
             tokenizer=tokenizer,
             prompts=prompts,
             max_new_tokens=max_new_tokens,
             device=device,
+            num_beams=num_beams,
+            length_penalty=length_penalty,
+            no_repeat_ngram_size=no_repeat_ngram_size,
+            use_beam_search=use_beam_search,
             use_greedy=use_greedy
         )
-        
-        logger.info("Computing generation metrics...")
-        metrics = compute_generation_metrics(predictions, references)
-        if do_bootstrap_eval:
-            metrics["bootstrap"] = compute_bootstrap_generation_metrics(
-                predictions,
-                references,
-                num_samples=num_samples
-            )
 
-        results.update(metrics)
+        logger.info("Computing generation metrics with multi-reference BLEU...")
+        gen_metrics = compute_generation_metrics(
+            predictions=predictions,
+            references=all_references,
+            num_samples=num_samples,
+            do_bootstrap_eval=do_bootstrap_eval
+        )
+        results.update(gen_metrics)
 
+        # Store some examples for inspection
         results["_examples"] = []
         for i in range(min(3, len(prompts))):
             results["_examples"].append(
                 {
-                    "prompt": (
-                        prompts[i][:100] + "..."
-                        if len(prompts[i]) > 100
-                        else prompts[i]
-                    ),
+                    "mr": mr_list[i][:100] + "..." if len(mr_list[i]) > 100 else mr_list[i],
                     "prediction": predictions[i],
-                    "reference": references[i],
+                    "num_references": len(all_references[i]),
+                    "sample_reference": all_references[i][0],  # Show first reference
                 }
             )
+
+        # Add evaluation metadata
+        results["_eval_info"] = {
+            "unique_mrs_evaluated": len(prompts),
+            "total_unique_mrs": total_unique_mrs,
+            "total_test_samples": len(test_dataset),
+            "avg_refs_per_mr": len(test_dataset) / total_unique_mrs,
+        }
     else:
         logger.warning("No valid prompts extracted for generation evaluation")
 
@@ -356,7 +470,7 @@ def evaluate_model_comprehensive(
 def _test_metrics():
     """Internal test function to verify metrics work correctly."""
     print("Testing evaluation metrics...")
-    
+
     class MockModel(nn.Module):
         def __init__(self):
             super().__init__()
@@ -374,12 +488,12 @@ def _test_metrics():
 
         def generate(self, input_ids, **kwargs):
             return torch.cat([input_ids, input_ids], dim=-1)
-    
+
     from transformers import GPT2TokenizerFast
-    
+
     tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
-    
+
     prompts = ["Hello world", "Test prompt"]
     model = MockModel()
 
@@ -390,13 +504,18 @@ def _test_metrics():
         prompts=prompts,
         max_new_tokens=30,
         device="cpu",
+        use_beam_search=True,
         use_greedy=True # always true during testing
     )
     print(f"Generated: {generated}")
 
-    print("\nTesting compute_generation_metrics...")
+    print("\nTesting compute_generation_metrics with multi-reference BLEU...")
     predictions = ["The cat sits on the mat", "I love programming"]
-    references = ["The cat sits on the mat", "I enjoy coding"]
+    # NB: Multi-reference format: List[List[str]]
+    references = [
+        ["The cat sits on the mat", "A cat is sitting on the mat", "The cat sat on the mat"],
+        ["I enjoy coding", "I love programming", "Programming is fun"]
+    ]
 
     metrics = compute_generation_metrics(predictions, references)
     print(f"Metrics: {metrics}")
