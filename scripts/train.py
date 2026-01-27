@@ -101,8 +101,7 @@ def setup_data(config: dict, tokenizer, training_config: TrainingConfig):
     """Setup datasets and dataloaders."""
     logger.info("Setting up datasets...")
 
-    #max_length = config.get('max_length', 256)
-    max_length = config.get('max_length', 128)
+    max_length = config.get('max_length', 256)
     sample_percentage = config.get('sample_percentage', 1.0)
 
     train_dataset = E2EDataset(
@@ -127,7 +126,7 @@ def setup_data(config: dict, tokenizer, training_config: TrainingConfig):
 
     val_loader = get_dataloader(
         val_dataset,
-        batch_size=training_config.batch_size * 2, # Larger batch for evaluation
+        batch_size=training_config.batch_size * 2,  # Larger batch for evaluation
         shuffle=False
     )
 

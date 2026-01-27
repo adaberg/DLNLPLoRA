@@ -218,16 +218,16 @@ class Trainer:
             self.current_epoch = epoch
 
             #train_loss = self._train_epoch_batch_weighted(epoch)
-            train_loss = self._train_epoch_token_weighted(epoch) # paper-conform
+            train_loss = self._train_epoch_token_weighted(epoch)  # paper-conform
             self.train_losses.append(train_loss)
 
             logger.info(f"Epoch {epoch + 1}/{self.config.num_epochs} - Train Loss: {train_loss:.4f}")
 
-            ## Evaluation:
+            # Evaluation:
             eval_loss = None
             if self.eval_dataloader is not None:
                 #eval_loss = self.evaluate_batch_weighted()
-                eval_loss = self.evaluate_token_weighted() # paper-conform
+                eval_loss = self.evaluate_token_weighted()  # paper-conform
                 self.eval_losses.append(eval_loss)
                 logger.info(f"Epoch {epoch + 1}/{self.config.num_epochs} - Eval Loss: {eval_loss:.4f}")
 
@@ -395,7 +395,7 @@ class Trainer:
 
             # Scale loss for gradient accumulation:
             # (*) This eliminates the need for a multiplication to scale back the total loss.
-            loss_scaled = loss / self.config.gradient_accumulation_steps # only for backward pass
+            loss_scaled = loss / self.config.gradient_accumulation_steps  # only for backward pass
 
             # Backward pass (scaled):
             if self.scaler is not None:
@@ -414,7 +414,7 @@ class Trainer:
             # Token-weighted accumulation (is more consistent):
             # (Multiplication by 'gradient_accumulation_steps' to reverse the scaling:
             #  total_loss += loss.item() * num_tokens * self.config.gradient_accumulation_steps)
-            total_loss += loss.item() * num_tokens # see (*)
+            total_loss += loss.item() * num_tokens  # see (*)
             total_tokens += num_tokens
 
             # Accumlation of the gradients:

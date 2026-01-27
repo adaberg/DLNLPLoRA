@@ -17,14 +17,19 @@ class E2EDataset(Dataset):
     """
     E2E NLG dataset for language modeling.
 
-    IMPORTANT: Adds EOS token after reference text so model learns to stop!
+    Note: An EOS token is added to each reference text in the dataset so that
+    the model learns to stop. Additionally, the maximum sequence length is
+    important to consider. If it is too short (< 192), then target truncations
+    occur and no complete sentences are formed.
+    The prompt format is also an important factor; no special characters may
+    be used in the text, such as "|".
     """
 
     def __init__(
         self,
         split: str,
         tokenizer: PreTrainedTokenizer,
-        max_length: int = 128, # reduced by half from 256, E2E samples are short!
+        max_length: int = 256,  # length >= 128 and <= 256, E2E samples are short!
         sample_percentage: float = 1.0,
         device: Optional[str] = None,
         add_eos_token: bool = True  # add EOS after reference
@@ -80,13 +85,14 @@ class E2EDataset(Dataset):
         meaning_rep = sample["meaning_representation"]
         reference = sample["human_reference"]
 
-        # Format with EOS token:
-        prompt = f"MR: {meaning_rep}\nREF:"
+        # Format full text (prompt + target) with EOS token:
+        prompt = self.format_prompt(meaning_rep)
         if self.add_eos_token:
-            text = f"{prompt} {reference}{self.tokenizer.eos_token}" # see (**) 
+            text = f"{prompt} {reference.strip()}{self.tokenizer.eos_token}"  # see (**)
         else:
-            text = f"{prompt} {reference}"
+            text = f"{prompt} {reference.strip()}"
 
+        # Tokenize the entire text sequence (prompt + target):
         encoding = self.tokenizer(
             text,
             truncation=True,
@@ -95,14 +101,28 @@ class E2EDataset(Dataset):
             return_tensors="pt"
         )
 
+        input_ids = encoding["input_ids"].squeeze(0)
         attention_mask = encoding["attention_mask"].squeeze(0)
-        labels = encoding["input_ids"].squeeze(0).clone()
+        labels = input_ids.clone()  # initial labels (copy 'input_ids')
 
+        # Mask prompt tokens (no padding):
+        prompt_ids = self.tokenizer(
+            prompt,
+            truncation=True,
+            max_length=self.max_length,
+            return_tensors="pt",
+            add_special_tokens=False,
+        )["input_ids"].squeeze(0)
+
+        prompt_len = prompt_ids.size(0)
+
+        # Ignore prompt tokens in loss:
+        labels[:prompt_len] = -100
         # Ignore padding tokens in loss:
         labels[attention_mask == 0] = -100
 
         item = {
-            "input_ids": encoding["input_ids"].squeeze(0),
+            "input_ids": input_ids,
             "attention_mask": attention_mask,
             "labels": labels
         }
@@ -113,15 +133,23 @@ class E2EDataset(Dataset):
         return item
 
     @staticmethod
+    def format_prompt(meaning_rep: str) -> str:
+        """Formats the input meaning representation as a generation prompt."""
+        return f"MR: {meaning_rep.strip()}\nREF:"  # the "\n" produces a better BLEU than the space " "
+
+    @staticmethod
     def format_sample(meaning_rep: str, reference: str, eos_token: str = "") -> str:
-        """Format a single sample for language modeling."""
+        """
+        Formats a full sample (prompt + target) for language modeling.
+        Note: Use this function only for training or testing, and not
+              for evaluation or data generation.
+        """
         # (**) Note: Do not use the rarely used pipe character "|", it is a strong
         #            and rare token and GPT-2 has hardly been trained on it.
         #            --> It strongly influences the BLEU score.
         # return f"meaning_representation: {meaning_rep.strip()} | reference: {reference.strip()}{eos_token}"
-        prompt = f"MR: {meaning_rep.strip()}\nREF:"
-        text = f"{prompt} {reference.strip()}{eos_token}"
-        return text
+        prompt = self.format_prompt(meaning_rep)
+        return f"{prompt} {reference.strip()}{eos_token}"  # full text
 
     def get_raw_sample(self, idx: int) -> Dict[str, str]:
         """Get raw sample for inspection."""
@@ -178,7 +206,7 @@ def create_datasets_and_loaders(
     tokenizer: PreTrainedTokenizer,
     train_batch_size: int = 8,
     val_batch_size: int = 16,
-    max_length: int = 128, # reduced from 256
+    max_length: int = 256,
     sample_percentage: float = 1.0,
     device: Optional[str] = None,
     add_eos_token: bool = True
@@ -231,7 +259,7 @@ def create_datasets_and_loaders(
         length = (sample["attention_mask"] == 1).sum().item()
         sample_lengths.append(length)
 
-    logger.info(f"Average token length (first 100 samples): {sum(sample_lengths)/len(sample_lengths):.1f}")
+    logger.info(f"Average token length (first 100 samples): {sum(sample_lengths) / len(sample_lengths):.1f}")
     logger.info(f"Max token length (first 100 samples): {max(sample_lengths)}")
     logger.info("=" * 50)
 

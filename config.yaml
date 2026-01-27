@@ -19,7 +19,7 @@ model_name: "gpt2-medium"  # ~355M parameters
 dataset_name: "e2e_nlg"
 sample_percentage: 0.1      # Use 10% of dataset (for quick experiments)
                             # Set to 1.0 for full dataset training
-max_length: 128             # Maximum sequence length
+max_length: 256             # Maximum sequence length
 
 # ============================================================================
 # Training Hyperparameters (from LoRA paper Table 11)
@@ -74,7 +74,7 @@ evaluation:
 
   generation:
     num_samples: 10         # Number of samples to generate for qualitative eval
-    max_new_tokens: 30      # Maximum tokens to generate per sample
+    max_new_tokens: 64      # Maximum tokens to generate per sample
     temperature: 1.0
     top_p: 0.9
     use_beam_search: true

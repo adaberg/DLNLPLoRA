@@ -96,7 +96,7 @@ def setup_test_data(config: Dict, tokenizer):
     print("Setting up test data...")
 
     # Get max_length from config, supporting both config.yaml and training_config.json formats
-    max_length = config.get("max_length", 128) # Default from config.yaml
+    max_length = config.get("max_length", 256)  # Default from config.yaml
 
     # Get sample_percentage, checking both top-level and nested 'dataset' key
     sample_percentage = config.get("sample_percentage") or config.get("dataset", {}).get("sample_percentage", 1.0)
@@ -144,7 +144,7 @@ def main() -> None:
                        help="Path to config file (default: config.yaml)")
     parser.add_argument("--output", type=str, default=None,
                        help="Output directory for evaluation results")
-    parser.add_argument("--num_samples", type=int, default=10,
+    parser.add_argument("--num_samples", type=int, default=0,
                        help="Number of samples for text generation evaluation")
 
     args = parser.parse_args()
@@ -171,10 +171,17 @@ def main() -> None:
     inference_config = eval_config.get("inference", {})
     generation_config = eval_config.get("generation", {})
 
+    num_samples = 10
+    if args.num_samples > 0:
+        num_samples = args.num_samples
+    else:
+        num_samples = generation_config.get("num_samples", 10)
+
     # Merge inference config into generation config (inference params take precedence)
     # This maps beam_size -> num_beams for compatibility
     merged_generation_config = {
-        "max_new_tokens": generation_config.get("max_new_tokens", 30),
+        "num_samples": num_samples,
+        "max_new_tokens": generation_config.get("max_new_tokens", 64),  # increased from 50
         "num_beams": inference_config.get("beam_size", 10),
         "length_penalty": inference_config.get("length_penalty", 0.9),
         "no_repeat_ngram_size": inference_config.get("no_repeat_ngram_size", 4),
@@ -190,7 +197,7 @@ def main() -> None:
         test_loader=test_loader,
         test_dataset=test_dataset,
         device=device,
-        num_samples=args.num_samples,
+        num_samples=num_samples,
         generation_config=merged_generation_config,
         do_bootstrap_eval=True
     )

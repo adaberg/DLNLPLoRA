@@ -119,8 +119,8 @@ def generate_texts(
     model: nn.Module,
     tokenizer: PreTrainedTokenizer,
     prompts: List[str],
-    max_new_tokens: int = 30, # reduced from 50
-    length_penalty: float = 0.9, # model applies a penalty based on the sequence length
+    max_new_tokens: int = 64,  # increased from 50
+    length_penalty: float = 0.9,  # model applies a penalty based on the sequence length
     no_repeat_ngram_size: int = 4,
     num_beams: int = 10,
     use_beam_search: bool = True,
@@ -184,7 +184,7 @@ def generate_texts(
                         no_repeat_ngram_size=no_repeat_ngram_size,
                         # paper states reuse of params of https://arxiv.org/pdf/2101.00190 (beam size = 5)
                         num_beams=num_beams,
-                        num_return_sequences = 1, # to avoid unnecessary internal competition between the bars
+                        num_return_sequences = 1,  # to avoid unnecessary internal competition between the beams
                         pad_token_id=tokenizer.pad_token_id,
                         eos_token_id=tokenizer.eos_token_id
                     )
@@ -215,13 +215,13 @@ def generate_texts(
                 logger.error(
                     f"Error generating text for prompt '{prompt[:50]}...': {e}"
                 )
-                generated_texts.append("") # Return empty string on error
+                generated_texts.append("")  # Return empty string on error
 
     return generated_texts
 
 
 def compute_rouge_multi_ref(
-    predictions: List[str], references: List[List[str]]    
+    predictions: List[str], references: List[List[str]]
 ) -> Dict[str, float]:
     """
     Computes ROUGE-1, ROUGE-2, and ROUGE-L F1 scores by evaluating each prediction
@@ -279,7 +279,7 @@ def compute_bertscore_multi_ref(
     for pred, refs in zip(predictions, references):
         # one prediction and N references
         P, R, F1 = bertscore(
-            [pred] * len(refs), # duplicate by the number of references
+            [pred] * len(refs),  # duplicate by the number of references
             refs,
             lang=lang,
             verbose=False
@@ -328,7 +328,7 @@ def compute_generation_metrics(
         bleu = evaluate.load("bleu")
         # 'references' is already in the correct format: List[List[str]]
         bleu_result = bleu.compute(predictions=predictions, references=references)
-        results["bleu"] = bleu_result["bleu"] # corpus BLEU
+        results["bleu"] = bleu_result["bleu"]  # corpus BLEU
         logger.info("BLEU (corpus-level, precision-based)")
     except Exception as e:
         logger.warning(f"BLEU calculation failed: {e}")
@@ -442,7 +442,7 @@ def evaluate_model_comprehensive(
     test_dataset,
     device: str = "cuda",
     num_samples: int = -1,
-    max_new_tokens = 30,
+    max_new_tokens = 64,
     generation_config: Dict[str, Any] | None = None,
     do_bootstrap_eval: bool = False
 ) -> Dict[str, float]:
@@ -463,7 +463,7 @@ def evaluate_model_comprehensive(
         device: Device to run on
         num_samples: Number of unique MRs to evaluate (-1 for all)
         generation_config: Dict with generation parameters:
-            - max_new_tokens (default: 30)
+            - max_new_tokens (default: 64)
             - num_beams (default: 10, from LoRA paper)
             - length_penalty (default: 0.9, from LoRA paper for E2E)
             - no_repeat_ngram_size (default: 4, from LoRA paper)
@@ -476,7 +476,7 @@ def evaluate_model_comprehensive(
         generation_config = {}
 
     # Default generation parameters from LoRA paper (Table 11 / Section D.3)
-    max_new_tokens = generation_config.get("max_new_tokens", 30)
+    max_new_tokens = generation_config.get("max_new_tokens", 64)
     num_beams = generation_config.get("num_beams", generation_config.get("beam_size", 10))
     length_penalty = generation_config.get("length_penalty", 0.9)
     no_repeat_ngram_size = generation_config.get("no_repeat_ngram_size", 4)
@@ -489,7 +489,7 @@ def evaluate_model_comprehensive(
     logger.info("Computing perplexity...")
     try:
         #perplexity = compute_perplexity_batch_weighted(model, test_loader, device)
-        perplexity = compute_perplexity_token_weighted(model, test_loader, device) # paper-conform
+        perplexity = compute_perplexity_token_weighted(model, test_loader, device)  # paper-conform
     except Exception as e:
         logger.error(f"Perplexity computation failed: {e}")
         results["perplexity"] = float("inf")
@@ -558,7 +558,7 @@ def evaluate_model_comprehensive(
                     "mr": mr_list[i][:100] + "..." if len(mr_list[i]) > 100 else mr_list[i],
                     "prediction": predictions[i],
                     "num_references": len(all_references[i]),
-                    "sample_reference": all_references[i][0], # Show first reference
+                    "sample_reference": all_references[i][0],  # Show first reference
                 }
             )
 
@@ -611,9 +611,9 @@ def _test_metrics():
         model=model,
         tokenizer=tokenizer,
         prompts=prompts,
-        max_new_tokens=30,
+        max_new_tokens=64,
         use_beam_search=True,
-        use_greedy=True, # always true during testing
+        use_greedy=True,  # always true during testing
         device="cpu"
     )
     print(f"Generated: {generated}")

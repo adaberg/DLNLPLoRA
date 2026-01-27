@@ -21,7 +21,16 @@ def test_format_sample():
     ref = "The Eagle is a coffee shop."
 
     formatted = E2EDataset.format_sample(mr, ref)
-    expected = "meaning_representation: name[The Eagle], eatType[coffee shop] | reference: The Eagle is a coffee shop."
+
+    # Just in case future prompt changes occur:
+    assert formatted.startswith("MR:")
+    assert "\nREF:" in formatted
+    assert formatted.endswith("The Eagle is a coffee shop.")
+
+    expected = (
+        "MR: name[The Eagle], eatType[coffee shop]\n"
+        "REF: The Eagle is a coffee shop."
+    )  # see (**) in 'dataset.py'
 
     assert formatted == expected, f"Expected: {expected}, Got: {formatted}"
     print("format_sample test passed")
