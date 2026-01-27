@@ -489,7 +489,7 @@ def evaluate_model_comprehensive(
     logger.info("Computing perplexity...")
     try:
         #perplexity = compute_perplexity_batch_weighted(model, test_loader, device)
-        perplexity = compute_perplexity_token_weighted(model, test_loader, device) # paper-conform
+        perplexity = compute_perplexity_token_weighted(model, test_loader, device)  # paper-conform
     except Exception as e:
         logger.error(f"Perplexity computation failed: {e}")
         results["perplexity"] = float("inf")
