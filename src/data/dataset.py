@@ -24,10 +24,10 @@ class E2EDataset(Dataset):
         self,
         split: str,
         tokenizer: PreTrainedTokenizer,
-        max_length: int = 128, # reduced by half from 256, E2E samples are short!
+        max_length: int = 128,  # reduced by half from 256, E2E samples are short!
         sample_percentage: float = 1.0,
         device: Optional[str] = None,
-        add_eos_token: bool = True  # add EOS after reference
+        add_eos_token: bool = True   # add EOS after reference
     ) -> None:
         self.split = split
         self.tokenizer = tokenizer
@@ -81,11 +81,12 @@ class E2EDataset(Dataset):
         reference = sample["human_reference"]
 
         # Format with EOS token:
-        prompt = f"MR: {meaning_rep}\nREF:"
+        prompt = f"MR: {meaning_rep.strip()}\nREF:"
+        #prompt = f"meaning_representation: {meaning_rep.strip()} | reference:"
         if self.add_eos_token:
-            text = f"{prompt} {reference}{self.tokenizer.eos_token}" # see (**) 
+            text = f"{prompt} {reference.strip()}{self.tokenizer.eos_token}"  # see (**) 
         else:
-            text = f"{prompt} {reference}"
+            text = f"{prompt} {reference.strip()}"
 
         encoding = self.tokenizer(
             text,
@@ -119,9 +120,10 @@ class E2EDataset(Dataset):
         #            and rare token and GPT-2 has hardly been trained on it.
         #            --> It strongly influences the BLEU score.
         # return f"meaning_representation: {meaning_rep.strip()} | reference: {reference.strip()}{eos_token}"
+
+        #prompt = f"meaning_representation: {meaning_rep.strip()} | reference:"
         prompt = f"MR: {meaning_rep.strip()}\nREF:"
-        text = f"{prompt} {reference.strip()}{eos_token}"
-        return text
+        return f"{prompt} {reference.strip()}{eos_token}"  # full text
 
     def get_raw_sample(self, idx: int) -> Dict[str, str]:
         """Get raw sample for inspection."""
@@ -178,7 +180,7 @@ def create_datasets_and_loaders(
     tokenizer: PreTrainedTokenizer,
     train_batch_size: int = 8,
     val_batch_size: int = 16,
-    max_length: int = 128, # reduced from 256
+    max_length: int = 128,  # reduced from 256
     sample_percentage: float = 1.0,
     device: Optional[str] = None,
     add_eos_token: bool = True

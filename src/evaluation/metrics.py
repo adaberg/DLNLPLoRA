@@ -119,8 +119,8 @@ def generate_texts(
     model: nn.Module,
     tokenizer: PreTrainedTokenizer,
     prompts: List[str],
-    max_new_tokens: int = 30, # reduced from 50
-    length_penalty: float = 0.9, # model applies a penalty based on the sequence length
+    max_new_tokens: int = 30,  # reduced from 50
+    length_penalty: float = 0.9,  # model applies a penalty based on the sequence length
     no_repeat_ngram_size: int = 4,
     num_beams: int = 10,
     use_beam_search: bool = True,
@@ -184,7 +184,7 @@ def generate_texts(
                         no_repeat_ngram_size=no_repeat_ngram_size,
                         # paper states reuse of params of https://arxiv.org/pdf/2101.00190 (beam size = 5)
                         num_beams=num_beams,
-                        num_return_sequences = 1, # to avoid unnecessary internal competition between the bars
+                        num_return_sequences = 1,  # to avoid unnecessary internal competition between the beams
                         pad_token_id=tokenizer.pad_token_id,
                         eos_token_id=tokenizer.eos_token_id
                     )
@@ -215,7 +215,7 @@ def generate_texts(
                 logger.error(
                     f"Error generating text for prompt '{prompt[:50]}...': {e}"
                 )
-                generated_texts.append("") # Return empty string on error
+                generated_texts.append("")  # Return empty string on error
 
     return generated_texts
 
@@ -279,7 +279,7 @@ def compute_bertscore_multi_ref(
     for pred, refs in zip(predictions, references):
         # one prediction and N references
         P, R, F1 = bertscore(
-            [pred] * len(refs), # duplicate by the number of references
+            [pred] * len(refs),  # duplicate by the number of references
             refs,
             lang=lang,
             verbose=False
@@ -558,7 +558,7 @@ def evaluate_model_comprehensive(
                     "mr": mr_list[i][:100] + "..." if len(mr_list[i]) > 100 else mr_list[i],
                     "prediction": predictions[i],
                     "num_references": len(all_references[i]),
-                    "sample_reference": all_references[i][0], # Show first reference
+                    "sample_reference": all_references[i][0],  # Show first reference
                 }
             )
 
@@ -613,7 +613,7 @@ def _test_metrics():
         prompts=prompts,
         max_new_tokens=30,
         use_beam_search=True,
-        use_greedy=True, # always true during testing
+        use_greedy=True,  # always true during testing
         device="cpu"
     )
     print(f"Generated: {generated}")
