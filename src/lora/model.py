@@ -1,3 +1,4 @@
+from os import mkdir
 from typing import List, Union
 import torch
 import torch.nn as nn
@@ -5,6 +6,7 @@ from transformers import GPT2LMHeadModel, BitsAndBytesConfig
 from transformers.pytorch_utils import Conv1D
 from .layer import LoRALayer, DoRALayer
 from bitsandbytes.nn import Params4bit
+from torchinfo import summary
 
 
 class LoRALinear(nn.Module):
@@ -164,24 +166,41 @@ if __name__ == "__main__":
         device_map="auto",
         dtype=torch.float16  # Non-quantized params use fp16
     )
-  
-    lora = LoRAGPT2(
-      model, rank=8, alpha=16, target_modules=["c_attn", "c_proj"]
-    )
+
+    mkdir("visualization")
     
-    for name, module in lora.named_modules():
-      if isinstance(module, nn.Linear):
-          has_4bit = any(isinstance(p, Params4bit) for p in module.parameters())
-          print(f"{name}: quantized={has_4bit}")
+    base_model = GPT2LMHeadModel.from_pretrained(
+        "gpt2-medium")
+    with open("visualization/base.txt", "w") as f:
+      f.write(str(summary(base_model, input_size=(1, 128), dtypes=[torch.long], verbose=2, col_names=[])))
+
+    lora = LoRAGPT2(
+      model,
+      rank=8,
+      alpha=16,
+      target_modules=["c_attn", "c_proj"]
+    )
+    with open("visualization/lora.txt", "w") as f:
+      f.write(str(summary(lora, input_size=(1, 128), dtypes=[torch.long], verbose=2, col_names=[])))
+      
+    dora = DoRAGPT2(
+      base_model=base_model,
+      rank=4,
+      alpha=16.0,
+      dropout=0.0,
+      target_modules=["c_attn", "c_proj"],
+    )
+    with open("visualization/dora.txt", "w") as f:
+      f.write(str(summary(dora, input_size=(1, 128), dtypes=[torch.long], verbose=2, col_names=[])))
           
-    #print()
-    #dora_layer = DoRALayer(
-    #    in_features=128,
-    #    out_features=64,
-    #    rank=8,
-    #    alpha=16,
-    #    base_weight=torch.randn(64, 128),
-    #)
-    #print(dora_layer)
-    #print("--" * 40)
-    #print(dora_layer.extra_repr())
+    print()
+    dora_layer = DoRALayer(
+        in_features=128,
+        out_features=64,
+        rank=8,
+        alpha=16,
+        base_weight=torch.randn(64, 128),
+    )
+    print(dora_layer)
+    print("--" * 40)
+    print(dora_layer.extra_repr())

@@ -16,6 +16,7 @@ pytest
 
 bitsandbytes
 accelerate
+torchinfo
 
 # Optional: for extensions
 #bitsandbytes

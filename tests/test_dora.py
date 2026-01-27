@@ -197,7 +197,7 @@ class TestDoRALearning:
             rank=4,
             alpha=16.0,
             dropout=0.0,
-            target_modules=["c_attn"],
+            target_modules=["c_attn","c_proj"],
         )
 
         tokenizer = GPT2Tokenizer.from_pretrained("gpt2-medium")
