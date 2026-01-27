@@ -144,7 +144,7 @@ def main() -> None:
                        help="Path to config file (default: config.yaml)")
     parser.add_argument("--output", type=str, default=None,
                        help="Output directory for evaluation results")
-    parser.add_argument("--num_samples", type=int, default=10,
+    parser.add_argument("--num_samples", type=int, default=-1,
                        help="Number of samples for text generation evaluation")
 
     args = parser.parse_args()
@@ -174,6 +174,7 @@ def main() -> None:
     # Merge inference config into generation config (inference params take precedence)
     # This maps beam_size -> num_beams for compatibility
     merged_generation_config = {
+        "num_samples": args.num_samples,
         "max_new_tokens": generation_config.get("max_new_tokens", 30),
         "num_beams": inference_config.get("beam_size", 10),
         "length_penalty": inference_config.get("length_penalty", 0.9),
