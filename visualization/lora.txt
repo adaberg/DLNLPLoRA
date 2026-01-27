@@ -1,0 +1,1332 @@
+=======================================================
+Layer (type:depth-idx)
+=======================================================
+LoRAGPT2
+├─GPT2LMHeadModel: 1-1
+│    └─transformer.wte.weight
+│    └─transformer.wpe.weight
+│    └─transformer.h.0.ln_1.weight
+│    └─transformer.h.0.ln_1.bias
+│    └─transformer.h.0.attn.c_attn.base_layer.weight
+│    └─transformer.h.0.attn.c_attn.base_layer.bias
+│    └─transformer.h.0.attn.c_attn.lora.lora_A
+│    └─transformer.h.0.attn.c_attn.lora.lora_B
+│    └─transformer.h.0.attn.c_proj.base_layer.weight
+│    └─transformer.h.0.attn.c_proj.base_layer.bias
+│    └─transformer.h.0.attn.c_proj.lora.lora_A
+│    └─transformer.h.0.attn.c_proj.lora.lora_B
+│    └─transformer.h.0.ln_2.weight
+│    └─transformer.h.0.ln_2.bias
+│    └─transformer.h.0.mlp.c_fc.weight
+│    └─transformer.h.0.mlp.c_fc.bias
+│    └─transformer.h.0.mlp.c_proj.base_layer.weight
+│    └─transformer.h.0.mlp.c_proj.base_layer.bias
+│    └─transformer.h.0.mlp.c_proj.lora.lora_A
+│    └─transformer.h.0.mlp.c_proj.lora.lora_B
+│    └─transformer.h.1.ln_1.weight
+│    └─transformer.h.1.ln_1.bias
+│    └─transformer.h.1.attn.c_attn.base_layer.weight
+│    └─transformer.h.1.attn.c_attn.base_layer.bias
+│    └─transformer.h.1.attn.c_attn.lora.lora_A
+│    └─transformer.h.1.attn.c_attn.lora.lora_B
+│    └─transformer.h.1.attn.c_proj.base_layer.weight
+│    └─transformer.h.1.attn.c_proj.base_layer.bias
+│    └─transformer.h.1.attn.c_proj.lora.lora_A
+│    └─transformer.h.1.attn.c_proj.lora.lora_B
+│    └─transformer.h.1.ln_2.weight
+│    └─transformer.h.1.ln_2.bias
+│    └─transformer.h.1.mlp.c_fc.weight
+│    └─transformer.h.1.mlp.c_fc.bias
+│    └─transformer.h.1.mlp.c_proj.base_layer.weight
+│    └─transformer.h.1.mlp.c_proj.base_layer.bias
+│    └─transformer.h.1.mlp.c_proj.lora.lora_A
+│    └─transformer.h.1.mlp.c_proj.lora.lora_B
+│    └─transformer.h.2.ln_1.weight
+│    └─transformer.h.2.ln_1.bias
+│    └─transformer.h.2.attn.c_attn.base_layer.weight
+│    └─transformer.h.2.attn.c_attn.base_layer.bias
+│    └─transformer.h.2.attn.c_attn.lora.lora_A
+│    └─transformer.h.2.attn.c_attn.lora.lora_B
+│    └─transformer.h.2.attn.c_proj.base_layer.weight
+│    └─transformer.h.2.attn.c_proj.base_layer.bias
+│    └─transformer.h.2.attn.c_proj.lora.lora_A
+│    └─transformer.h.2.attn.c_proj.lora.lora_B
+│    └─transformer.h.2.ln_2.weight
+│    └─transformer.h.2.ln_2.bias
+│    └─transformer.h.2.mlp.c_fc.weight
+│    └─transformer.h.2.mlp.c_fc.bias
+│    └─transformer.h.2.mlp.c_proj.base_layer.weight
+│    └─transformer.h.2.mlp.c_proj.base_layer.bias
+│    └─transformer.h.2.mlp.c_proj.lora.lora_A
+│    └─transformer.h.2.mlp.c_proj.lora.lora_B
+│    └─transformer.h.3.ln_1.weight
+│    └─transformer.h.3.ln_1.bias
+│    └─transformer.h.3.attn.c_attn.base_layer.weight
+│    └─transformer.h.3.attn.c_attn.base_layer.bias
+│    └─transformer.h.3.attn.c_attn.lora.lora_A
+│    └─transformer.h.3.attn.c_attn.lora.lora_B
+│    └─transformer.h.3.attn.c_proj.base_layer.weight
+│    └─transformer.h.3.attn.c_proj.base_layer.bias
+│    └─transformer.h.3.attn.c_proj.lora.lora_A
+│    └─transformer.h.3.attn.c_proj.lora.lora_B
+│    └─transformer.h.3.ln_2.weight
+│    └─transformer.h.3.ln_2.bias
+│    └─transformer.h.3.mlp.c_fc.weight
+│    └─transformer.h.3.mlp.c_fc.bias
+│    └─transformer.h.3.mlp.c_proj.base_layer.weight
+│    └─transformer.h.3.mlp.c_proj.base_layer.bias
+│    └─transformer.h.3.mlp.c_proj.lora.lora_A
+│    └─transformer.h.3.mlp.c_proj.lora.lora_B
+│    └─transformer.h.4.ln_1.weight
+│    └─transformer.h.4.ln_1.bias
+│    └─transformer.h.4.attn.c_attn.base_layer.weight
+│    └─transformer.h.4.attn.c_attn.base_layer.bias
+│    └─transformer.h.4.attn.c_attn.lora.lora_A
+│    └─transformer.h.4.attn.c_attn.lora.lora_B
+│    └─transformer.h.4.attn.c_proj.base_layer.weight
+│    └─transformer.h.4.attn.c_proj.base_layer.bias
+│    └─transformer.h.4.attn.c_proj.lora.lora_A
+│    └─transformer.h.4.attn.c_proj.lora.lora_B
+│    └─transformer.h.4.ln_2.weight
+│    └─transformer.h.4.ln_2.bias
+│    └─transformer.h.4.mlp.c_fc.weight
+│    └─transformer.h.4.mlp.c_fc.bias
+│    └─transformer.h.4.mlp.c_proj.base_layer.weight
+│    └─transformer.h.4.mlp.c_proj.base_layer.bias
+│    └─transformer.h.4.mlp.c_proj.lora.lora_A
+│    └─transformer.h.4.mlp.c_proj.lora.lora_B
+│    └─transformer.h.5.ln_1.weight
+│    └─transformer.h.5.ln_1.bias
+│    └─transformer.h.5.attn.c_attn.base_layer.weight
+│    └─transformer.h.5.attn.c_attn.base_layer.bias
+│    └─transformer.h.5.attn.c_attn.lora.lora_A
+│    └─transformer.h.5.attn.c_attn.lora.lora_B
+│    └─transformer.h.5.attn.c_proj.base_layer.weight
+│    └─transformer.h.5.attn.c_proj.base_layer.bias
+│    └─transformer.h.5.attn.c_proj.lora.lora_A
+│    └─transformer.h.5.attn.c_proj.lora.lora_B
+│    └─transformer.h.5.ln_2.weight
+│    └─transformer.h.5.ln_2.bias
+│    └─transformer.h.5.mlp.c_fc.weight
+│    └─transformer.h.5.mlp.c_fc.bias
+│    └─transformer.h.5.mlp.c_proj.base_layer.weight
+│    └─transformer.h.5.mlp.c_proj.base_layer.bias
+│    └─transformer.h.5.mlp.c_proj.lora.lora_A
+│    └─transformer.h.5.mlp.c_proj.lora.lora_B
+│    └─transformer.h.6.ln_1.weight
+│    └─transformer.h.6.ln_1.bias
+│    └─transformer.h.6.attn.c_attn.base_layer.weight
+│    └─transformer.h.6.attn.c_attn.base_layer.bias
+│    └─transformer.h.6.attn.c_attn.lora.lora_A
+│    └─transformer.h.6.attn.c_attn.lora.lora_B
+│    └─transformer.h.6.attn.c_proj.base_layer.weight
+│    └─transformer.h.6.attn.c_proj.base_layer.bias
+│    └─transformer.h.6.attn.c_proj.lora.lora_A
+│    └─transformer.h.6.attn.c_proj.lora.lora_B
+│    └─transformer.h.6.ln_2.weight
+│    └─transformer.h.6.ln_2.bias
+│    └─transformer.h.6.mlp.c_fc.weight
+│    └─transformer.h.6.mlp.c_fc.bias
+│    └─transformer.h.6.mlp.c_proj.base_layer.weight
+│    └─transformer.h.6.mlp.c_proj.base_layer.bias
+│    └─transformer.h.6.mlp.c_proj.lora.lora_A
+│    └─transformer.h.6.mlp.c_proj.lora.lora_B
+│    └─transformer.h.7.ln_1.weight
+│    └─transformer.h.7.ln_1.bias
+│    └─transformer.h.7.attn.c_attn.base_layer.weight
+│    └─transformer.h.7.attn.c_attn.base_layer.bias
+│    └─transformer.h.7.attn.c_attn.lora.lora_A
+│    └─transformer.h.7.attn.c_attn.lora.lora_B
+│    └─transformer.h.7.attn.c_proj.base_layer.weight
+│    └─transformer.h.7.attn.c_proj.base_layer.bias
+│    └─transformer.h.7.attn.c_proj.lora.lora_A
+│    └─transformer.h.7.attn.c_proj.lora.lora_B
+│    └─transformer.h.7.ln_2.weight
+│    └─transformer.h.7.ln_2.bias
+│    └─transformer.h.7.mlp.c_fc.weight
+│    └─transformer.h.7.mlp.c_fc.bias
+│    └─transformer.h.7.mlp.c_proj.base_layer.weight
+│    └─transformer.h.7.mlp.c_proj.base_layer.bias
+│    └─transformer.h.7.mlp.c_proj.lora.lora_A
+│    └─transformer.h.7.mlp.c_proj.lora.lora_B
+│    └─transformer.h.8.ln_1.weight
+│    └─transformer.h.8.ln_1.bias
+│    └─transformer.h.8.attn.c_attn.base_layer.weight
+│    └─transformer.h.8.attn.c_attn.base_layer.bias
+│    └─transformer.h.8.attn.c_attn.lora.lora_A
+│    └─transformer.h.8.attn.c_attn.lora.lora_B
+│    └─transformer.h.8.attn.c_proj.base_layer.weight
+│    └─transformer.h.8.attn.c_proj.base_layer.bias
+│    └─transformer.h.8.attn.c_proj.lora.lora_A
+│    └─transformer.h.8.attn.c_proj.lora.lora_B
+│    └─transformer.h.8.ln_2.weight
+│    └─transformer.h.8.ln_2.bias
+│    └─transformer.h.8.mlp.c_fc.weight
+│    └─transformer.h.8.mlp.c_fc.bias
+│    └─transformer.h.8.mlp.c_proj.base_layer.weight
+│    └─transformer.h.8.mlp.c_proj.base_layer.bias
+│    └─transformer.h.8.mlp.c_proj.lora.lora_A
+│    └─transformer.h.8.mlp.c_proj.lora.lora_B
+│    └─transformer.h.9.ln_1.weight
+│    └─transformer.h.9.ln_1.bias
+│    └─transformer.h.9.attn.c_attn.base_layer.weight
+│    └─transformer.h.9.attn.c_attn.base_layer.bias
+│    └─transformer.h.9.attn.c_attn.lora.lora_A
+│    └─transformer.h.9.attn.c_attn.lora.lora_B
+│    └─transformer.h.9.attn.c_proj.base_layer.weight
+│    └─transformer.h.9.attn.c_proj.base_layer.bias
+│    └─transformer.h.9.attn.c_proj.lora.lora_A
+│    └─transformer.h.9.attn.c_proj.lora.lora_B
+│    └─transformer.h.9.ln_2.weight
+│    └─transformer.h.9.ln_2.bias
+│    └─transformer.h.9.mlp.c_fc.weight
+│    └─transformer.h.9.mlp.c_fc.bias
+│    └─transformer.h.9.mlp.c_proj.base_layer.weight
+│    └─transformer.h.9.mlp.c_proj.base_layer.bias
+│    └─transformer.h.9.mlp.c_proj.lora.lora_A
+│    └─transformer.h.9.mlp.c_proj.lora.lora_B
+│    └─transformer.h.10.ln_1.weight
+│    └─transformer.h.10.ln_1.bias
+│    └─transformer.h.10.attn.c_attn.base_layer.weight
+│    └─transformer.h.10.attn.c_attn.base_layer.bias
+│    └─transformer.h.10.attn.c_attn.lora.lora_A
+│    └─transformer.h.10.attn.c_attn.lora.lora_B
+│    └─transformer.h.10.attn.c_proj.base_layer.weight
+│    └─transformer.h.10.attn.c_proj.base_layer.bias
+│    └─transformer.h.10.attn.c_proj.lora.lora_A
+│    └─transformer.h.10.attn.c_proj.lora.lora_B
+│    └─transformer.h.10.ln_2.weight
+│    └─transformer.h.10.ln_2.bias
+│    └─transformer.h.10.mlp.c_fc.weight
+│    └─transformer.h.10.mlp.c_fc.bias
+│    └─transformer.h.10.mlp.c_proj.base_layer.weight
+│    └─transformer.h.10.mlp.c_proj.base_layer.bias
+│    └─transformer.h.10.mlp.c_proj.lora.lora_A
+│    └─transformer.h.10.mlp.c_proj.lora.lora_B
+│    └─transformer.h.11.ln_1.weight
+│    └─transformer.h.11.ln_1.bias
+│    └─transformer.h.11.attn.c_attn.base_layer.weight
+│    └─transformer.h.11.attn.c_attn.base_layer.bias
+│    └─transformer.h.11.attn.c_attn.lora.lora_A
+│    └─transformer.h.11.attn.c_attn.lora.lora_B
+│    └─transformer.h.11.attn.c_proj.base_layer.weight
+│    └─transformer.h.11.attn.c_proj.base_layer.bias
+│    └─transformer.h.11.attn.c_proj.lora.lora_A
+│    └─transformer.h.11.attn.c_proj.lora.lora_B
+│    └─transformer.h.11.ln_2.weight
+│    └─transformer.h.11.ln_2.bias
+│    └─transformer.h.11.mlp.c_fc.weight
+│    └─transformer.h.11.mlp.c_fc.bias
+│    └─transformer.h.11.mlp.c_proj.base_layer.weight
+│    └─transformer.h.11.mlp.c_proj.base_layer.bias
+│    └─transformer.h.11.mlp.c_proj.lora.lora_A
+│    └─transformer.h.11.mlp.c_proj.lora.lora_B
+│    └─transformer.h.12.ln_1.weight
+│    └─transformer.h.12.ln_1.bias
+│    └─transformer.h.12.attn.c_attn.base_layer.weight
+│    └─transformer.h.12.attn.c_attn.base_layer.bias
+│    └─transformer.h.12.attn.c_attn.lora.lora_A
+│    └─transformer.h.12.attn.c_attn.lora.lora_B
+│    └─transformer.h.12.attn.c_proj.base_layer.weight
+│    └─transformer.h.12.attn.c_proj.base_layer.bias
+│    └─transformer.h.12.attn.c_proj.lora.lora_A
+│    └─transformer.h.12.attn.c_proj.lora.lora_B
+│    └─transformer.h.12.ln_2.weight
+│    └─transformer.h.12.ln_2.bias
+│    └─transformer.h.12.mlp.c_fc.weight
+│    └─transformer.h.12.mlp.c_fc.bias
+│    └─transformer.h.12.mlp.c_proj.base_layer.weight
+│    └─transformer.h.12.mlp.c_proj.base_layer.bias
+│    └─transformer.h.12.mlp.c_proj.lora.lora_A
+│    └─transformer.h.12.mlp.c_proj.lora.lora_B
+│    └─transformer.h.13.ln_1.weight
+│    └─transformer.h.13.ln_1.bias
+│    └─transformer.h.13.attn.c_attn.base_layer.weight
+│    └─transformer.h.13.attn.c_attn.base_layer.bias
+│    └─transformer.h.13.attn.c_attn.lora.lora_A
+│    └─transformer.h.13.attn.c_attn.lora.lora_B
+│    └─transformer.h.13.attn.c_proj.base_layer.weight
+│    └─transformer.h.13.attn.c_proj.base_layer.bias
+│    └─transformer.h.13.attn.c_proj.lora.lora_A
+│    └─transformer.h.13.attn.c_proj.lora.lora_B
+│    └─transformer.h.13.ln_2.weight
+│    └─transformer.h.13.ln_2.bias
+│    └─transformer.h.13.mlp.c_fc.weight
+│    └─transformer.h.13.mlp.c_fc.bias
+│    └─transformer.h.13.mlp.c_proj.base_layer.weight
+│    └─transformer.h.13.mlp.c_proj.base_layer.bias
+│    └─transformer.h.13.mlp.c_proj.lora.lora_A
+│    └─transformer.h.13.mlp.c_proj.lora.lora_B
+│    └─transformer.h.14.ln_1.weight
+│    └─transformer.h.14.ln_1.bias
+│    └─transformer.h.14.attn.c_attn.base_layer.weight
+│    └─transformer.h.14.attn.c_attn.base_layer.bias
+│    └─transformer.h.14.attn.c_attn.lora.lora_A
+│    └─transformer.h.14.attn.c_attn.lora.lora_B
+│    └─transformer.h.14.attn.c_proj.base_layer.weight
+│    └─transformer.h.14.attn.c_proj.base_layer.bias
+│    └─transformer.h.14.attn.c_proj.lora.lora_A
+│    └─transformer.h.14.attn.c_proj.lora.lora_B
+│    └─transformer.h.14.ln_2.weight
+│    └─transformer.h.14.ln_2.bias
+│    └─transformer.h.14.mlp.c_fc.weight
+│    └─transformer.h.14.mlp.c_fc.bias
+│    └─transformer.h.14.mlp.c_proj.base_layer.weight
+│    └─transformer.h.14.mlp.c_proj.base_layer.bias
+│    └─transformer.h.14.mlp.c_proj.lora.lora_A
+│    └─transformer.h.14.mlp.c_proj.lora.lora_B
+│    └─transformer.h.15.ln_1.weight
+│    └─transformer.h.15.ln_1.bias
+│    └─transformer.h.15.attn.c_attn.base_layer.weight
+│    └─transformer.h.15.attn.c_attn.base_layer.bias
+│    └─transformer.h.15.attn.c_attn.lora.lora_A
+│    └─transformer.h.15.attn.c_attn.lora.lora_B
+│    └─transformer.h.15.attn.c_proj.base_layer.weight
+│    └─transformer.h.15.attn.c_proj.base_layer.bias
+│    └─transformer.h.15.attn.c_proj.lora.lora_A
+│    └─transformer.h.15.attn.c_proj.lora.lora_B
+│    └─transformer.h.15.ln_2.weight
+│    └─transformer.h.15.ln_2.bias
+│    └─transformer.h.15.mlp.c_fc.weight
+│    └─transformer.h.15.mlp.c_fc.bias
+│    └─transformer.h.15.mlp.c_proj.base_layer.weight
+│    └─transformer.h.15.mlp.c_proj.base_layer.bias
+│    └─transformer.h.15.mlp.c_proj.lora.lora_A
+│    └─transformer.h.15.mlp.c_proj.lora.lora_B
+│    └─transformer.h.16.ln_1.weight
+│    └─transformer.h.16.ln_1.bias
+│    └─transformer.h.16.attn.c_attn.base_layer.weight
+│    └─transformer.h.16.attn.c_attn.base_layer.bias
+│    └─transformer.h.16.attn.c_attn.lora.lora_A
+│    └─transformer.h.16.attn.c_attn.lora.lora_B
+│    └─transformer.h.16.attn.c_proj.base_layer.weight
+│    └─transformer.h.16.attn.c_proj.base_layer.bias
+│    └─transformer.h.16.attn.c_proj.lora.lora_A
+│    └─transformer.h.16.attn.c_proj.lora.lora_B
+│    └─transformer.h.16.ln_2.weight
+│    └─transformer.h.16.ln_2.bias
+│    └─transformer.h.16.mlp.c_fc.weight
+│    └─transformer.h.16.mlp.c_fc.bias
+│    └─transformer.h.16.mlp.c_proj.base_layer.weight
+│    └─transformer.h.16.mlp.c_proj.base_layer.bias
+│    └─transformer.h.16.mlp.c_proj.lora.lora_A
+│    └─transformer.h.16.mlp.c_proj.lora.lora_B
+│    └─transformer.h.17.ln_1.weight
+│    └─transformer.h.17.ln_1.bias
+│    └─transformer.h.17.attn.c_attn.base_layer.weight
+│    └─transformer.h.17.attn.c_attn.base_layer.bias
+│    └─transformer.h.17.attn.c_attn.lora.lora_A
+│    └─transformer.h.17.attn.c_attn.lora.lora_B
+│    └─transformer.h.17.attn.c_proj.base_layer.weight
+│    └─transformer.h.17.attn.c_proj.base_layer.bias
+│    └─transformer.h.17.attn.c_proj.lora.lora_A
+│    └─transformer.h.17.attn.c_proj.lora.lora_B
+│    └─transformer.h.17.ln_2.weight
+│    └─transformer.h.17.ln_2.bias
+│    └─transformer.h.17.mlp.c_fc.weight
+│    └─transformer.h.17.mlp.c_fc.bias
+│    └─transformer.h.17.mlp.c_proj.base_layer.weight
+│    └─transformer.h.17.mlp.c_proj.base_layer.bias
+│    └─transformer.h.17.mlp.c_proj.lora.lora_A
+│    └─transformer.h.17.mlp.c_proj.lora.lora_B
+│    └─transformer.h.18.ln_1.weight
+│    └─transformer.h.18.ln_1.bias
+│    └─transformer.h.18.attn.c_attn.base_layer.weight
+│    └─transformer.h.18.attn.c_attn.base_layer.bias
+│    └─transformer.h.18.attn.c_attn.lora.lora_A
+│    └─transformer.h.18.attn.c_attn.lora.lora_B
+│    └─transformer.h.18.attn.c_proj.base_layer.weight
+│    └─transformer.h.18.attn.c_proj.base_layer.bias
+│    └─transformer.h.18.attn.c_proj.lora.lora_A
+│    └─transformer.h.18.attn.c_proj.lora.lora_B
+│    └─transformer.h.18.ln_2.weight
+│    └─transformer.h.18.ln_2.bias
+│    └─transformer.h.18.mlp.c_fc.weight
+│    └─transformer.h.18.mlp.c_fc.bias
+│    └─transformer.h.18.mlp.c_proj.base_layer.weight
+│    └─transformer.h.18.mlp.c_proj.base_layer.bias
+│    └─transformer.h.18.mlp.c_proj.lora.lora_A
+│    └─transformer.h.18.mlp.c_proj.lora.lora_B
+│    └─transformer.h.19.ln_1.weight
+│    └─transformer.h.19.ln_1.bias
+│    └─transformer.h.19.attn.c_attn.base_layer.weight
+│    └─transformer.h.19.attn.c_attn.base_layer.bias
+│    └─transformer.h.19.attn.c_attn.lora.lora_A
+│    └─transformer.h.19.attn.c_attn.lora.lora_B
+│    └─transformer.h.19.attn.c_proj.base_layer.weight
+│    └─transformer.h.19.attn.c_proj.base_layer.bias
+│    └─transformer.h.19.attn.c_proj.lora.lora_A
+│    └─transformer.h.19.attn.c_proj.lora.lora_B
+│    └─transformer.h.19.ln_2.weight
+│    └─transformer.h.19.ln_2.bias
+│    └─transformer.h.19.mlp.c_fc.weight
+│    └─transformer.h.19.mlp.c_fc.bias
+│    └─transformer.h.19.mlp.c_proj.base_layer.weight
+│    └─transformer.h.19.mlp.c_proj.base_layer.bias
+│    └─transformer.h.19.mlp.c_proj.lora.lora_A
+│    └─transformer.h.19.mlp.c_proj.lora.lora_B
+│    └─transformer.h.20.ln_1.weight
+│    └─transformer.h.20.ln_1.bias
+│    └─transformer.h.20.attn.c_attn.base_layer.weight
+│    └─transformer.h.20.attn.c_attn.base_layer.bias
+│    └─transformer.h.20.attn.c_attn.lora.lora_A
+│    └─transformer.h.20.attn.c_attn.lora.lora_B
+│    └─transformer.h.20.attn.c_proj.base_layer.weight
+│    └─transformer.h.20.attn.c_proj.base_layer.bias
+│    └─transformer.h.20.attn.c_proj.lora.lora_A
+│    └─transformer.h.20.attn.c_proj.lora.lora_B
+│    └─transformer.h.20.ln_2.weight
+│    └─transformer.h.20.ln_2.bias
+│    └─transformer.h.20.mlp.c_fc.weight
+│    └─transformer.h.20.mlp.c_fc.bias
+│    └─transformer.h.20.mlp.c_proj.base_layer.weight
+│    └─transformer.h.20.mlp.c_proj.base_layer.bias
+│    └─transformer.h.20.mlp.c_proj.lora.lora_A
+│    └─transformer.h.20.mlp.c_proj.lora.lora_B
+│    └─transformer.h.21.ln_1.weight
+│    └─transformer.h.21.ln_1.bias
+│    └─transformer.h.21.attn.c_attn.base_layer.weight
+│    └─transformer.h.21.attn.c_attn.base_layer.bias
+│    └─transformer.h.21.attn.c_attn.lora.lora_A
+│    └─transformer.h.21.attn.c_attn.lora.lora_B
+│    └─transformer.h.21.attn.c_proj.base_layer.weight
+│    └─transformer.h.21.attn.c_proj.base_layer.bias
+│    └─transformer.h.21.attn.c_proj.lora.lora_A
+│    └─transformer.h.21.attn.c_proj.lora.lora_B
+│    └─transformer.h.21.ln_2.weight
+│    └─transformer.h.21.ln_2.bias
+│    └─transformer.h.21.mlp.c_fc.weight
+│    └─transformer.h.21.mlp.c_fc.bias
+│    └─transformer.h.21.mlp.c_proj.base_layer.weight
+│    └─transformer.h.21.mlp.c_proj.base_layer.bias
+│    └─transformer.h.21.mlp.c_proj.lora.lora_A
+│    └─transformer.h.21.mlp.c_proj.lora.lora_B
+│    └─transformer.h.22.ln_1.weight
+│    └─transformer.h.22.ln_1.bias
+│    └─transformer.h.22.attn.c_attn.base_layer.weight
+│    └─transformer.h.22.attn.c_attn.base_layer.bias
+│    └─transformer.h.22.attn.c_attn.lora.lora_A
+│    └─transformer.h.22.attn.c_attn.lora.lora_B
+│    └─transformer.h.22.attn.c_proj.base_layer.weight
+│    └─transformer.h.22.attn.c_proj.base_layer.bias
+│    └─transformer.h.22.attn.c_proj.lora.lora_A
+│    └─transformer.h.22.attn.c_proj.lora.lora_B
+│    └─transformer.h.22.ln_2.weight
+│    └─transformer.h.22.ln_2.bias
+│    └─transformer.h.22.mlp.c_fc.weight
+│    └─transformer.h.22.mlp.c_fc.bias
+│    └─transformer.h.22.mlp.c_proj.base_layer.weight
+│    └─transformer.h.22.mlp.c_proj.base_layer.bias
+│    └─transformer.h.22.mlp.c_proj.lora.lora_A
+│    └─transformer.h.22.mlp.c_proj.lora.lora_B
+│    └─transformer.h.23.ln_1.weight
+│    └─transformer.h.23.ln_1.bias
+│    └─transformer.h.23.attn.c_attn.base_layer.weight
+│    └─transformer.h.23.attn.c_attn.base_layer.bias
+│    └─transformer.h.23.attn.c_attn.lora.lora_A
+│    └─transformer.h.23.attn.c_attn.lora.lora_B
+│    └─transformer.h.23.attn.c_proj.base_layer.weight
+│    └─transformer.h.23.attn.c_proj.base_layer.bias
+│    └─transformer.h.23.attn.c_proj.lora.lora_A
+│    └─transformer.h.23.attn.c_proj.lora.lora_B
+│    └─transformer.h.23.ln_2.weight
+│    └─transformer.h.23.ln_2.bias
+│    └─transformer.h.23.mlp.c_fc.weight
+│    └─transformer.h.23.mlp.c_fc.bias
+│    └─transformer.h.23.mlp.c_proj.base_layer.weight
+│    └─transformer.h.23.mlp.c_proj.base_layer.bias
+│    └─transformer.h.23.mlp.c_proj.lora.lora_A
+│    └─transformer.h.23.mlp.c_proj.lora.lora_B
+│    └─transformer.ln_f.weight
+│    └─transformer.ln_f.bias
+│    └─GPT2Model: 2-1
+│    │    └─wte.weight
+│    │    └─wpe.weight
+│    │    └─h.0.ln_1.weight
+│    │    └─h.0.ln_1.bias
+│    │    └─h.0.attn.c_attn.base_layer.weight
+│    │    └─h.0.attn.c_attn.base_layer.bias
+│    │    └─h.0.attn.c_attn.lora.lora_A
+│    │    └─h.0.attn.c_attn.lora.lora_B
+│    │    └─h.0.attn.c_proj.base_layer.weight
+│    │    └─h.0.attn.c_proj.base_layer.bias
+│    │    └─h.0.attn.c_proj.lora.lora_A
+│    │    └─h.0.attn.c_proj.lora.lora_B
+│    │    └─h.0.ln_2.weight
+│    │    └─h.0.ln_2.bias
+│    │    └─h.0.mlp.c_fc.weight
+│    │    └─h.0.mlp.c_fc.bias
+│    │    └─h.0.mlp.c_proj.base_layer.weight
+│    │    └─h.0.mlp.c_proj.base_layer.bias
+│    │    └─h.0.mlp.c_proj.lora.lora_A
+│    │    └─h.0.mlp.c_proj.lora.lora_B
+│    │    └─h.1.ln_1.weight
+│    │    └─h.1.ln_1.bias
+│    │    └─h.1.attn.c_attn.base_layer.weight
+│    │    └─h.1.attn.c_attn.base_layer.bias
+│    │    └─h.1.attn.c_attn.lora.lora_A
+│    │    └─h.1.attn.c_attn.lora.lora_B
+│    │    └─h.1.attn.c_proj.base_layer.weight
+│    │    └─h.1.attn.c_proj.base_layer.bias
+│    │    └─h.1.attn.c_proj.lora.lora_A
+│    │    └─h.1.attn.c_proj.lora.lora_B
+│    │    └─h.1.ln_2.weight
+│    │    └─h.1.ln_2.bias
+│    │    └─h.1.mlp.c_fc.weight
+│    │    └─h.1.mlp.c_fc.bias
+│    │    └─h.1.mlp.c_proj.base_layer.weight
+│    │    └─h.1.mlp.c_proj.base_layer.bias
+│    │    └─h.1.mlp.c_proj.lora.lora_A
+│    │    └─h.1.mlp.c_proj.lora.lora_B
+│    │    └─h.2.ln_1.weight
+│    │    └─h.2.ln_1.bias
+│    │    └─h.2.attn.c_attn.base_layer.weight
+│    │    └─h.2.attn.c_attn.base_layer.bias
+│    │    └─h.2.attn.c_attn.lora.lora_A
+│    │    └─h.2.attn.c_attn.lora.lora_B
+│    │    └─h.2.attn.c_proj.base_layer.weight
+│    │    └─h.2.attn.c_proj.base_layer.bias
+│    │    └─h.2.attn.c_proj.lora.lora_A
+│    │    └─h.2.attn.c_proj.lora.lora_B
+│    │    └─h.2.ln_2.weight
+│    │    └─h.2.ln_2.bias
+│    │    └─h.2.mlp.c_fc.weight
+│    │    └─h.2.mlp.c_fc.bias
+│    │    └─h.2.mlp.c_proj.base_layer.weight
+│    │    └─h.2.mlp.c_proj.base_layer.bias
+│    │    └─h.2.mlp.c_proj.lora.lora_A
+│    │    └─h.2.mlp.c_proj.lora.lora_B
+│    │    └─h.3.ln_1.weight
+│    │    └─h.3.ln_1.bias
+│    │    └─h.3.attn.c_attn.base_layer.weight
+│    │    └─h.3.attn.c_attn.base_layer.bias
+│    │    └─h.3.attn.c_attn.lora.lora_A
+│    │    └─h.3.attn.c_attn.lora.lora_B
+│    │    └─h.3.attn.c_proj.base_layer.weight
+│    │    └─h.3.attn.c_proj.base_layer.bias
+│    │    └─h.3.attn.c_proj.lora.lora_A
+│    │    └─h.3.attn.c_proj.lora.lora_B
+│    │    └─h.3.ln_2.weight
+│    │    └─h.3.ln_2.bias
+│    │    └─h.3.mlp.c_fc.weight
+│    │    └─h.3.mlp.c_fc.bias
+│    │    └─h.3.mlp.c_proj.base_layer.weight
+│    │    └─h.3.mlp.c_proj.base_layer.bias
+│    │    └─h.3.mlp.c_proj.lora.lora_A
+│    │    └─h.3.mlp.c_proj.lora.lora_B
+│    │    └─h.4.ln_1.weight
+│    │    └─h.4.ln_1.bias
+│    │    └─h.4.attn.c_attn.base_layer.weight
+│    │    └─h.4.attn.c_attn.base_layer.bias
+│    │    └─h.4.attn.c_attn.lora.lora_A
+│    │    └─h.4.attn.c_attn.lora.lora_B
+│    │    └─h.4.attn.c_proj.base_layer.weight
+│    │    └─h.4.attn.c_proj.base_layer.bias
+│    │    └─h.4.attn.c_proj.lora.lora_A
+│    │    └─h.4.attn.c_proj.lora.lora_B
+│    │    └─h.4.ln_2.weight
+│    │    └─h.4.ln_2.bias
+│    │    └─h.4.mlp.c_fc.weight
+│    │    └─h.4.mlp.c_fc.bias
+│    │    └─h.4.mlp.c_proj.base_layer.weight
+│    │    └─h.4.mlp.c_proj.base_layer.bias
+│    │    └─h.4.mlp.c_proj.lora.lora_A
+│    │    └─h.4.mlp.c_proj.lora.lora_B
+│    │    └─h.5.ln_1.weight
+│    │    └─h.5.ln_1.bias
+│    │    └─h.5.attn.c_attn.base_layer.weight
+│    │    └─h.5.attn.c_attn.base_layer.bias
+│    │    └─h.5.attn.c_attn.lora.lora_A
+│    │    └─h.5.attn.c_attn.lora.lora_B
+│    │    └─h.5.attn.c_proj.base_layer.weight
+│    │    └─h.5.attn.c_proj.base_layer.bias
+│    │    └─h.5.attn.c_proj.lora.lora_A
+│    │    └─h.5.attn.c_proj.lora.lora_B
+│    │    └─h.5.ln_2.weight
+│    │    └─h.5.ln_2.bias
+│    │    └─h.5.mlp.c_fc.weight
+│    │    └─h.5.mlp.c_fc.bias
+│    │    └─h.5.mlp.c_proj.base_layer.weight
+│    │    └─h.5.mlp.c_proj.base_layer.bias
+│    │    └─h.5.mlp.c_proj.lora.lora_A
+│    │    └─h.5.mlp.c_proj.lora.lora_B
+│    │    └─h.6.ln_1.weight
+│    │    └─h.6.ln_1.bias
+│    │    └─h.6.attn.c_attn.base_layer.weight
+│    │    └─h.6.attn.c_attn.base_layer.bias
+│    │    └─h.6.attn.c_attn.lora.lora_A
+│    │    └─h.6.attn.c_attn.lora.lora_B
+│    │    └─h.6.attn.c_proj.base_layer.weight
+│    │    └─h.6.attn.c_proj.base_layer.bias
+│    │    └─h.6.attn.c_proj.lora.lora_A
+│    │    └─h.6.attn.c_proj.lora.lora_B
+│    │    └─h.6.ln_2.weight
+│    │    └─h.6.ln_2.bias
+│    │    └─h.6.mlp.c_fc.weight
+│    │    └─h.6.mlp.c_fc.bias
+│    │    └─h.6.mlp.c_proj.base_layer.weight
+│    │    └─h.6.mlp.c_proj.base_layer.bias
+│    │    └─h.6.mlp.c_proj.lora.lora_A
+│    │    └─h.6.mlp.c_proj.lora.lora_B
+│    │    └─h.7.ln_1.weight
+│    │    └─h.7.ln_1.bias
+│    │    └─h.7.attn.c_attn.base_layer.weight
+│    │    └─h.7.attn.c_attn.base_layer.bias
+│    │    └─h.7.attn.c_attn.lora.lora_A
+│    │    └─h.7.attn.c_attn.lora.lora_B
+│    │    └─h.7.attn.c_proj.base_layer.weight
+│    │    └─h.7.attn.c_proj.base_layer.bias
+│    │    └─h.7.attn.c_proj.lora.lora_A
+│    │    └─h.7.attn.c_proj.lora.lora_B
+│    │    └─h.7.ln_2.weight
+│    │    └─h.7.ln_2.bias
+│    │    └─h.7.mlp.c_fc.weight
+│    │    └─h.7.mlp.c_fc.bias
+│    │    └─h.7.mlp.c_proj.base_layer.weight
+│    │    └─h.7.mlp.c_proj.base_layer.bias
+│    │    └─h.7.mlp.c_proj.lora.lora_A
+│    │    └─h.7.mlp.c_proj.lora.lora_B
+│    │    └─h.8.ln_1.weight
+│    │    └─h.8.ln_1.bias
+│    │    └─h.8.attn.c_attn.base_layer.weight
+│    │    └─h.8.attn.c_attn.base_layer.bias
+│    │    └─h.8.attn.c_attn.lora.lora_A
+│    │    └─h.8.attn.c_attn.lora.lora_B
+│    │    └─h.8.attn.c_proj.base_layer.weight
+│    │    └─h.8.attn.c_proj.base_layer.bias
+│    │    └─h.8.attn.c_proj.lora.lora_A
+│    │    └─h.8.attn.c_proj.lora.lora_B
+│    │    └─h.8.ln_2.weight
+│    │    └─h.8.ln_2.bias
+│    │    └─h.8.mlp.c_fc.weight
+│    │    └─h.8.mlp.c_fc.bias
+│    │    └─h.8.mlp.c_proj.base_layer.weight
+│    │    └─h.8.mlp.c_proj.base_layer.bias
+│    │    └─h.8.mlp.c_proj.lora.lora_A
+│    │    └─h.8.mlp.c_proj.lora.lora_B
+│    │    └─h.9.ln_1.weight
+│    │    └─h.9.ln_1.bias
+│    │    └─h.9.attn.c_attn.base_layer.weight
+│    │    └─h.9.attn.c_attn.base_layer.bias
+│    │    └─h.9.attn.c_attn.lora.lora_A
+│    │    └─h.9.attn.c_attn.lora.lora_B
+│    │    └─h.9.attn.c_proj.base_layer.weight
+│    │    └─h.9.attn.c_proj.base_layer.bias
+│    │    └─h.9.attn.c_proj.lora.lora_A
+│    │    └─h.9.attn.c_proj.lora.lora_B
+│    │    └─h.9.ln_2.weight
+│    │    └─h.9.ln_2.bias
+│    │    └─h.9.mlp.c_fc.weight
+│    │    └─h.9.mlp.c_fc.bias
+│    │    └─h.9.mlp.c_proj.base_layer.weight
+│    │    └─h.9.mlp.c_proj.base_layer.bias
+│    │    └─h.9.mlp.c_proj.lora.lora_A
+│    │    └─h.9.mlp.c_proj.lora.lora_B
+│    │    └─h.10.ln_1.weight
+│    │    └─h.10.ln_1.bias
+│    │    └─h.10.attn.c_attn.base_layer.weight
+│    │    └─h.10.attn.c_attn.base_layer.bias
+│    │    └─h.10.attn.c_attn.lora.lora_A
+│    │    └─h.10.attn.c_attn.lora.lora_B
+│    │    └─h.10.attn.c_proj.base_layer.weight
+│    │    └─h.10.attn.c_proj.base_layer.bias
+│    │    └─h.10.attn.c_proj.lora.lora_A
+│    │    └─h.10.attn.c_proj.lora.lora_B
+│    │    └─h.10.ln_2.weight
+│    │    └─h.10.ln_2.bias
+│    │    └─h.10.mlp.c_fc.weight
+│    │    └─h.10.mlp.c_fc.bias
+│    │    └─h.10.mlp.c_proj.base_layer.weight
+│    │    └─h.10.mlp.c_proj.base_layer.bias
+│    │    └─h.10.mlp.c_proj.lora.lora_A
+│    │    └─h.10.mlp.c_proj.lora.lora_B
+│    │    └─h.11.ln_1.weight
+│    │    └─h.11.ln_1.bias
+│    │    └─h.11.attn.c_attn.base_layer.weight
+│    │    └─h.11.attn.c_attn.base_layer.bias
+│    │    └─h.11.attn.c_attn.lora.lora_A
+│    │    └─h.11.attn.c_attn.lora.lora_B
+│    │    └─h.11.attn.c_proj.base_layer.weight
+│    │    └─h.11.attn.c_proj.base_layer.bias
+│    │    └─h.11.attn.c_proj.lora.lora_A
+│    │    └─h.11.attn.c_proj.lora.lora_B
+│    │    └─h.11.ln_2.weight
+│    │    └─h.11.ln_2.bias
+│    │    └─h.11.mlp.c_fc.weight
+│    │    └─h.11.mlp.c_fc.bias
+│    │    └─h.11.mlp.c_proj.base_layer.weight
+│    │    └─h.11.mlp.c_proj.base_layer.bias
+│    │    └─h.11.mlp.c_proj.lora.lora_A
+│    │    └─h.11.mlp.c_proj.lora.lora_B
+│    │    └─h.12.ln_1.weight
+│    │    └─h.12.ln_1.bias
+│    │    └─h.12.attn.c_attn.base_layer.weight
+│    │    └─h.12.attn.c_attn.base_layer.bias
+│    │    └─h.12.attn.c_attn.lora.lora_A
+│    │    └─h.12.attn.c_attn.lora.lora_B
+│    │    └─h.12.attn.c_proj.base_layer.weight
+│    │    └─h.12.attn.c_proj.base_layer.bias
+│    │    └─h.12.attn.c_proj.lora.lora_A
+│    │    └─h.12.attn.c_proj.lora.lora_B
+│    │    └─h.12.ln_2.weight
+│    │    └─h.12.ln_2.bias
+│    │    └─h.12.mlp.c_fc.weight
+│    │    └─h.12.mlp.c_fc.bias
+│    │    └─h.12.mlp.c_proj.base_layer.weight
+│    │    └─h.12.mlp.c_proj.base_layer.bias
+│    │    └─h.12.mlp.c_proj.lora.lora_A
+│    │    └─h.12.mlp.c_proj.lora.lora_B
+│    │    └─h.13.ln_1.weight
+│    │    └─h.13.ln_1.bias
+│    │    └─h.13.attn.c_attn.base_layer.weight
+│    │    └─h.13.attn.c_attn.base_layer.bias
+│    │    └─h.13.attn.c_attn.lora.lora_A
+│    │    └─h.13.attn.c_attn.lora.lora_B
+│    │    └─h.13.attn.c_proj.base_layer.weight
+│    │    └─h.13.attn.c_proj.base_layer.bias
+│    │    └─h.13.attn.c_proj.lora.lora_A
+│    │    └─h.13.attn.c_proj.lora.lora_B
+│    │    └─h.13.ln_2.weight
+│    │    └─h.13.ln_2.bias
+│    │    └─h.13.mlp.c_fc.weight
+│    │    └─h.13.mlp.c_fc.bias
+│    │    └─h.13.mlp.c_proj.base_layer.weight
+│    │    └─h.13.mlp.c_proj.base_layer.bias
+│    │    └─h.13.mlp.c_proj.lora.lora_A
+│    │    └─h.13.mlp.c_proj.lora.lora_B
+│    │    └─h.14.ln_1.weight
+│    │    └─h.14.ln_1.bias
+│    │    └─h.14.attn.c_attn.base_layer.weight
+│    │    └─h.14.attn.c_attn.base_layer.bias
+│    │    └─h.14.attn.c_attn.lora.lora_A
+│    │    └─h.14.attn.c_attn.lora.lora_B
+│    │    └─h.14.attn.c_proj.base_layer.weight
+│    │    └─h.14.attn.c_proj.base_layer.bias
+│    │    └─h.14.attn.c_proj.lora.lora_A
+│    │    └─h.14.attn.c_proj.lora.lora_B
+│    │    └─h.14.ln_2.weight
+│    │    └─h.14.ln_2.bias
+│    │    └─h.14.mlp.c_fc.weight
+│    │    └─h.14.mlp.c_fc.bias
+│    │    └─h.14.mlp.c_proj.base_layer.weight
+│    │    └─h.14.mlp.c_proj.base_layer.bias
+│    │    └─h.14.mlp.c_proj.lora.lora_A
+│    │    └─h.14.mlp.c_proj.lora.lora_B
+│    │    └─h.15.ln_1.weight
+│    │    └─h.15.ln_1.bias
+│    │    └─h.15.attn.c_attn.base_layer.weight
+│    │    └─h.15.attn.c_attn.base_layer.bias
+│    │    └─h.15.attn.c_attn.lora.lora_A
+│    │    └─h.15.attn.c_attn.lora.lora_B
+│    │    └─h.15.attn.c_proj.base_layer.weight
+│    │    └─h.15.attn.c_proj.base_layer.bias
+│    │    └─h.15.attn.c_proj.lora.lora_A
+│    │    └─h.15.attn.c_proj.lora.lora_B
+│    │    └─h.15.ln_2.weight
+│    │    └─h.15.ln_2.bias
+│    │    └─h.15.mlp.c_fc.weight
+│    │    └─h.15.mlp.c_fc.bias
+│    │    └─h.15.mlp.c_proj.base_layer.weight
+│    │    └─h.15.mlp.c_proj.base_layer.bias
+│    │    └─h.15.mlp.c_proj.lora.lora_A
+│    │    └─h.15.mlp.c_proj.lora.lora_B
+│    │    └─h.16.ln_1.weight
+│    │    └─h.16.ln_1.bias
+│    │    └─h.16.attn.c_attn.base_layer.weight
+│    │    └─h.16.attn.c_attn.base_layer.bias
+│    │    └─h.16.attn.c_attn.lora.lora_A
+│    │    └─h.16.attn.c_attn.lora.lora_B
+│    │    └─h.16.attn.c_proj.base_layer.weight
+│    │    └─h.16.attn.c_proj.base_layer.bias
+│    │    └─h.16.attn.c_proj.lora.lora_A
+│    │    └─h.16.attn.c_proj.lora.lora_B
+│    │    └─h.16.ln_2.weight
+│    │    └─h.16.ln_2.bias
+│    │    └─h.16.mlp.c_fc.weight
+│    │    └─h.16.mlp.c_fc.bias
+│    │    └─h.16.mlp.c_proj.base_layer.weight
+│    │    └─h.16.mlp.c_proj.base_layer.bias
+│    │    └─h.16.mlp.c_proj.lora.lora_A
+│    │    └─h.16.mlp.c_proj.lora.lora_B
+│    │    └─h.17.ln_1.weight
+│    │    └─h.17.ln_1.bias
+│    │    └─h.17.attn.c_attn.base_layer.weight
+│    │    └─h.17.attn.c_attn.base_layer.bias
+│    │    └─h.17.attn.c_attn.lora.lora_A
+│    │    └─h.17.attn.c_attn.lora.lora_B
+│    │    └─h.17.attn.c_proj.base_layer.weight
+│    │    └─h.17.attn.c_proj.base_layer.bias
+│    │    └─h.17.attn.c_proj.lora.lora_A
+│    │    └─h.17.attn.c_proj.lora.lora_B
+│    │    └─h.17.ln_2.weight
+│    │    └─h.17.ln_2.bias
+│    │    └─h.17.mlp.c_fc.weight
+│    │    └─h.17.mlp.c_fc.bias
+│    │    └─h.17.mlp.c_proj.base_layer.weight
+│    │    └─h.17.mlp.c_proj.base_layer.bias
+│    │    └─h.17.mlp.c_proj.lora.lora_A
+│    │    └─h.17.mlp.c_proj.lora.lora_B
+│    │    └─h.18.ln_1.weight
+│    │    └─h.18.ln_1.bias
+│    │    └─h.18.attn.c_attn.base_layer.weight
+│    │    └─h.18.attn.c_attn.base_layer.bias
+│    │    └─h.18.attn.c_attn.lora.lora_A
+│    │    └─h.18.attn.c_attn.lora.lora_B
+│    │    └─h.18.attn.c_proj.base_layer.weight
+│    │    └─h.18.attn.c_proj.base_layer.bias
+│    │    └─h.18.attn.c_proj.lora.lora_A
+│    │    └─h.18.attn.c_proj.lora.lora_B
+│    │    └─h.18.ln_2.weight
+│    │    └─h.18.ln_2.bias
+│    │    └─h.18.mlp.c_fc.weight
+│    │    └─h.18.mlp.c_fc.bias
+│    │    └─h.18.mlp.c_proj.base_layer.weight
+│    │    └─h.18.mlp.c_proj.base_layer.bias
+│    │    └─h.18.mlp.c_proj.lora.lora_A
+│    │    └─h.18.mlp.c_proj.lora.lora_B
+│    │    └─h.19.ln_1.weight
+│    │    └─h.19.ln_1.bias
+│    │    └─h.19.attn.c_attn.base_layer.weight
+│    │    └─h.19.attn.c_attn.base_layer.bias
+│    │    └─h.19.attn.c_attn.lora.lora_A
+│    │    └─h.19.attn.c_attn.lora.lora_B
+│    │    └─h.19.attn.c_proj.base_layer.weight
+│    │    └─h.19.attn.c_proj.base_layer.bias
+│    │    └─h.19.attn.c_proj.lora.lora_A
+│    │    └─h.19.attn.c_proj.lora.lora_B
+│    │    └─h.19.ln_2.weight
+│    │    └─h.19.ln_2.bias
+│    │    └─h.19.mlp.c_fc.weight
+│    │    └─h.19.mlp.c_fc.bias
+│    │    └─h.19.mlp.c_proj.base_layer.weight
+│    │    └─h.19.mlp.c_proj.base_layer.bias
+│    │    └─h.19.mlp.c_proj.lora.lora_A
+│    │    └─h.19.mlp.c_proj.lora.lora_B
+│    │    └─h.20.ln_1.weight
+│    │    └─h.20.ln_1.bias
+│    │    └─h.20.attn.c_attn.base_layer.weight
+│    │    └─h.20.attn.c_attn.base_layer.bias
+│    │    └─h.20.attn.c_attn.lora.lora_A
+│    │    └─h.20.attn.c_attn.lora.lora_B
+│    │    └─h.20.attn.c_proj.base_layer.weight
+│    │    └─h.20.attn.c_proj.base_layer.bias
+│    │    └─h.20.attn.c_proj.lora.lora_A
+│    │    └─h.20.attn.c_proj.lora.lora_B
+│    │    └─h.20.ln_2.weight
+│    │    └─h.20.ln_2.bias
+│    │    └─h.20.mlp.c_fc.weight
+│    │    └─h.20.mlp.c_fc.bias
+│    │    └─h.20.mlp.c_proj.base_layer.weight
+│    │    └─h.20.mlp.c_proj.base_layer.bias
+│    │    └─h.20.mlp.c_proj.lora.lora_A
+│    │    └─h.20.mlp.c_proj.lora.lora_B
+│    │    └─h.21.ln_1.weight
+│    │    └─h.21.ln_1.bias
+│    │    └─h.21.attn.c_attn.base_layer.weight
+│    │    └─h.21.attn.c_attn.base_layer.bias
+│    │    └─h.21.attn.c_attn.lora.lora_A
+│    │    └─h.21.attn.c_attn.lora.lora_B
+│    │    └─h.21.attn.c_proj.base_layer.weight
+│    │    └─h.21.attn.c_proj.base_layer.bias
+│    │    └─h.21.attn.c_proj.lora.lora_A
+│    │    └─h.21.attn.c_proj.lora.lora_B
+│    │    └─h.21.ln_2.weight
+│    │    └─h.21.ln_2.bias
+│    │    └─h.21.mlp.c_fc.weight
+│    │    └─h.21.mlp.c_fc.bias
+│    │    └─h.21.mlp.c_proj.base_layer.weight
+│    │    └─h.21.mlp.c_proj.base_layer.bias
+│    │    └─h.21.mlp.c_proj.lora.lora_A
+│    │    └─h.21.mlp.c_proj.lora.lora_B
+│    │    └─h.22.ln_1.weight
+│    │    └─h.22.ln_1.bias
+│    │    └─h.22.attn.c_attn.base_layer.weight
+│    │    └─h.22.attn.c_attn.base_layer.bias
+│    │    └─h.22.attn.c_attn.lora.lora_A
+│    │    └─h.22.attn.c_attn.lora.lora_B
+│    │    └─h.22.attn.c_proj.base_layer.weight
+│    │    └─h.22.attn.c_proj.base_layer.bias
+│    │    └─h.22.attn.c_proj.lora.lora_A
+│    │    └─h.22.attn.c_proj.lora.lora_B
+│    │    └─h.22.ln_2.weight
+│    │    └─h.22.ln_2.bias
+│    │    └─h.22.mlp.c_fc.weight
+│    │    └─h.22.mlp.c_fc.bias
+│    │    └─h.22.mlp.c_proj.base_layer.weight
+│    │    └─h.22.mlp.c_proj.base_layer.bias
+│    │    └─h.22.mlp.c_proj.lora.lora_A
+│    │    └─h.22.mlp.c_proj.lora.lora_B
+│    │    └─h.23.ln_1.weight
+│    │    └─h.23.ln_1.bias
+│    │    └─h.23.attn.c_attn.base_layer.weight
+│    │    └─h.23.attn.c_attn.base_layer.bias
+│    │    └─h.23.attn.c_attn.lora.lora_A
+│    │    └─h.23.attn.c_attn.lora.lora_B
+│    │    └─h.23.attn.c_proj.base_layer.weight
+│    │    └─h.23.attn.c_proj.base_layer.bias
+│    │    └─h.23.attn.c_proj.lora.lora_A
+│    │    └─h.23.attn.c_proj.lora.lora_B
+│    │    └─h.23.ln_2.weight
+│    │    └─h.23.ln_2.bias
+│    │    └─h.23.mlp.c_fc.weight
+│    │    └─h.23.mlp.c_fc.bias
+│    │    └─h.23.mlp.c_proj.base_layer.weight
+│    │    └─h.23.mlp.c_proj.base_layer.bias
+│    │    └─h.23.mlp.c_proj.lora.lora_A
+│    │    └─h.23.mlp.c_proj.lora.lora_B
+│    │    └─ln_f.weight
+│    │    └─ln_f.bias
+│    │    └─Embedding: 3-1
+│    │    │    └─weight
+│    │    └─Embedding: 3-2
+│    │    │    └─weight
+│    │    └─Dropout: 3-3
+│    │    └─ModuleList: 3-4
+│    │    │    └─0.ln_1.weight
+│    │    │    └─0.ln_1.bias
+│    │    │    └─0.attn.c_attn.base_layer.weight
+│    │    │    └─0.attn.c_attn.base_layer.bias
+│    │    │    └─0.attn.c_attn.lora.lora_A
+│    │    │    └─0.attn.c_attn.lora.lora_B
+│    │    │    └─0.attn.c_proj.base_layer.weight
+│    │    │    └─0.attn.c_proj.base_layer.bias
+│    │    │    └─0.attn.c_proj.lora.lora_A
+│    │    │    └─0.attn.c_proj.lora.lora_B
+│    │    │    └─0.ln_2.weight
+│    │    │    └─0.ln_2.bias
+│    │    │    └─0.mlp.c_fc.weight
+│    │    │    └─0.mlp.c_fc.bias
+│    │    │    └─0.mlp.c_proj.base_layer.weight
+│    │    │    └─0.mlp.c_proj.base_layer.bias
+│    │    │    └─0.mlp.c_proj.lora.lora_A
+│    │    │    └─0.mlp.c_proj.lora.lora_B
+│    │    │    └─1.ln_1.weight
+│    │    │    └─1.ln_1.bias
+│    │    │    └─1.attn.c_attn.base_layer.weight
+│    │    │    └─1.attn.c_attn.base_layer.bias
+│    │    │    └─1.attn.c_attn.lora.lora_A
+│    │    │    └─1.attn.c_attn.lora.lora_B
+│    │    │    └─1.attn.c_proj.base_layer.weight
+│    │    │    └─1.attn.c_proj.base_layer.bias
+│    │    │    └─1.attn.c_proj.lora.lora_A
+│    │    │    └─1.attn.c_proj.lora.lora_B
+│    │    │    └─1.ln_2.weight
+│    │    │    └─1.ln_2.bias
+│    │    │    └─1.mlp.c_fc.weight
+│    │    │    └─1.mlp.c_fc.bias
+│    │    │    └─1.mlp.c_proj.base_layer.weight
+│    │    │    └─1.mlp.c_proj.base_layer.bias
+│    │    │    └─1.mlp.c_proj.lora.lora_A
+│    │    │    └─1.mlp.c_proj.lora.lora_B
+│    │    │    └─2.ln_1.weight
+│    │    │    └─2.ln_1.bias
+│    │    │    └─2.attn.c_attn.base_layer.weight
+│    │    │    └─2.attn.c_attn.base_layer.bias
+│    │    │    └─2.attn.c_attn.lora.lora_A
+│    │    │    └─2.attn.c_attn.lora.lora_B
+│    │    │    └─2.attn.c_proj.base_layer.weight
+│    │    │    └─2.attn.c_proj.base_layer.bias
+│    │    │    └─2.attn.c_proj.lora.lora_A
+│    │    │    └─2.attn.c_proj.lora.lora_B
+│    │    │    └─2.ln_2.weight
+│    │    │    └─2.ln_2.bias
+│    │    │    └─2.mlp.c_fc.weight
+│    │    │    └─2.mlp.c_fc.bias
+│    │    │    └─2.mlp.c_proj.base_layer.weight
+│    │    │    └─2.mlp.c_proj.base_layer.bias
+│    │    │    └─2.mlp.c_proj.lora.lora_A
+│    │    │    └─2.mlp.c_proj.lora.lora_B
+│    │    │    └─3.ln_1.weight
+│    │    │    └─3.ln_1.bias
+│    │    │    └─3.attn.c_attn.base_layer.weight
+│    │    │    └─3.attn.c_attn.base_layer.bias
+│    │    │    └─3.attn.c_attn.lora.lora_A
+│    │    │    └─3.attn.c_attn.lora.lora_B
+│    │    │    └─3.attn.c_proj.base_layer.weight
+│    │    │    └─3.attn.c_proj.base_layer.bias
+│    │    │    └─3.attn.c_proj.lora.lora_A
+│    │    │    └─3.attn.c_proj.lora.lora_B
+│    │    │    └─3.ln_2.weight
+│    │    │    └─3.ln_2.bias
+│    │    │    └─3.mlp.c_fc.weight
+│    │    │    └─3.mlp.c_fc.bias
+│    │    │    └─3.mlp.c_proj.base_layer.weight
+│    │    │    └─3.mlp.c_proj.base_layer.bias
+│    │    │    └─3.mlp.c_proj.lora.lora_A
+│    │    │    └─3.mlp.c_proj.lora.lora_B
+│    │    │    └─4.ln_1.weight
+│    │    │    └─4.ln_1.bias
+│    │    │    └─4.attn.c_attn.base_layer.weight
+│    │    │    └─4.attn.c_attn.base_layer.bias
+│    │    │    └─4.attn.c_attn.lora.lora_A
+│    │    │    └─4.attn.c_attn.lora.lora_B
+│    │    │    └─4.attn.c_proj.base_layer.weight
+│    │    │    └─4.attn.c_proj.base_layer.bias
+│    │    │    └─4.attn.c_proj.lora.lora_A
+│    │    │    └─4.attn.c_proj.lora.lora_B
+│    │    │    └─4.ln_2.weight
+│    │    │    └─4.ln_2.bias
+│    │    │    └─4.mlp.c_fc.weight
+│    │    │    └─4.mlp.c_fc.bias
+│    │    │    └─4.mlp.c_proj.base_layer.weight
+│    │    │    └─4.mlp.c_proj.base_layer.bias
+│    │    │    └─4.mlp.c_proj.lora.lora_A
+│    │    │    └─4.mlp.c_proj.lora.lora_B
+│    │    │    └─5.ln_1.weight
+│    │    │    └─5.ln_1.bias
+│    │    │    └─5.attn.c_attn.base_layer.weight
+│    │    │    └─5.attn.c_attn.base_layer.bias
+│    │    │    └─5.attn.c_attn.lora.lora_A
+│    │    │    └─5.attn.c_attn.lora.lora_B
+│    │    │    └─5.attn.c_proj.base_layer.weight
+│    │    │    └─5.attn.c_proj.base_layer.bias
+│    │    │    └─5.attn.c_proj.lora.lora_A
+│    │    │    └─5.attn.c_proj.lora.lora_B
+│    │    │    └─5.ln_2.weight
+│    │    │    └─5.ln_2.bias
+│    │    │    └─5.mlp.c_fc.weight
+│    │    │    └─5.mlp.c_fc.bias
+│    │    │    └─5.mlp.c_proj.base_layer.weight
+│    │    │    └─5.mlp.c_proj.base_layer.bias
+│    │    │    └─5.mlp.c_proj.lora.lora_A
+│    │    │    └─5.mlp.c_proj.lora.lora_B
+│    │    │    └─6.ln_1.weight
+│    │    │    └─6.ln_1.bias
+│    │    │    └─6.attn.c_attn.base_layer.weight
+│    │    │    └─6.attn.c_attn.base_layer.bias
+│    │    │    └─6.attn.c_attn.lora.lora_A
+│    │    │    └─6.attn.c_attn.lora.lora_B
+│    │    │    └─6.attn.c_proj.base_layer.weight
+│    │    │    └─6.attn.c_proj.base_layer.bias
+│    │    │    └─6.attn.c_proj.lora.lora_A
+│    │    │    └─6.attn.c_proj.lora.lora_B
+│    │    │    └─6.ln_2.weight
+│    │    │    └─6.ln_2.bias
+│    │    │    └─6.mlp.c_fc.weight
+│    │    │    └─6.mlp.c_fc.bias
+│    │    │    └─6.mlp.c_proj.base_layer.weight
+│    │    │    └─6.mlp.c_proj.base_layer.bias
+│    │    │    └─6.mlp.c_proj.lora.lora_A
+│    │    │    └─6.mlp.c_proj.lora.lora_B
+│    │    │    └─7.ln_1.weight
+│    │    │    └─7.ln_1.bias
+│    │    │    └─7.attn.c_attn.base_layer.weight
+│    │    │    └─7.attn.c_attn.base_layer.bias
+│    │    │    └─7.attn.c_attn.lora.lora_A
+│    │    │    └─7.attn.c_attn.lora.lora_B
+│    │    │    └─7.attn.c_proj.base_layer.weight
+│    │    │    └─7.attn.c_proj.base_layer.bias
+│    │    │    └─7.attn.c_proj.lora.lora_A
+│    │    │    └─7.attn.c_proj.lora.lora_B
+│    │    │    └─7.ln_2.weight
+│    │    │    └─7.ln_2.bias
+│    │    │    └─7.mlp.c_fc.weight
+│    │    │    └─7.mlp.c_fc.bias
+│    │    │    └─7.mlp.c_proj.base_layer.weight
+│    │    │    └─7.mlp.c_proj.base_layer.bias
+│    │    │    └─7.mlp.c_proj.lora.lora_A
+│    │    │    └─7.mlp.c_proj.lora.lora_B
+│    │    │    └─8.ln_1.weight
+│    │    │    └─8.ln_1.bias
+│    │    │    └─8.attn.c_attn.base_layer.weight
+│    │    │    └─8.attn.c_attn.base_layer.bias
+│    │    │    └─8.attn.c_attn.lora.lora_A
+│    │    │    └─8.attn.c_attn.lora.lora_B
+│    │    │    └─8.attn.c_proj.base_layer.weight
+│    │    │    └─8.attn.c_proj.base_layer.bias
+│    │    │    └─8.attn.c_proj.lora.lora_A
+│    │    │    └─8.attn.c_proj.lora.lora_B
+│    │    │    └─8.ln_2.weight
+│    │    │    └─8.ln_2.bias
+│    │    │    └─8.mlp.c_fc.weight
+│    │    │    └─8.mlp.c_fc.bias
+│    │    │    └─8.mlp.c_proj.base_layer.weight
+│    │    │    └─8.mlp.c_proj.base_layer.bias
+│    │    │    └─8.mlp.c_proj.lora.lora_A
+│    │    │    └─8.mlp.c_proj.lora.lora_B
+│    │    │    └─9.ln_1.weight
+│    │    │    └─9.ln_1.bias
+│    │    │    └─9.attn.c_attn.base_layer.weight
+│    │    │    └─9.attn.c_attn.base_layer.bias
+│    │    │    └─9.attn.c_attn.lora.lora_A
+│    │    │    └─9.attn.c_attn.lora.lora_B
+│    │    │    └─9.attn.c_proj.base_layer.weight
+│    │    │    └─9.attn.c_proj.base_layer.bias
+│    │    │    └─9.attn.c_proj.lora.lora_A
+│    │    │    └─9.attn.c_proj.lora.lora_B
+│    │    │    └─9.ln_2.weight
+│    │    │    └─9.ln_2.bias
+│    │    │    └─9.mlp.c_fc.weight
+│    │    │    └─9.mlp.c_fc.bias
+│    │    │    └─9.mlp.c_proj.base_layer.weight
+│    │    │    └─9.mlp.c_proj.base_layer.bias
+│    │    │    └─9.mlp.c_proj.lora.lora_A
+│    │    │    └─9.mlp.c_proj.lora.lora_B
+│    │    │    └─10.ln_1.weight
+│    │    │    └─10.ln_1.bias
+│    │    │    └─10.attn.c_attn.base_layer.weight
+│    │    │    └─10.attn.c_attn.base_layer.bias
+│    │    │    └─10.attn.c_attn.lora.lora_A
+│    │    │    └─10.attn.c_attn.lora.lora_B
+│    │    │    └─10.attn.c_proj.base_layer.weight
+│    │    │    └─10.attn.c_proj.base_layer.bias
+│    │    │    └─10.attn.c_proj.lora.lora_A
+│    │    │    └─10.attn.c_proj.lora.lora_B
+│    │    │    └─10.ln_2.weight
+│    │    │    └─10.ln_2.bias
+│    │    │    └─10.mlp.c_fc.weight
+│    │    │    └─10.mlp.c_fc.bias
+│    │    │    └─10.mlp.c_proj.base_layer.weight
+│    │    │    └─10.mlp.c_proj.base_layer.bias
+│    │    │    └─10.mlp.c_proj.lora.lora_A
+│    │    │    └─10.mlp.c_proj.lora.lora_B
+│    │    │    └─11.ln_1.weight
+│    │    │    └─11.ln_1.bias
+│    │    │    └─11.attn.c_attn.base_layer.weight
+│    │    │    └─11.attn.c_attn.base_layer.bias
+│    │    │    └─11.attn.c_attn.lora.lora_A
+│    │    │    └─11.attn.c_attn.lora.lora_B
+│    │    │    └─11.attn.c_proj.base_layer.weight
+│    │    │    └─11.attn.c_proj.base_layer.bias
+│    │    │    └─11.attn.c_proj.lora.lora_A
+│    │    │    └─11.attn.c_proj.lora.lora_B
+│    │    │    └─11.ln_2.weight
+│    │    │    └─11.ln_2.bias
+│    │    │    └─11.mlp.c_fc.weight
+│    │    │    └─11.mlp.c_fc.bias
+│    │    │    └─11.mlp.c_proj.base_layer.weight
+│    │    │    └─11.mlp.c_proj.base_layer.bias
+│    │    │    └─11.mlp.c_proj.lora.lora_A
+│    │    │    └─11.mlp.c_proj.lora.lora_B
+│    │    │    └─12.ln_1.weight
+│    │    │    └─12.ln_1.bias
+│    │    │    └─12.attn.c_attn.base_layer.weight
+│    │    │    └─12.attn.c_attn.base_layer.bias
+│    │    │    └─12.attn.c_attn.lora.lora_A
+│    │    │    └─12.attn.c_attn.lora.lora_B
+│    │    │    └─12.attn.c_proj.base_layer.weight
+│    │    │    └─12.attn.c_proj.base_layer.bias
+│    │    │    └─12.attn.c_proj.lora.lora_A
+│    │    │    └─12.attn.c_proj.lora.lora_B
+│    │    │    └─12.ln_2.weight
+│    │    │    └─12.ln_2.bias
+│    │    │    └─12.mlp.c_fc.weight
+│    │    │    └─12.mlp.c_fc.bias
+│    │    │    └─12.mlp.c_proj.base_layer.weight
+│    │    │    └─12.mlp.c_proj.base_layer.bias
+│    │    │    └─12.mlp.c_proj.lora.lora_A
+│    │    │    └─12.mlp.c_proj.lora.lora_B
+│    │    │    └─13.ln_1.weight
+│    │    │    └─13.ln_1.bias
+│    │    │    └─13.attn.c_attn.base_layer.weight
+│    │    │    └─13.attn.c_attn.base_layer.bias
+│    │    │    └─13.attn.c_attn.lora.lora_A
+│    │    │    └─13.attn.c_attn.lora.lora_B
+│    │    │    └─13.attn.c_proj.base_layer.weight
+│    │    │    └─13.attn.c_proj.base_layer.bias
+│    │    │    └─13.attn.c_proj.lora.lora_A
+│    │    │    └─13.attn.c_proj.lora.lora_B
+│    │    │    └─13.ln_2.weight
+│    │    │    └─13.ln_2.bias
+│    │    │    └─13.mlp.c_fc.weight
+│    │    │    └─13.mlp.c_fc.bias
+│    │    │    └─13.mlp.c_proj.base_layer.weight
+│    │    │    └─13.mlp.c_proj.base_layer.bias
+│    │    │    └─13.mlp.c_proj.lora.lora_A
+│    │    │    └─13.mlp.c_proj.lora.lora_B
+│    │    │    └─14.ln_1.weight
+│    │    │    └─14.ln_1.bias
+│    │    │    └─14.attn.c_attn.base_layer.weight
+│    │    │    └─14.attn.c_attn.base_layer.bias
+│    │    │    └─14.attn.c_attn.lora.lora_A
+│    │    │    └─14.attn.c_attn.lora.lora_B
+│    │    │    └─14.attn.c_proj.base_layer.weight
+│    │    │    └─14.attn.c_proj.base_layer.bias
+│    │    │    └─14.attn.c_proj.lora.lora_A
+│    │    │    └─14.attn.c_proj.lora.lora_B
+│    │    │    └─14.ln_2.weight
+│    │    │    └─14.ln_2.bias
+│    │    │    └─14.mlp.c_fc.weight
+│    │    │    └─14.mlp.c_fc.bias
+│    │    │    └─14.mlp.c_proj.base_layer.weight
+│    │    │    └─14.mlp.c_proj.base_layer.bias
+│    │    │    └─14.mlp.c_proj.lora.lora_A
+│    │    │    └─14.mlp.c_proj.lora.lora_B
+│    │    │    └─15.ln_1.weight
+│    │    │    └─15.ln_1.bias
+│    │    │    └─15.attn.c_attn.base_layer.weight
+│    │    │    └─15.attn.c_attn.base_layer.bias
+│    │    │    └─15.attn.c_attn.lora.lora_A
+│    │    │    └─15.attn.c_attn.lora.lora_B
+│    │    │    └─15.attn.c_proj.base_layer.weight
+│    │    │    └─15.attn.c_proj.base_layer.bias
+│    │    │    └─15.attn.c_proj.lora.lora_A
+│    │    │    └─15.attn.c_proj.lora.lora_B
+│    │    │    └─15.ln_2.weight
+│    │    │    └─15.ln_2.bias
+│    │    │    └─15.mlp.c_fc.weight
+│    │    │    └─15.mlp.c_fc.bias
+│    │    │    └─15.mlp.c_proj.base_layer.weight
+│    │    │    └─15.mlp.c_proj.base_layer.bias
+│    │    │    └─15.mlp.c_proj.lora.lora_A
+│    │    │    └─15.mlp.c_proj.lora.lora_B
+│    │    │    └─16.ln_1.weight
+│    │    │    └─16.ln_1.bias
+│    │    │    └─16.attn.c_attn.base_layer.weight
+│    │    │    └─16.attn.c_attn.base_layer.bias
+│    │    │    └─16.attn.c_attn.lora.lora_A
+│    │    │    └─16.attn.c_attn.lora.lora_B
+│    │    │    └─16.attn.c_proj.base_layer.weight
+│    │    │    └─16.attn.c_proj.base_layer.bias
+│    │    │    └─16.attn.c_proj.lora.lora_A
+│    │    │    └─16.attn.c_proj.lora.lora_B
+│    │    │    └─16.ln_2.weight
+│    │    │    └─16.ln_2.bias
+│    │    │    └─16.mlp.c_fc.weight
+│    │    │    └─16.mlp.c_fc.bias
+│    │    │    └─16.mlp.c_proj.base_layer.weight
+│    │    │    └─16.mlp.c_proj.base_layer.bias
+│    │    │    └─16.mlp.c_proj.lora.lora_A
+│    │    │    └─16.mlp.c_proj.lora.lora_B
+│    │    │    └─17.ln_1.weight
+│    │    │    └─17.ln_1.bias
+│    │    │    └─17.attn.c_attn.base_layer.weight
+│    │    │    └─17.attn.c_attn.base_layer.bias
+│    │    │    └─17.attn.c_attn.lora.lora_A
+│    │    │    └─17.attn.c_attn.lora.lora_B
+│    │    │    └─17.attn.c_proj.base_layer.weight
+│    │    │    └─17.attn.c_proj.base_layer.bias
+│    │    │    └─17.attn.c_proj.lora.lora_A
+│    │    │    └─17.attn.c_proj.lora.lora_B
+│    │    │    └─17.ln_2.weight
+│    │    │    └─17.ln_2.bias
+│    │    │    └─17.mlp.c_fc.weight
+│    │    │    └─17.mlp.c_fc.bias
+│    │    │    └─17.mlp.c_proj.base_layer.weight
+│    │    │    └─17.mlp.c_proj.base_layer.bias
+│    │    │    └─17.mlp.c_proj.lora.lora_A
+│    │    │    └─17.mlp.c_proj.lora.lora_B
+│    │    │    └─18.ln_1.weight
+│    │    │    └─18.ln_1.bias
+│    │    │    └─18.attn.c_attn.base_layer.weight
+│    │    │    └─18.attn.c_attn.base_layer.bias
+│    │    │    └─18.attn.c_attn.lora.lora_A
+│    │    │    └─18.attn.c_attn.lora.lora_B
+│    │    │    └─18.attn.c_proj.base_layer.weight
+│    │    │    └─18.attn.c_proj.base_layer.bias
+│    │    │    └─18.attn.c_proj.lora.lora_A
+│    │    │    └─18.attn.c_proj.lora.lora_B
+│    │    │    └─18.ln_2.weight
+│    │    │    └─18.ln_2.bias
+│    │    │    └─18.mlp.c_fc.weight
+│    │    │    └─18.mlp.c_fc.bias
+│    │    │    └─18.mlp.c_proj.base_layer.weight
+│    │    │    └─18.mlp.c_proj.base_layer.bias
+│    │    │    └─18.mlp.c_proj.lora.lora_A
+│    │    │    └─18.mlp.c_proj.lora.lora_B
+│    │    │    └─19.ln_1.weight
+│    │    │    └─19.ln_1.bias
+│    │    │    └─19.attn.c_attn.base_layer.weight
+│    │    │    └─19.attn.c_attn.base_layer.bias
+│    │    │    └─19.attn.c_attn.lora.lora_A
+│    │    │    └─19.attn.c_attn.lora.lora_B
+│    │    │    └─19.attn.c_proj.base_layer.weight
+│    │    │    └─19.attn.c_proj.base_layer.bias
+│    │    │    └─19.attn.c_proj.lora.lora_A
+│    │    │    └─19.attn.c_proj.lora.lora_B
+│    │    │    └─19.ln_2.weight
+│    │    │    └─19.ln_2.bias
+│    │    │    └─19.mlp.c_fc.weight
+│    │    │    └─19.mlp.c_fc.bias
+│    │    │    └─19.mlp.c_proj.base_layer.weight
+│    │    │    └─19.mlp.c_proj.base_layer.bias
+│    │    │    └─19.mlp.c_proj.lora.lora_A
+│    │    │    └─19.mlp.c_proj.lora.lora_B
+│    │    │    └─20.ln_1.weight
+│    │    │    └─20.ln_1.bias
+│    │    │    └─20.attn.c_attn.base_layer.weight
+│    │    │    └─20.attn.c_attn.base_layer.bias
+│    │    │    └─20.attn.c_attn.lora.lora_A
+│    │    │    └─20.attn.c_attn.lora.lora_B
+│    │    │    └─20.attn.c_proj.base_layer.weight
+│    │    │    └─20.attn.c_proj.base_layer.bias
+│    │    │    └─20.attn.c_proj.lora.lora_A
+│    │    │    └─20.attn.c_proj.lora.lora_B
+│    │    │    └─20.ln_2.weight
+│    │    │    └─20.ln_2.bias
+│    │    │    └─20.mlp.c_fc.weight
+│    │    │    └─20.mlp.c_fc.bias
+│    │    │    └─20.mlp.c_proj.base_layer.weight
+│    │    │    └─20.mlp.c_proj.base_layer.bias
+│    │    │    └─20.mlp.c_proj.lora.lora_A
+│    │    │    └─20.mlp.c_proj.lora.lora_B
+│    │    │    └─21.ln_1.weight
+│    │    │    └─21.ln_1.bias
+│    │    │    └─21.attn.c_attn.base_layer.weight
+│    │    │    └─21.attn.c_attn.base_layer.bias
+│    │    │    └─21.attn.c_attn.lora.lora_A
+│    │    │    └─21.attn.c_attn.lora.lora_B
+│    │    │    └─21.attn.c_proj.base_layer.weight
+│    │    │    └─21.attn.c_proj.base_layer.bias
+│    │    │    └─21.attn.c_proj.lora.lora_A
+│    │    │    └─21.attn.c_proj.lora.lora_B
+│    │    │    └─21.ln_2.weight
+│    │    │    └─21.ln_2.bias
+│    │    │    └─21.mlp.c_fc.weight
+│    │    │    └─21.mlp.c_fc.bias
+│    │    │    └─21.mlp.c_proj.base_layer.weight
+│    │    │    └─21.mlp.c_proj.base_layer.bias
+│    │    │    └─21.mlp.c_proj.lora.lora_A
+│    │    │    └─21.mlp.c_proj.lora.lora_B
+│    │    │    └─22.ln_1.weight
+│    │    │    └─22.ln_1.bias
+│    │    │    └─22.attn.c_attn.base_layer.weight
+│    │    │    └─22.attn.c_attn.base_layer.bias
+│    │    │    └─22.attn.c_attn.lora.lora_A
+│    │    │    └─22.attn.c_attn.lora.lora_B
+│    │    │    └─22.attn.c_proj.base_layer.weight
+│    │    │    └─22.attn.c_proj.base_layer.bias
+│    │    │    └─22.attn.c_proj.lora.lora_A
+│    │    │    └─22.attn.c_proj.lora.lora_B
+│    │    │    └─22.ln_2.weight
+│    │    │    └─22.ln_2.bias
+│    │    │    └─22.mlp.c_fc.weight
+│    │    │    └─22.mlp.c_fc.bias
+│    │    │    └─22.mlp.c_proj.base_layer.weight
+│    │    │    └─22.mlp.c_proj.base_layer.bias
+│    │    │    └─22.mlp.c_proj.lora.lora_A
+│    │    │    └─22.mlp.c_proj.lora.lora_B
+│    │    │    └─23.ln_1.weight
+│    │    │    └─23.ln_1.bias
+│    │    │    └─23.attn.c_attn.base_layer.weight
+│    │    │    └─23.attn.c_attn.base_layer.bias
+│    │    │    └─23.attn.c_attn.lora.lora_A
+│    │    │    └─23.attn.c_attn.lora.lora_B
+│    │    │    └─23.attn.c_proj.base_layer.weight
+│    │    │    └─23.attn.c_proj.base_layer.bias
+│    │    │    └─23.attn.c_proj.lora.lora_A
+│    │    │    └─23.attn.c_proj.lora.lora_B
+│    │    │    └─23.ln_2.weight
+│    │    │    └─23.ln_2.bias
+│    │    │    └─23.mlp.c_fc.weight
+│    │    │    └─23.mlp.c_fc.bias
+│    │    │    └─23.mlp.c_proj.base_layer.weight
+│    │    │    └─23.mlp.c_proj.base_layer.bias
+│    │    │    └─23.mlp.c_proj.lora.lora_A
+│    │    │    └─23.mlp.c_proj.lora.lora_B
+│    │    └─LayerNorm: 3-5
+│    │    │    └─weight
+│    │    │    └─bias
+│    └─Linear: 2-2
+│    │    └─weight
+=======================================================
+Total params: 408,449,024
+Trainable params: 2,162,688
+Non-trainable params: 406,286,336
+Total mult-adds (Units.GIGABYTES): 773.88
+=======================================================
+Input size (MB): 0.00
+Forward/backward pass size (MB): 331.43
+Params size (MB): 1625.15
+Estimated Total Size (MB): 1956.58
+=======================================================

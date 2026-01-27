@@ -1,0 +1,919 @@
+==================================================
+Layer (type:depth-idx)
+==================================================
+GPT2LMHeadModel
+├─GPT2Model: 1-1
+│    └─wte.weight
+│    └─wpe.weight
+│    └─h.0.ln_1.weight
+│    └─h.0.ln_1.bias
+│    └─h.0.attn.c_attn.weight
+│    └─h.0.attn.c_attn.bias
+│    └─h.0.attn.c_proj.weight
+│    └─h.0.attn.c_proj.bias
+│    └─h.0.ln_2.weight
+│    └─h.0.ln_2.bias
+│    └─h.0.mlp.c_fc.weight
+│    └─h.0.mlp.c_fc.bias
+│    └─h.0.mlp.c_proj.weight
+│    └─h.0.mlp.c_proj.bias
+│    └─h.1.ln_1.weight
+│    └─h.1.ln_1.bias
+│    └─h.1.attn.c_attn.weight
+│    └─h.1.attn.c_attn.bias
+│    └─h.1.attn.c_proj.weight
+│    └─h.1.attn.c_proj.bias
+│    └─h.1.ln_2.weight
+│    └─h.1.ln_2.bias
+│    └─h.1.mlp.c_fc.weight
+│    └─h.1.mlp.c_fc.bias
+│    └─h.1.mlp.c_proj.weight
+│    └─h.1.mlp.c_proj.bias
+│    └─h.2.ln_1.weight
+│    └─h.2.ln_1.bias
+│    └─h.2.attn.c_attn.weight
+│    └─h.2.attn.c_attn.bias
+│    └─h.2.attn.c_proj.weight
+│    └─h.2.attn.c_proj.bias
+│    └─h.2.ln_2.weight
+│    └─h.2.ln_2.bias
+│    └─h.2.mlp.c_fc.weight
+│    └─h.2.mlp.c_fc.bias
+│    └─h.2.mlp.c_proj.weight
+│    └─h.2.mlp.c_proj.bias
+│    └─h.3.ln_1.weight
+│    └─h.3.ln_1.bias
+│    └─h.3.attn.c_attn.weight
+│    └─h.3.attn.c_attn.bias
+│    └─h.3.attn.c_proj.weight
+│    └─h.3.attn.c_proj.bias
+│    └─h.3.ln_2.weight
+│    └─h.3.ln_2.bias
+│    └─h.3.mlp.c_fc.weight
+│    └─h.3.mlp.c_fc.bias
+│    └─h.3.mlp.c_proj.weight
+│    └─h.3.mlp.c_proj.bias
+│    └─h.4.ln_1.weight
+│    └─h.4.ln_1.bias
+│    └─h.4.attn.c_attn.weight
+│    └─h.4.attn.c_attn.bias
+│    └─h.4.attn.c_proj.weight
+│    └─h.4.attn.c_proj.bias
+│    └─h.4.ln_2.weight
+│    └─h.4.ln_2.bias
+│    └─h.4.mlp.c_fc.weight
+│    └─h.4.mlp.c_fc.bias
+│    └─h.4.mlp.c_proj.weight
+│    └─h.4.mlp.c_proj.bias
+│    └─h.5.ln_1.weight
+│    └─h.5.ln_1.bias
+│    └─h.5.attn.c_attn.weight
+│    └─h.5.attn.c_attn.bias
+│    └─h.5.attn.c_proj.weight
+│    └─h.5.attn.c_proj.bias
+│    └─h.5.ln_2.weight
+│    └─h.5.ln_2.bias
+│    └─h.5.mlp.c_fc.weight
+│    └─h.5.mlp.c_fc.bias
+│    └─h.5.mlp.c_proj.weight
+│    └─h.5.mlp.c_proj.bias
+│    └─h.6.ln_1.weight
+│    └─h.6.ln_1.bias
+│    └─h.6.attn.c_attn.weight
+│    └─h.6.attn.c_attn.bias
+│    └─h.6.attn.c_proj.weight
+│    └─h.6.attn.c_proj.bias
+│    └─h.6.ln_2.weight
+│    └─h.6.ln_2.bias
+│    └─h.6.mlp.c_fc.weight
+│    └─h.6.mlp.c_fc.bias
+│    └─h.6.mlp.c_proj.weight
+│    └─h.6.mlp.c_proj.bias
+│    └─h.7.ln_1.weight
+│    └─h.7.ln_1.bias
+│    └─h.7.attn.c_attn.weight
+│    └─h.7.attn.c_attn.bias
+│    └─h.7.attn.c_proj.weight
+│    └─h.7.attn.c_proj.bias
+│    └─h.7.ln_2.weight
+│    └─h.7.ln_2.bias
+│    └─h.7.mlp.c_fc.weight
+│    └─h.7.mlp.c_fc.bias
+│    └─h.7.mlp.c_proj.weight
+│    └─h.7.mlp.c_proj.bias
+│    └─h.8.ln_1.weight
+│    └─h.8.ln_1.bias
+│    └─h.8.attn.c_attn.weight
+│    └─h.8.attn.c_attn.bias
+│    └─h.8.attn.c_proj.weight
+│    └─h.8.attn.c_proj.bias
+│    └─h.8.ln_2.weight
+│    └─h.8.ln_2.bias
+│    └─h.8.mlp.c_fc.weight
+│    └─h.8.mlp.c_fc.bias
+│    └─h.8.mlp.c_proj.weight
+│    └─h.8.mlp.c_proj.bias
+│    └─h.9.ln_1.weight
+│    └─h.9.ln_1.bias
+│    └─h.9.attn.c_attn.weight
+│    └─h.9.attn.c_attn.bias
+│    └─h.9.attn.c_proj.weight
+│    └─h.9.attn.c_proj.bias
+│    └─h.9.ln_2.weight
+│    └─h.9.ln_2.bias
+│    └─h.9.mlp.c_fc.weight
+│    └─h.9.mlp.c_fc.bias
+│    └─h.9.mlp.c_proj.weight
+│    └─h.9.mlp.c_proj.bias
+│    └─h.10.ln_1.weight
+│    └─h.10.ln_1.bias
+│    └─h.10.attn.c_attn.weight
+│    └─h.10.attn.c_attn.bias
+│    └─h.10.attn.c_proj.weight
+│    └─h.10.attn.c_proj.bias
+│    └─h.10.ln_2.weight
+│    └─h.10.ln_2.bias
+│    └─h.10.mlp.c_fc.weight
+│    └─h.10.mlp.c_fc.bias
+│    └─h.10.mlp.c_proj.weight
+│    └─h.10.mlp.c_proj.bias
+│    └─h.11.ln_1.weight
+│    └─h.11.ln_1.bias
+│    └─h.11.attn.c_attn.weight
+│    └─h.11.attn.c_attn.bias
+│    └─h.11.attn.c_proj.weight
+│    └─h.11.attn.c_proj.bias
+│    └─h.11.ln_2.weight
+│    └─h.11.ln_2.bias
+│    └─h.11.mlp.c_fc.weight
+│    └─h.11.mlp.c_fc.bias
+│    └─h.11.mlp.c_proj.weight
+│    └─h.11.mlp.c_proj.bias
+│    └─h.12.ln_1.weight
+│    └─h.12.ln_1.bias
+│    └─h.12.attn.c_attn.weight
+│    └─h.12.attn.c_attn.bias
+│    └─h.12.attn.c_proj.weight
+│    └─h.12.attn.c_proj.bias
+│    └─h.12.ln_2.weight
+│    └─h.12.ln_2.bias
+│    └─h.12.mlp.c_fc.weight
+│    └─h.12.mlp.c_fc.bias
+│    └─h.12.mlp.c_proj.weight
+│    └─h.12.mlp.c_proj.bias
+│    └─h.13.ln_1.weight
+│    └─h.13.ln_1.bias
+│    └─h.13.attn.c_attn.weight
+│    └─h.13.attn.c_attn.bias
+│    └─h.13.attn.c_proj.weight
+│    └─h.13.attn.c_proj.bias
+│    └─h.13.ln_2.weight
+│    └─h.13.ln_2.bias
+│    └─h.13.mlp.c_fc.weight
+│    └─h.13.mlp.c_fc.bias
+│    └─h.13.mlp.c_proj.weight
+│    └─h.13.mlp.c_proj.bias
+│    └─h.14.ln_1.weight
+│    └─h.14.ln_1.bias
+│    └─h.14.attn.c_attn.weight
+│    └─h.14.attn.c_attn.bias
+│    └─h.14.attn.c_proj.weight
+│    └─h.14.attn.c_proj.bias
+│    └─h.14.ln_2.weight
+│    └─h.14.ln_2.bias
+│    └─h.14.mlp.c_fc.weight
+│    └─h.14.mlp.c_fc.bias
+│    └─h.14.mlp.c_proj.weight
+│    └─h.14.mlp.c_proj.bias
+│    └─h.15.ln_1.weight
+│    └─h.15.ln_1.bias
+│    └─h.15.attn.c_attn.weight
+│    └─h.15.attn.c_attn.bias
+│    └─h.15.attn.c_proj.weight
+│    └─h.15.attn.c_proj.bias
+│    └─h.15.ln_2.weight
+│    └─h.15.ln_2.bias
+│    └─h.15.mlp.c_fc.weight
+│    └─h.15.mlp.c_fc.bias
+│    └─h.15.mlp.c_proj.weight
+│    └─h.15.mlp.c_proj.bias
+│    └─h.16.ln_1.weight
+│    └─h.16.ln_1.bias
+│    └─h.16.attn.c_attn.weight
+│    └─h.16.attn.c_attn.bias
+│    └─h.16.attn.c_proj.weight
+│    └─h.16.attn.c_proj.bias
+│    └─h.16.ln_2.weight
+│    └─h.16.ln_2.bias
+│    └─h.16.mlp.c_fc.weight
+│    └─h.16.mlp.c_fc.bias
+│    └─h.16.mlp.c_proj.weight
+│    └─h.16.mlp.c_proj.bias
+│    └─h.17.ln_1.weight
+│    └─h.17.ln_1.bias
+│    └─h.17.attn.c_attn.weight
+│    └─h.17.attn.c_attn.bias
+│    └─h.17.attn.c_proj.weight
+│    └─h.17.attn.c_proj.bias
+│    └─h.17.ln_2.weight
+│    └─h.17.ln_2.bias
+│    └─h.17.mlp.c_fc.weight
+│    └─h.17.mlp.c_fc.bias
+│    └─h.17.mlp.c_proj.weight
+│    └─h.17.mlp.c_proj.bias
+│    └─h.18.ln_1.weight
+│    └─h.18.ln_1.bias
+│    └─h.18.attn.c_attn.weight
+│    └─h.18.attn.c_attn.bias
+│    └─h.18.attn.c_proj.weight
+│    └─h.18.attn.c_proj.bias
+│    └─h.18.ln_2.weight
+│    └─h.18.ln_2.bias
+│    └─h.18.mlp.c_fc.weight
+│    └─h.18.mlp.c_fc.bias
+│    └─h.18.mlp.c_proj.weight
+│    └─h.18.mlp.c_proj.bias
+│    └─h.19.ln_1.weight
+│    └─h.19.ln_1.bias
+│    └─h.19.attn.c_attn.weight
+│    └─h.19.attn.c_attn.bias
+│    └─h.19.attn.c_proj.weight
+│    └─h.19.attn.c_proj.bias
+│    └─h.19.ln_2.weight
+│    └─h.19.ln_2.bias
+│    └─h.19.mlp.c_fc.weight
+│    └─h.19.mlp.c_fc.bias
+│    └─h.19.mlp.c_proj.weight
+│    └─h.19.mlp.c_proj.bias
+│    └─h.20.ln_1.weight
+│    └─h.20.ln_1.bias
+│    └─h.20.attn.c_attn.weight
+│    └─h.20.attn.c_attn.bias
+│    └─h.20.attn.c_proj.weight
+│    └─h.20.attn.c_proj.bias
+│    └─h.20.ln_2.weight
+│    └─h.20.ln_2.bias
+│    └─h.20.mlp.c_fc.weight
+│    └─h.20.mlp.c_fc.bias
+│    └─h.20.mlp.c_proj.weight
+│    └─h.20.mlp.c_proj.bias
+│    └─h.21.ln_1.weight
+│    └─h.21.ln_1.bias
+│    └─h.21.attn.c_attn.weight
+│    └─h.21.attn.c_attn.bias
+│    └─h.21.attn.c_proj.weight
+│    └─h.21.attn.c_proj.bias
+│    └─h.21.ln_2.weight
+│    └─h.21.ln_2.bias
+│    └─h.21.mlp.c_fc.weight
+│    └─h.21.mlp.c_fc.bias
+│    └─h.21.mlp.c_proj.weight
+│    └─h.21.mlp.c_proj.bias
+│    └─h.22.ln_1.weight
+│    └─h.22.ln_1.bias
+│    └─h.22.attn.c_attn.weight
+│    └─h.22.attn.c_attn.bias
+│    └─h.22.attn.c_proj.weight
+│    └─h.22.attn.c_proj.bias
+│    └─h.22.ln_2.weight
+│    └─h.22.ln_2.bias
+│    └─h.22.mlp.c_fc.weight
+│    └─h.22.mlp.c_fc.bias
+│    └─h.22.mlp.c_proj.weight
+│    └─h.22.mlp.c_proj.bias
+│    └─h.23.ln_1.weight
+│    └─h.23.ln_1.bias
+│    └─h.23.attn.c_attn.weight
+│    └─h.23.attn.c_attn.bias
+│    └─h.23.attn.c_proj.weight
+│    └─h.23.attn.c_proj.bias
+│    └─h.23.ln_2.weight
+│    └─h.23.ln_2.bias
+│    └─h.23.mlp.c_fc.weight
+│    └─h.23.mlp.c_fc.bias
+│    └─h.23.mlp.c_proj.weight
+│    └─h.23.mlp.c_proj.bias
+│    └─ln_f.weight
+│    └─ln_f.bias
+│    └─Embedding: 2-1
+│    │    └─weight
+│    └─Embedding: 2-2
+│    │    └─weight
+│    └─Dropout: 2-3
+│    └─ModuleList: 2-4
+│    │    └─0.ln_1.weight
+│    │    └─0.ln_1.bias
+│    │    └─0.attn.c_attn.weight
+│    │    └─0.attn.c_attn.bias
+│    │    └─0.attn.c_proj.weight
+│    │    └─0.attn.c_proj.bias
+│    │    └─0.ln_2.weight
+│    │    └─0.ln_2.bias
+│    │    └─0.mlp.c_fc.weight
+│    │    └─0.mlp.c_fc.bias
+│    │    └─0.mlp.c_proj.weight
+│    │    └─0.mlp.c_proj.bias
+│    │    └─1.ln_1.weight
+│    │    └─1.ln_1.bias
+│    │    └─1.attn.c_attn.weight
+│    │    └─1.attn.c_attn.bias
+│    │    └─1.attn.c_proj.weight
+│    │    └─1.attn.c_proj.bias
+│    │    └─1.ln_2.weight
+│    │    └─1.ln_2.bias
+│    │    └─1.mlp.c_fc.weight
+│    │    └─1.mlp.c_fc.bias
+│    │    └─1.mlp.c_proj.weight
+│    │    └─1.mlp.c_proj.bias
+│    │    └─2.ln_1.weight
+│    │    └─2.ln_1.bias
+│    │    └─2.attn.c_attn.weight
+│    │    └─2.attn.c_attn.bias
+│    │    └─2.attn.c_proj.weight
+│    │    └─2.attn.c_proj.bias
+│    │    └─2.ln_2.weight
+│    │    └─2.ln_2.bias
+│    │    └─2.mlp.c_fc.weight
+│    │    └─2.mlp.c_fc.bias
+│    │    └─2.mlp.c_proj.weight
+│    │    └─2.mlp.c_proj.bias
+│    │    └─3.ln_1.weight
+│    │    └─3.ln_1.bias
+│    │    └─3.attn.c_attn.weight
+│    │    └─3.attn.c_attn.bias
+│    │    └─3.attn.c_proj.weight
+│    │    └─3.attn.c_proj.bias
+│    │    └─3.ln_2.weight
+│    │    └─3.ln_2.bias
+│    │    └─3.mlp.c_fc.weight
+│    │    └─3.mlp.c_fc.bias
+│    │    └─3.mlp.c_proj.weight
+│    │    └─3.mlp.c_proj.bias
+│    │    └─4.ln_1.weight
+│    │    └─4.ln_1.bias
+│    │    └─4.attn.c_attn.weight
+│    │    └─4.attn.c_attn.bias
+│    │    └─4.attn.c_proj.weight
+│    │    └─4.attn.c_proj.bias
+│    │    └─4.ln_2.weight
+│    │    └─4.ln_2.bias
+│    │    └─4.mlp.c_fc.weight
+│    │    └─4.mlp.c_fc.bias
+│    │    └─4.mlp.c_proj.weight
+│    │    └─4.mlp.c_proj.bias
+│    │    └─5.ln_1.weight
+│    │    └─5.ln_1.bias
+│    │    └─5.attn.c_attn.weight
+│    │    └─5.attn.c_attn.bias
+│    │    └─5.attn.c_proj.weight
+│    │    └─5.attn.c_proj.bias
+│    │    └─5.ln_2.weight
+│    │    └─5.ln_2.bias
+│    │    └─5.mlp.c_fc.weight
+│    │    └─5.mlp.c_fc.bias
+│    │    └─5.mlp.c_proj.weight
+│    │    └─5.mlp.c_proj.bias
+│    │    └─6.ln_1.weight
+│    │    └─6.ln_1.bias
+│    │    └─6.attn.c_attn.weight
+│    │    └─6.attn.c_attn.bias
+│    │    └─6.attn.c_proj.weight
+│    │    └─6.attn.c_proj.bias
+│    │    └─6.ln_2.weight
+│    │    └─6.ln_2.bias
+│    │    └─6.mlp.c_fc.weight
+│    │    └─6.mlp.c_fc.bias
+│    │    └─6.mlp.c_proj.weight
+│    │    └─6.mlp.c_proj.bias
+│    │    └─7.ln_1.weight
+│    │    └─7.ln_1.bias
+│    │    └─7.attn.c_attn.weight
+│    │    └─7.attn.c_attn.bias
+│    │    └─7.attn.c_proj.weight
+│    │    └─7.attn.c_proj.bias
+│    │    └─7.ln_2.weight
+│    │    └─7.ln_2.bias
+│    │    └─7.mlp.c_fc.weight
+│    │    └─7.mlp.c_fc.bias
+│    │    └─7.mlp.c_proj.weight
+│    │    └─7.mlp.c_proj.bias
+│    │    └─8.ln_1.weight
+│    │    └─8.ln_1.bias
+│    │    └─8.attn.c_attn.weight
+│    │    └─8.attn.c_attn.bias
+│    │    └─8.attn.c_proj.weight
+│    │    └─8.attn.c_proj.bias
+│    │    └─8.ln_2.weight
+│    │    └─8.ln_2.bias
+│    │    └─8.mlp.c_fc.weight
+│    │    └─8.mlp.c_fc.bias
+│    │    └─8.mlp.c_proj.weight
+│    │    └─8.mlp.c_proj.bias
+│    │    └─9.ln_1.weight
+│    │    └─9.ln_1.bias
+│    │    └─9.attn.c_attn.weight
+│    │    └─9.attn.c_attn.bias
+│    │    └─9.attn.c_proj.weight
+│    │    └─9.attn.c_proj.bias
+│    │    └─9.ln_2.weight
+│    │    └─9.ln_2.bias
+│    │    └─9.mlp.c_fc.weight
+│    │    └─9.mlp.c_fc.bias
+│    │    └─9.mlp.c_proj.weight
+│    │    └─9.mlp.c_proj.bias
+│    │    └─10.ln_1.weight
+│    │    └─10.ln_1.bias
+│    │    └─10.attn.c_attn.weight
+│    │    └─10.attn.c_attn.bias
+│    │    └─10.attn.c_proj.weight
+│    │    └─10.attn.c_proj.bias
+│    │    └─10.ln_2.weight
+│    │    └─10.ln_2.bias
+│    │    └─10.mlp.c_fc.weight
+│    │    └─10.mlp.c_fc.bias
+│    │    └─10.mlp.c_proj.weight
+│    │    └─10.mlp.c_proj.bias
+│    │    └─11.ln_1.weight
+│    │    └─11.ln_1.bias
+│    │    └─11.attn.c_attn.weight
+│    │    └─11.attn.c_attn.bias
+│    │    └─11.attn.c_proj.weight
+│    │    └─11.attn.c_proj.bias
+│    │    └─11.ln_2.weight
+│    │    └─11.ln_2.bias
+│    │    └─11.mlp.c_fc.weight
+│    │    └─11.mlp.c_fc.bias
+│    │    └─11.mlp.c_proj.weight
+│    │    └─11.mlp.c_proj.bias
+│    │    └─12.ln_1.weight
+│    │    └─12.ln_1.bias
+│    │    └─12.attn.c_attn.weight
+│    │    └─12.attn.c_attn.bias
+│    │    └─12.attn.c_proj.weight
+│    │    └─12.attn.c_proj.bias
+│    │    └─12.ln_2.weight
+│    │    └─12.ln_2.bias
+│    │    └─12.mlp.c_fc.weight
+│    │    └─12.mlp.c_fc.bias
+│    │    └─12.mlp.c_proj.weight
+│    │    └─12.mlp.c_proj.bias
+│    │    └─13.ln_1.weight
+│    │    └─13.ln_1.bias
+│    │    └─13.attn.c_attn.weight
+│    │    └─13.attn.c_attn.bias
+│    │    └─13.attn.c_proj.weight
+│    │    └─13.attn.c_proj.bias
+│    │    └─13.ln_2.weight
+│    │    └─13.ln_2.bias
+│    │    └─13.mlp.c_fc.weight
+│    │    └─13.mlp.c_fc.bias
+│    │    └─13.mlp.c_proj.weight
+│    │    └─13.mlp.c_proj.bias
+│    │    └─14.ln_1.weight
+│    │    └─14.ln_1.bias
+│    │    └─14.attn.c_attn.weight
+│    │    └─14.attn.c_attn.bias
+│    │    └─14.attn.c_proj.weight
+│    │    └─14.attn.c_proj.bias
+│    │    └─14.ln_2.weight
+│    │    └─14.ln_2.bias
+│    │    └─14.mlp.c_fc.weight
+│    │    └─14.mlp.c_fc.bias
+│    │    └─14.mlp.c_proj.weight
+│    │    └─14.mlp.c_proj.bias
+│    │    └─15.ln_1.weight
+│    │    └─15.ln_1.bias
+│    │    └─15.attn.c_attn.weight
+│    │    └─15.attn.c_attn.bias
+│    │    └─15.attn.c_proj.weight
+│    │    └─15.attn.c_proj.bias
+│    │    └─15.ln_2.weight
+│    │    └─15.ln_2.bias
+│    │    └─15.mlp.c_fc.weight
+│    │    └─15.mlp.c_fc.bias
+│    │    └─15.mlp.c_proj.weight
+│    │    └─15.mlp.c_proj.bias
+│    │    └─16.ln_1.weight
+│    │    └─16.ln_1.bias
+│    │    └─16.attn.c_attn.weight
+│    │    └─16.attn.c_attn.bias
+│    │    └─16.attn.c_proj.weight
+│    │    └─16.attn.c_proj.bias
+│    │    └─16.ln_2.weight
+│    │    └─16.ln_2.bias
+│    │    └─16.mlp.c_fc.weight
+│    │    └─16.mlp.c_fc.bias
+│    │    └─16.mlp.c_proj.weight
+│    │    └─16.mlp.c_proj.bias
+│    │    └─17.ln_1.weight
+│    │    └─17.ln_1.bias
+│    │    └─17.attn.c_attn.weight
+│    │    └─17.attn.c_attn.bias
+│    │    └─17.attn.c_proj.weight
+│    │    └─17.attn.c_proj.bias
+│    │    └─17.ln_2.weight
+│    │    └─17.ln_2.bias
+│    │    └─17.mlp.c_fc.weight
+│    │    └─17.mlp.c_fc.bias
+│    │    └─17.mlp.c_proj.weight
+│    │    └─17.mlp.c_proj.bias
+│    │    └─18.ln_1.weight
+│    │    └─18.ln_1.bias
+│    │    └─18.attn.c_attn.weight
+│    │    └─18.attn.c_attn.bias
+│    │    └─18.attn.c_proj.weight
+│    │    └─18.attn.c_proj.bias
+│    │    └─18.ln_2.weight
+│    │    └─18.ln_2.bias
+│    │    └─18.mlp.c_fc.weight
+│    │    └─18.mlp.c_fc.bias
+│    │    └─18.mlp.c_proj.weight
+│    │    └─18.mlp.c_proj.bias
+│    │    └─19.ln_1.weight
+│    │    └─19.ln_1.bias
+│    │    └─19.attn.c_attn.weight
+│    │    └─19.attn.c_attn.bias
+│    │    └─19.attn.c_proj.weight
+│    │    └─19.attn.c_proj.bias
+│    │    └─19.ln_2.weight
+│    │    └─19.ln_2.bias
+│    │    └─19.mlp.c_fc.weight
+│    │    └─19.mlp.c_fc.bias
+│    │    └─19.mlp.c_proj.weight
+│    │    └─19.mlp.c_proj.bias
+│    │    └─20.ln_1.weight
+│    │    └─20.ln_1.bias
+│    │    └─20.attn.c_attn.weight
+│    │    └─20.attn.c_attn.bias
+│    │    └─20.attn.c_proj.weight
+│    │    └─20.attn.c_proj.bias
+│    │    └─20.ln_2.weight
+│    │    └─20.ln_2.bias
+│    │    └─20.mlp.c_fc.weight
+│    │    └─20.mlp.c_fc.bias
+│    │    └─20.mlp.c_proj.weight
+│    │    └─20.mlp.c_proj.bias
+│    │    └─21.ln_1.weight
+│    │    └─21.ln_1.bias
+│    │    └─21.attn.c_attn.weight
+│    │    └─21.attn.c_attn.bias
+│    │    └─21.attn.c_proj.weight
+│    │    └─21.attn.c_proj.bias
+│    │    └─21.ln_2.weight
+│    │    └─21.ln_2.bias
+│    │    └─21.mlp.c_fc.weight
+│    │    └─21.mlp.c_fc.bias
+│    │    └─21.mlp.c_proj.weight
+│    │    └─21.mlp.c_proj.bias
+│    │    └─22.ln_1.weight
+│    │    └─22.ln_1.bias
+│    │    └─22.attn.c_attn.weight
+│    │    └─22.attn.c_attn.bias
+│    │    └─22.attn.c_proj.weight
+│    │    └─22.attn.c_proj.bias
+│    │    └─22.ln_2.weight
+│    │    └─22.ln_2.bias
+│    │    └─22.mlp.c_fc.weight
+│    │    └─22.mlp.c_fc.bias
+│    │    └─22.mlp.c_proj.weight
+│    │    └─22.mlp.c_proj.bias
+│    │    └─23.ln_1.weight
+│    │    └─23.ln_1.bias
+│    │    └─23.attn.c_attn.weight
+│    │    └─23.attn.c_attn.bias
+│    │    └─23.attn.c_proj.weight
+│    │    └─23.attn.c_proj.bias
+│    │    └─23.ln_2.weight
+│    │    └─23.ln_2.bias
+│    │    └─23.mlp.c_fc.weight
+│    │    └─23.mlp.c_fc.bias
+│    │    └─23.mlp.c_proj.weight
+│    │    └─23.mlp.c_proj.bias
+│    │    └─GPT2Block: 3-1
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-2
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-3
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-4
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-5
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-6
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-7
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-8
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-9
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-10
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-11
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-12
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-13
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-14
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-15
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-16
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-17
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-18
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-19
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-20
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-21
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-22
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-23
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    │    └─GPT2Block: 3-24
+│    │    │    └─ln_1.weight
+│    │    │    └─ln_1.bias
+│    │    │    └─attn.c_attn.weight
+│    │    │    └─attn.c_attn.bias
+│    │    │    └─attn.c_proj.weight
+│    │    │    └─attn.c_proj.bias
+│    │    │    └─ln_2.weight
+│    │    │    └─ln_2.bias
+│    │    │    └─mlp.c_fc.weight
+│    │    │    └─mlp.c_fc.bias
+│    │    │    └─mlp.c_proj.weight
+│    │    │    └─mlp.c_proj.bias
+│    └─LayerNorm: 2-5
+│    │    └─weight
+│    │    └─bias
+├─Linear: 1-2
+│    └─weight
+==================================================
+Total params: 406,286,336
+Trainable params: 406,286,336
+Non-trainable params: 0
+Total mult-adds (Units.GIGABYTES): 773.88
+==================================================
+Input size (MB): 0.00
+Forward/backward pass size (MB): 331.43
+Params size (MB): 1625.15
+Estimated Total Size (MB): 1956.58
+==================================================
