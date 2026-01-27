@@ -72,7 +72,7 @@ evaluation:
     - "rouge"               # ROUGE-1, ROUGE-2, ROUGE-L
   
   generation:
-    num_samples: 10         # Number of samples to generate for qualitative eval
+    num_samples: -1         # Number of samples to generate for qualitative eval (-1 => all samples)
     max_new_tokens: 50      # Maximum tokens to generate per sample
     temperature: 1.0
     top_p: 0.9
