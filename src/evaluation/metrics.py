@@ -10,8 +10,16 @@ from transformers import PreTrainedTokenizer
 import numpy as np
 import evaluate
 from tqdm import trange
+from bert_score import score as bertscore
 from transformers import GPT2TokenizerFast
 import logging
+from absl import logging as absl_logging
+from transformers import logging as hf_logging
+
+# Suppresses the annoying info messages
+# from the bertscore function:
+absl_logging.set_verbosity(absl_logging.ERROR)
+hf_logging.set_verbosity_error()
 
 logger = logging.getLogger(__name__)
 
@@ -267,15 +275,10 @@ def compute_bertscore_multi_ref(
     and taking the maximum score per example.
     """
     best_scores = []
-    try:
-        bertscore = evaluate.load("bertscore")
-    except Exception as e:
-        logger.warning(f"BERTScore F1 calculation failed: {e}")
-        return {"bertscore_f1": 0.0}
 
     for pred, refs in zip(predictions, references):
         # one prediction and N references
-        P, R, F1 = bertscore.compute(
+        P, R, F1 = bertscore(
             [pred] * len(refs), # duplicate by the number of references
             refs,
             lang=lang,

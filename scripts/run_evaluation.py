@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.models.gpt2_wrapper import load_gpt2_model_and_tokenizer
 from src.data.dataset import E2EDataset, get_dataloader
 from src.evaluation.metrics import (
-    compute_perplexity,
+    compute_perplexity_token_weighted,
     generate_texts,
     compute_generation_metrics,
     evaluate_model_comprehensive
