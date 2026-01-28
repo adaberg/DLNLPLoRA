@@ -20,6 +20,7 @@ import math
 
 import torch
 import torch.nn as nn
+from torch import Tensor
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
@@ -40,6 +41,9 @@ class TrainingConfig:
     batch_size: int = 8
     warmup_steps: int = 500
     max_grad_norm: float = 1.0
+    
+    # Regularization (paper: Label Smooth = 0.1 for E2E)
+    label_smoothing: float = 0.1
     
     # LoRA specific
     lora_dropout: float = 0.1
@@ -326,27 +330,62 @@ class Trainer:
         
         return total_loss / num_batches if num_batches > 0 else 0.0
     
+    def _compute_loss_with_label_smoothing(
+        self, logits: torch.Tensor, labels: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        Compute causal LM loss with label smoothing.
+        """
+        # Shift for causal LM: predict next token (compare logits at position 0 with label at position 1)
+        # NB: .contiguous() ensures that the tensor is stored in contiguous memory
+        shift_logits = logits[..., :-1, :].contiguous() # last token has nothing to predict => cut off
+        shift_labels = labels[..., 1:].contiguous() # first token cant be predicted => cut off
+        
+        # Flatten for CrossEntropyLoss
+        loss_fct = torch.nn.CrossEntropyLoss(
+            label_smoothing=self.config.label_smoothing,
+            ignore_index=-100  # Ignore padding tokens
+        )
+        
+        loss = loss_fct(
+            shift_logits.view(-1, shift_logits.size(-1)),
+            shift_labels.view(-1)
+        )
+        
+        return loss
+    
     def _training_step(self, batch: Dict[str, torch.Tensor]) -> torch.Tensor:
-        """Perform a single training step."""
+        """Perform a single training step with optional label smoothing."""
         # Move batch to device
         batch = {k: v.to(self.config.device) for k, v in batch.items() 
                  if isinstance(v, torch.Tensor)}
         
-        # Forward pass
+        # Forward pass - get logits for label smoothing loss computation
         if self.config.fp16:
             with torch.amp.autocast('cuda'):
-                outputs = self.model(**batch)
-                loss = outputs.loss
+                loss = self._calculate_outputs(batch)
         elif self.config.bf16:
             with torch.amp.autocast('cuda', dtype=torch.bfloat16):
-                outputs = self.model(**batch)
-                loss = outputs.loss
+                loss = self._calculate_outputs(batch)
         else:
-            outputs = self.model(**batch)
-            loss = outputs.loss
-        
+            loss = self._calculate_outputs(batch)
+
         return loss
-    
+
+    def _calculate_outputs(self, batch: dict[str, Tensor]) -> Tensor:
+        outputs = self.model(
+            input_ids=batch["input_ids"],
+            attention_mask=batch["attention_mask"],
+        )
+        if self.config.label_smoothing > 0:
+            loss = self._compute_loss_with_label_smoothing(
+                outputs.logits, batch["labels"]
+            )
+        else:
+            loss = outputs.loss if hasattr(outputs, 'loss') and outputs.loss is not None else \
+                self._compute_loss_with_label_smoothing(outputs.logits, batch["labels"])
+        return loss
+
     @torch.no_grad()
     def evaluate(self) -> float:
         """Evaluate the model on the evaluation dataset."""
