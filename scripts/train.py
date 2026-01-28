@@ -294,7 +294,6 @@ def main():
         training_mode=args.mode,
         lora_dropout=config.get('lora', {}).get('dropout', 0.1),
         use_qlora=args.use_qlora,
-        bnb_4bit_compute_dtype=args.qlora_compute_dtype,
     )
     
     # Setup model

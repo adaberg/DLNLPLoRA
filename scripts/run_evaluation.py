@@ -11,6 +11,7 @@ import json
 import os
 import sys
 from pathlib import Path
+import logging
 from transformers import BitsAndBytesConfig, GPT2LMHeadModel, GPT2Tokenizer
 
 sys.path.insert(0, str(Path(__file__).parent.parent))

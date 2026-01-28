@@ -44,6 +44,9 @@ python scripts/train.py --config config.yaml --mode full
 
 # With custom hyperparameters
 python scripts/train.py --config config.yaml --mode lora --lr 2e-4 --epochs 5 --batch_size 8
+
+# QLORA
+python scripts/train.py --config config.yaml --mode lora --use_qlora
 ```
 
 ### Training Modes
@@ -110,7 +113,7 @@ python scripts/train.py --config config.yaml --mode lora --fp16
 
 ```bash
 # Evaluate a trained checkpoint
-python scripts/run_evaluation.py --checkpoint results/best_model/checkpoint.pt --config results/training_config.json
+python scripts/run_evaluation.py --checkpoint results/{model_name}/best_model/checkpoint.pt --config results/{model_name}/training_config.json
 
 # Evaluate Zero-shot
 python scripts/run_evaluation.py --checkpoint gpt2-medium --config config.yaml
