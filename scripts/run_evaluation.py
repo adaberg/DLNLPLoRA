@@ -11,6 +11,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from transformers import BitsAndBytesConfig, GPT2LMHeadModel, GPT2Tokenizer
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -29,7 +30,7 @@ def load_checkpoint(
     checkpoint_path: str,
     config: Dict,
     device: str
-) -> nn.Module:
+) -> tuple[nn.Module, any]:
     """
     Load trained model from checkpoint.
     
@@ -39,9 +40,9 @@ def load_checkpoint(
         device: Device to load model on
         
     Returns:
-        Loaded model ready for evaluation
+        Loaded model and tokenizer ready for evaluation
     """
-    # MODIFICATION: Support zero-shot evaluation
+    # Zero-shot evaluation
     if checkpoint_path.replace('-', '').lower().startswith('gpt2'):
         model_name = config["model_name"]
         print(f"Zero-shot with {model_name}")
@@ -52,29 +53,64 @@ def load_checkpoint(
 
     print(f"Loading checkpoint from {checkpoint_path}...")
     
-    model, tokenizer = load_gpt2_model_and_tokenizer(config["model_name"])
+    # Check if QLoRA was used
+    training_config = config.get("training_config", {})
+    use_qlora = training_config.get("use_qlora", False)
     
-    if config.get("training_mode") == "lora":
-        # Support both "lora" (config.yaml) and "lora_config" (training_config.json) keys
+    # Load base model (with or without quantization)
+    if use_qlora:
+        print("Loading quantized model for QLoRA evaluation...")
+        
+        qlora_compute_dtype = training_config.get("qlora_compute_dtype", "float16")
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.float16 if qlora_compute_dtype == "float16" else torch.float32,
+            bnb_4bit_use_double_quant=True,
+            llm_int8_skip_modules=["lm_head"]
+        )
+        
+        base_model = GPT2LMHeadModel.from_pretrained(
+            config["model_name"],
+            quantization_config=bnb_config,
+            device_map="auto",
+            torch_dtype=torch.float16
+        )
+        
+        tokenizer = GPT2Tokenizer.from_pretrained(config["model_name"])
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+    else:
+        base_model, tokenizer = load_gpt2_model_and_tokenizer(config["model_name"])
+    
+    training_mode = config.get("training_mode") or training_config.get("training_mode")
+    if training_mode == "lora":
         lora_config = config.get("lora") or config.get("lora_config", {})
         model = LoRAGPT2(
-            base_model=model,
+            base_model=base_model,
             rank=lora_config["rank"],
             alpha=lora_config["alpha"],
             target_modules=lora_config["target_modules"],
             dropout=lora_config.get("dropout", 0.0)
         )
+    else:
+        model = base_model
     
+    # Load checkpoint weights
     checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
     
     if "model_state_dict" in checkpoint:
-        model.load_state_dict(checkpoint["model_state_dict"])
+        # For QLoRA: use strict=False since checkpoint only has LoRA params
+        model.load_state_dict(checkpoint["model_state_dict"], strict=not use_qlora)
         print(f"Loaded model state from checkpoint (epoch {checkpoint.get('epoch', 'unknown')})")
     else:
-        model.load_state_dict(checkpoint)
+        model.load_state_dict(checkpoint, strict=not use_qlora)
         print("Loaded model state directly from checkpoint")
     
-    model.to(device)
+    #  quantized models already placed by device_map)
+    if not use_qlora:
+        model.to(device)
+    
     model.eval()
     
     return model, tokenizer
@@ -138,11 +174,18 @@ def main() -> None:
                        help="Output directory for evaluation results")
     parser.add_argument("--num_samples", type=int, default=-1,
                        help="Number of samples for text generation evaluation")
+    parser.add_argument("--use_qlora", action="store_true",
+                      help="Force QLoRA mode (if not detected from config)")
     
     args = parser.parse_args()
     
     print(f"Loading configuration from {args.config}...")
     config = load_config(args.config)
+    
+    if hasattr(args, 'use_qlora') and args.use_qlora:
+        if "training_config" not in config:
+            config["training_config"] = {}
+        config["training_config"]["use_qlora"] = True    
     
     device = config.get("device", "cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")

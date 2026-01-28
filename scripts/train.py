@@ -35,6 +35,7 @@ from src.models.gpt2_wrapper import load_gpt2_model_and_tokenizer, count_paramet
 from src.data.dataset import E2EDataset, get_dataloader
 from src.lora.model import LoRAGPT2
 from src.training.trainer import Trainer, TrainingConfig
+from transformers import BitsAndBytesConfig, GPT2LMHeadModel
 
 logging.basicConfig(
     level=logging.INFO,
@@ -53,7 +54,7 @@ def load_config(config_path: str) -> dict:
     return config
 
 
-def setup_model(config: dict, training_mode: str):
+def setup_model(config: dict, training_mode: str, use_qlora: bool = False):
     """
     Setup model based on training mode.
     
@@ -67,8 +68,31 @@ def setup_model(config: dict, training_mode: str):
     logger.info(f"Loading model: {config['model_name']}")
     base_model, tokenizer = load_gpt2_model_and_tokenizer(config['model_name'])
     
-    if training_mode == "lora":
-        logger.info("Setting up LoRA model...")
+    if use_qlora and training_mode == "lora":
+        logger.info("Setting up QLoRA with 4-bit quantization...")
+        
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_use_double_quant=True,
+            llm_int8_skip_modules=["lm_head"]
+        )
+        
+        base_model = GPT2LMHeadModel.from_pretrained(
+            config['model_name'],
+            quantization_config=bnb_config,
+            device_map="auto",  # Required for quantization
+            torch_dtype=torch.float16
+        )
+        
+        # Load tokenizer separately
+        from transformers import GPT2Tokenizer
+        tokenizer = GPT2Tokenizer.from_pretrained(config['model_name'])
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+            
+            
         model = LoRAGPT2(
             base_model=base_model,
             rank=config['lora']['rank'],
@@ -77,16 +101,32 @@ def setup_model(config: dict, training_mode: str):
             dropout=config['lora']['dropout']
         )
         logger.info(f"LoRA modules injected: {model.lora_modules}")
-    elif training_mode == "full":
-        logger.info("Setting up full fine-tuning...")
-        model = base_model
-        for param in model.parameters():
-            param.requires_grad = True
-    else:  # none - evaluation only
-        logger.info("Setting up model for evaluation only (no training)...")
-        model = base_model
-        for param in model.parameters():
-            param.requires_grad = False
+    else:
+      # Standard loading (non-quantized)
+        base_model, tokenizer = load_gpt2_model_and_tokenizer(config['model_name'])
+        
+        if training_mode == "lora":
+            logger.info("Setting up LoRA model...")
+            model = LoRAGPT2(
+                base_model=base_model,
+                rank=config['lora']['rank'],
+                alpha=config['lora']['alpha'],
+                target_modules=config['lora']['target_modules'],
+                dropout=config['lora']['dropout']
+            )
+            logger.info(f"LoRA modules injected: {model.lora_modules}")
+            
+        elif training_mode == "full":
+            logger.info("Setting up full fine-tuning...")
+            model = base_model
+            for param in model.parameters():
+                param.requires_grad = True
+                
+        else:  # none - evaluation only
+            logger.info("Setting up model for evaluation only (no training)...")
+            model = base_model
+            for param in model.parameters():
+                param.requires_grad = False
     
     # Log parameter counts
     total, trainable = count_parameters(model)
@@ -156,6 +196,9 @@ def parse_args():
         choices=["lora", "full", "none"],
         help="Training mode: lora, full fine-tuning, or none (eval only)"
     )
+    
+    parser.add_argument("--use_qlora", action="store_true", 
+                   help="Use QLoRA (4-bit quantization)")
     
     # Hyperparameters (override config)
     parser.add_argument("--lr", type=float, default=None, help="Learning rate")
@@ -250,10 +293,12 @@ def main():
         seed=seed,
         training_mode=args.mode,
         lora_dropout=config.get('lora', {}).get('dropout', 0.1),
+        use_qlora=args.use_qlora,
+        bnb_4bit_compute_dtype=args.qlora_compute_dtype,
     )
     
     # Setup model
-    model, tokenizer = setup_model(config, args.mode)
+    model, tokenizer = setup_model(config, args.mode, args.use_qlora)
     
     # Setup data
     train_loader, val_loader = setup_data(config, tokenizer, training_config)
@@ -289,6 +334,7 @@ def main():
                 "gradient_accumulation_steps": training_config.gradient_accumulation_steps,
                 "fp16": training_config.fp16,
                 "bf16": training_config.bf16,
+                "use_qlora": training_config.use_qlora,
             },
             "dataset": {
                 "name": config.get('dataset_name', 'e2e_nlg'),
