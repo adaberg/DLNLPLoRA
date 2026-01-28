@@ -74,7 +74,7 @@ evaluation:
 
   generation:
     num_samples: 10         # Number of samples to generate for qualitative eval
-    max_new_tokens: 30      # Maximum tokens to generate per sample
+    max_new_tokens: 32      # Maximum tokens to generate per sample
     temperature: 1.0
     top_p: 0.9
     use_beam_search: true

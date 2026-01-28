@@ -119,7 +119,7 @@ def generate_texts(
     model: nn.Module,
     tokenizer: PreTrainedTokenizer,
     prompts: List[str],
-    max_new_tokens: int = 30,  # reduced from 50
+    max_new_tokens: int = 32,  # reduced from 50
     length_penalty: float = 0.9,  # model applies a penalty based on the sequence length
     no_repeat_ngram_size: int = 4,
     num_beams: int = 10,
@@ -237,7 +237,7 @@ def compute_rouge_multi_ref(
     rouge2_scores = []
     rougeL_scores = []
 
-    # Select the best ROUGE values ​​from each reference example:
+    # Select the best ROUGE values from each reference example:
     for pred, refs in zip(predictions, references):
         # one prediction and N references
         best_r1 = 0.0
@@ -336,7 +336,7 @@ def compute_generation_metrics(
 
     # 2. Compute ROUGE F1 scores (mean of the best scores):
     #    Note: ROUGE F1 does not natively support multiple references well, therefore the
-    #          ROUGE values ​​must be calculated as the arithmetic mean across all references.
+    #          ROUGE values must be calculated as the arithmetic mean across all references.
     rouge_scores = compute_rouge_multi_ref(predictions, references)
     results.update(rouge_scores)
 
@@ -442,7 +442,7 @@ def evaluate_model_comprehensive(
     test_dataset,
     device: str = "cuda",
     num_samples: int = -1,
-    max_new_tokens = 30,
+    max_new_tokens = 32,
     generation_config: Dict[str, Any] | None = None,
     do_bootstrap_eval: bool = False
 ) -> Dict[str, float]:
@@ -463,7 +463,7 @@ def evaluate_model_comprehensive(
         device: Device to run on
         num_samples: Number of unique MRs to evaluate (-1 for all)
         generation_config: Dict with generation parameters:
-            - max_new_tokens (default: 30)
+            - max_new_tokens (default: 32)
             - num_beams (default: 10, from LoRA paper)
             - length_penalty (default: 0.9, from LoRA paper for E2E)
             - no_repeat_ngram_size (default: 4, from LoRA paper)
@@ -476,7 +476,7 @@ def evaluate_model_comprehensive(
         generation_config = {}
 
     # Default generation parameters from LoRA paper (Table 11 / Section D.3)
-    max_new_tokens = generation_config.get("max_new_tokens", 30)
+    max_new_tokens = generation_config.get("max_new_tokens", 32)
     num_beams = generation_config.get("num_beams", generation_config.get("beam_size", 10))
     length_penalty = generation_config.get("length_penalty", 0.9)
     no_repeat_ngram_size = generation_config.get("no_repeat_ngram_size", 4)
@@ -611,7 +611,7 @@ def _test_metrics():
         model=model,
         tokenizer=tokenizer,
         prompts=prompts,
-        max_new_tokens=30,
+        max_new_tokens=32,
         use_beam_search=True,
         use_greedy=True,  # always true during testing
         device="cpu"

@@ -175,7 +175,7 @@ def main() -> None:
     # This maps beam_size -> num_beams for compatibility
     merged_generation_config = {
         "num_samples": args.num_samples,
-        "max_new_tokens": generation_config.get("max_new_tokens", 30),
+        "max_new_tokens": generation_config.get("max_new_tokens", 32),
         "num_beams": inference_config.get("beam_size", 10),
         "length_penalty": inference_config.get("length_penalty", 0.9),
         "no_repeat_ngram_size": inference_config.get("no_repeat_ngram_size", 4),
@@ -193,7 +193,7 @@ def main() -> None:
         device=device,
         num_samples=args.num_samples,
         generation_config=merged_generation_config,
-        do_bootstrap_eval=True
+        do_bootstrap_eval=False  # disabled (extremely slow during a full sequence evaluation)
     )
 
     print("\n" + "="*60)
