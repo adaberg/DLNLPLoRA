@@ -5,7 +5,7 @@ import torch.nn as nn
 from transformers import GPT2LMHeadModel, BitsAndBytesConfig
 from transformers.pytorch_utils import Conv1D
 from .layer import LoRALayer, DoRALayer
-from bitsandbytes.nn import Params4bit
+from bitsandbytes.nn import Params4bit, Int8Params
 from torchinfo import summary
 from os import mkdir
 from torchinfo import summary
@@ -34,7 +34,8 @@ class LoRALinear(nn.Module):
 
         self.lora = LoRALayer(in_features, out_features, rank, alpha, dropout)
 
-        if hasattr(base_layer.weight, "quant_state"):  # Check if quantized
+        is_quantized = isinstance(base_layer.weight, (Params4bit, Int8Params))
+        if is_quantized:
             device = base_layer.weight.device
             self.lora.lora_A.data = self.lora.lora_A.data.to(torch.float16).to(device)
             self.lora.lora_B.data = self.lora.lora_B.data.to(torch.float16).to(device)
@@ -152,11 +153,11 @@ class LoRAGPT2(nn.Module):
 class DoRALinear(LoRALinear):
     def __init__(self, base_layer, rank, alpha, dropout):
         super().__init__(base_layer, rank, alpha, dropout)
-        base_w = (
-            self.base_layer.weight
-            if isinstance(base_layer, nn.Linear)
-            else self.base_layer.weight.T
-        )
+        base_w = self.base_layer.weight
+        if isinstance(base_w, (Params4bit, Int8Params)):  # Handle both 4-bit and 8-bit
+            base_w = base_w.data  # Dequantize
+        elif isinstance(self.base_layer, Conv1D):
+            base_w = base_w.T
         in_f, out_f = self.lora.lora_A.shape[1], self.lora.lora_B.shape[0]
         self.lora = DoRALayer(in_f, out_f, rank, alpha, base_w, dropout)
 

@@ -63,11 +63,16 @@ def load_checkpoint(
         print("Loading quantized model for QLoRA evaluation...")
         
         qlora_compute_dtype = training_config.get("qlora_compute_dtype", "float16")
+        #bnb_config = BitsAndBytesConfig(
+        #    load_in_4bit=True,
+        #    bnb_4bit_quant_type="nf4",
+        #    bnb_4bit_compute_dtype=torch.float16 if qlora_compute_dtype == "float16" else torch.float32,
+        #    bnb_4bit_use_double_quant=True,
+        #    llm_int8_skip_modules=["lm_head"]
+        #)
+        
         bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.float16 if qlora_compute_dtype == "float16" else torch.float32,
-            bnb_4bit_use_double_quant=True,
+            load_in_8bit=True,
             llm_int8_skip_modules=["lm_head"]
         )
         

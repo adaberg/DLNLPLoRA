@@ -215,6 +215,18 @@ pytest tests/test_qlora.py -v -m model   # Only model tests
 pytest tests/test_qlora.py -v -m learning
 ```
 
+## Insights
+
+After a local run with 4-bit that produced only empty sentences, i adapted the code to use 8-bit quantization.
+
+Still, the model is unable to fulfill the task, now outputting stuff like
+
+```
+ "Blue Spice, eatType [coffee shop]."
+ "name[ Blue Spice ]"
+```
+
+
 # Extention: Selective LoRA
 
 ## Tests

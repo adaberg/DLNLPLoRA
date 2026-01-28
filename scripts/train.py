@@ -71,11 +71,16 @@ def setup_model(config: dict, training_mode: str, use_qlora: bool = False):
     if use_qlora and training_mode == "lora":
         logger.info("Setting up QLoRA with 4-bit quantization...")
         
+        #bnb_config = BitsAndBytesConfig(
+        #    load_in_4bit=True,
+        #    bnb_4bit_quant_type="nf4",
+        #    bnb_4bit_compute_dtype=torch.float16,
+        #    bnb_4bit_use_double_quant=True,
+        #    llm_int8_skip_modules=["lm_head"]
+        #)
+        
         bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.float16,
-            bnb_4bit_use_double_quant=True,
+            load_in_8bit=True, 
             llm_int8_skip_modules=["lm_head"]
         )
         
