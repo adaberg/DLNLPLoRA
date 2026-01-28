@@ -521,7 +521,8 @@ def evaluate_model_comprehensive(
     for i, (mr, refs) in enumerate(grouped_data.items()):
         if i >= num_samples:
             break
-        prompt = f"meaning_representation: {mr} | reference:"
+        #prompt = f"meaning_representation: {mr} | reference:"
+        prompt = f"MR: {mr}\nREF:"  # see (**) in 'dataset.py'
         prompts.append(prompt)
         all_references.append(refs)  # All references for this MR
         mr_list.append(mr)
