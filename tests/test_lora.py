@@ -4,6 +4,7 @@ import pytest
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 import sys
 from pathlib import Path
+from torchinfo import summary
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.lora.layer import LoRALayer
@@ -75,9 +76,7 @@ class TestLoRALinear:
 
 class TestLoRAGPT2:
     """Test LoRAGPT2 model"""
-
-    # this annotation makes it so that evert test with gpt2_model as paramether
-    # gets the initialized gpt2 model without writing it explicitly every time
+    
     @pytest.fixture
     def gpt2_model(self):
         return GPT2LMHeadModel.from_pretrained("gpt2-medium")
@@ -243,6 +242,54 @@ class TestLoRALearning:
         assert final_loss < initial_loss, \
             f"Loss did not decrease: {initial_loss:.4f} -> {final_loss:.4f}"
             
+class TestLoRASelectiveLayers:
+    @pytest.fixture
+    def gpt2_model(self):
+        return GPT2LMHeadModel.from_pretrained("gpt2-medium")
+  
+    @pytest.mark.selective
+    def test_selective_injection(self, gpt2_model):
+        model = LoRAGPT2(
+            base_model=gpt2_model,
+            rank=8,
+            alpha=16,
+            target_modules=["c_attn", "c_proj"],
+            layer_indices=[0, 1, 2]
+        )
+        
+        assert len(model.lora_modules) == 9, f"Expected 9 modules, got {len(model.lora_modules)}"
+        
+        for module_name in model.lora_modules:
+            assert any(f".h.{i}." in module_name for i in [0, 1, 2]), \
+                f"Module {module_name} not in blocks 0,1,2"
+        
+        for module_name in model.lora_modules:
+            assert not any(f".h.{i}." in module_name for i in range(3, 24)), \
+                f"Module {module_name} incorrectly in blocks 3-23"
+
+    @pytest.mark.selective
+    def test_parameter_count(self, gpt2_model):
+        rank = 8
+        model = LoRAGPT2(
+            base_model=gpt2_model,
+            rank=rank,
+            alpha=16,
+            target_modules=["c_attn", "c_proj"],
+            layer_indices=[0]
+        )
+        
+        trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        
+        hidden_size = gpt2_model.config.hidden_size
+        c_attn = rank * (hidden_size + 3 * hidden_size)
+        c_proj = rank * (hidden_size + hidden_size)
+        mlp_c_proj = rank * (4 * hidden_size + hidden_size)
+        expected = c_attn + c_proj + mlp_c_proj
+        
+        assert trainable == expected, \
+            f"Expected {expected} trainable params, got {trainable}"
+
+
             
 # tagging of tests definetlye not required but i am flexing
-# actually it is useful to not run layer tests again
+# actually it is useful to only run heavy tests when needed

@@ -119,6 +119,7 @@ python scripts/run_evaluation.py --checkpoint gpt2-medium --config config.yaml
 ## Tests
 
 ```bash
+source venv/bin/activate
 # Run all tests
 pytest tests/ -v
 
