@@ -1,0 +1,67 @@
+{
+  "checkpoint": "results/lora_gpt2_e2e_lora_20260128_154632/best_model/checkpoint.pt",
+  "config": {
+    "training_mode": "lora",
+    "model_name": "gpt2-xl",
+    "lora_config": {
+      "rank": 4,
+      "alpha": 32,
+      "dropout": 0.1,
+      "target_modules": [
+        "c_attn",
+        "c_proj"
+      ]
+    },
+    "training_config": {
+      "learning_rate": 0.0002,
+      "weight_decay": 0.01,
+      "num_epochs": 5,
+      "batch_size": 8,
+      "warmup_steps": 500,
+      "gradient_accumulation_steps": 1,
+      "fp16": false,
+      "bf16": false,
+      "use_qlora": true
+    },
+    "dataset": {
+      "name": "e2e_nlg",
+      "sample_percentage": 0.1
+    },
+    "seed": 42,
+    "device": "cuda"
+  },
+  "timestamp": "20260128_161506",
+  "metrics": {
+    "perplexity": 2.0627601461356875,
+    "bleu": 0.12941511998780494,
+    "rouge1": 0.3541987370058043,
+    "rouge2": 0.21722118934130885,
+    "rougeL": 0.2820656901919809
+  },
+  "examples": [
+    {
+      "mr": "name[Blue Spice], eatType[coffee shop], area[city centre]",
+      "prediction": "Blue Spice is a coffee shop in the city centre.",
+      "num_references": 2,
+      "sample_reference": "A coffee shop in the city centre area called Blue Spice."
+    },
+    {
+      "mr": "name[Blue Spice], eatType[coffee shop], area[riverside]",
+      "prediction": "Blue Spice, coffee shop, riverside",
+      "num_references": 2,
+      "sample_reference": "There is a coffee shop Blue Spice in the riverside area."
+    },
+    {
+      "mr": "name[Blue Spice], eatType[coffee shop], customer rating[5 out of 5], near[Crowne Plaza Hotel]",
+      "prediction": "Blue Spice, Crowne Plaza Hotel, 5 out of 5",
+      "num_references": 3,
+      "sample_reference": "The coffee shop Blue Spice is based near Crowne Plaza Hotel and has a high customer rating of 5 out of 5."
+    }
+  ],
+  "eval_info": {
+    "unique_mrs_evaluated": 111,
+    "total_unique_mrs": 111,
+    "total_test_samples": 469,
+    "avg_refs_per_mr": 4.225225225225225
+  }
+}

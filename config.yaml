@@ -14,8 +14,8 @@ experiment_name: "lora_gpt2_e2e"
 seed: 42
 output_dir: "./results"
 
-#model_name: "gpt2-medium"  # ~355M parameters
-model_name: "gpt2-xl"
+model_name: "gpt2-medium"  # ~355M parameters
+#model_name: "gpt2-xl"
 
 dataset_name: "e2e_nlg"
 sample_percentage: 0.1      # Use 10% of dataset (for quick experiments)
