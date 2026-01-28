@@ -72,17 +72,17 @@ evaluation:
     - "rouge"               # ROUGE-1, ROUGE-2, ROUGE-L
   
   generation:
-    num_samples: 10         # Number of samples to generate for qualitative eval
+    num_samples: -1         # Number of samples to generate for qualitative eval (-1 => all samples)
     max_new_tokens: 50      # Maximum tokens to generate per sample
     temperature: 1.0
     top_p: 0.9
     do_sample: true
     
-  # Inference parameters (from paper Table 11)
-  inference:
-    beam_size: 10           # Beam search size
-    length_penalty: 0.8     # Length penalty for beam search
-    no_repeat_ngram_size: 4 # Prevent n-gram repetition
+  # Inference parameters (from paper Table 11 / Section D.3)
+  inference: # Values from table in paper
+    beam_size: 10           # Beam search size (paper: 10)
+    length_penalty: 0.9     # Length penalty for beam search (paper: 0.9 for E2E)
+    no_repeat_ngram_size: 4 # Prevent n-gram repetition (paper: 4)
 
 # ============================================================================
 # Expected Results (from LoRA paper, GPT-2 Medium on E2E)

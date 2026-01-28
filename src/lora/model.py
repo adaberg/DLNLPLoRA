@@ -3,8 +3,9 @@ import torch
 import torch.nn as nn
 from transformers import GPT2LMHeadModel
 from transformers.pytorch_utils import Conv1D
-from .layer import LoRALayer
-
+from .layer import LoRALayer, DoRALayer
+from os import mkdir
+from torchinfo import summary
 
 class LoRALinear(nn.Module):
 
@@ -92,3 +93,87 @@ class LoRAGPT2(nn.Module):
             if isinstance(module, LoRALinear):
                 params.extend([module.lora.lora_A, module.lora.lora_B])
         return params
+
+
+class DoRALinear(LoRALinear):
+    def __init__(self, base_layer, rank, alpha, dropout):
+        super().__init__(base_layer, rank, alpha, dropout)
+        base_w = (
+            self.base_layer.weight
+            if isinstance(base_layer, nn.Linear)
+            else self.base_layer.weight.T
+        )
+        in_f, out_f = self.lora.lora_A.shape[1], self.lora.lora_B.shape[0]
+        self.lora = DoRALayer(in_f, out_f, rank, alpha, base_w, dropout)
+
+    def forward(self, x):
+        base_w = (
+            self.base_layer.weight
+            if isinstance(self.base_layer, nn.Linear)
+            else self.base_layer.weight.T
+        )
+        return self.lora(x, base_w)
+
+
+class DoRAGPT2(LoRAGPT2):
+    def _inject_lora(self, name, module, rank, alpha, dropout):
+        parent_name, child_name = name.rsplit(".", 1)
+        parent = self.base_model.get_submodule(parent_name)
+
+        dora_linear = DoRALinear(module, rank, alpha, dropout)
+        setattr(parent, child_name, dora_linear)
+        self.lora_modules.append(name)
+
+    def get_lora_parameters(self) -> List[nn.Parameter]:
+        params = []
+        for module in self.base_model.modules():
+            if isinstance(module, DoRALinear):
+                params.extend(
+                    [module.lora.lora_A, module.lora.lora_B, module.lora.magnitude]
+                )
+        return params
+
+
+if __name__ == "__main__":
+    lora_layer = LoRALayer(in_features=128, out_features=64, rank=8, alpha=16)
+    print(lora_layer)
+    print("--" * 40)
+    print(lora_layer.extra_repr)
+    print("--" * 40)
+    print()
+    dora_layer = DoRALayer(
+        in_features=128,
+        out_features=64,
+        rank=8,
+        alpha=16,
+        base_weight=torch.randn(64, 128),
+    )
+    print(dora_layer)
+    print("--" * 40)
+    print(dora_layer.extra_repr())
+    
+    mkdir("visualization")
+    
+    base_model = GPT2LMHeadModel.from_pretrained(
+        "gpt2-medium")
+    with open("visualization/base.txt", "w") as f:
+      f.write(str(summary(base_model, input_size=(1, 128), dtypes=[torch.long], verbose=2, col_names=[])))
+
+    lora = LoRAGPT2(
+      base_model,
+      rank=8,
+      alpha=16,
+      target_modules=["c_attn", "c_proj"]
+    )
+    with open("visualization/lora.txt", "w") as f:
+      f.write(str(summary(lora, input_size=(1, 128), dtypes=[torch.long], verbose=2, col_names=[])))
+      
+    dora = DoRAGPT2(
+      base_model=base_model,
+      rank=4,
+      alpha=16.0,
+      dropout=0.0,
+      target_modules=["c_attn", "c_proj"],
+    )
+    with open("visualization/dora.txt", "w") as f:
+      f.write(str(summary(dora, input_size=(1, 128), dtypes=[torch.long], verbose=2, col_names=[])))

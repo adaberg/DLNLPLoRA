@@ -45,6 +45,8 @@ class TrainingConfig:
     # LoRA specific
     lora_dropout: float = 0.1
 
+    lora_dropout: float = 0.1
+
     # Logging and checkpointing
     output_dir: str = "./results"
     logging_steps: int = 100

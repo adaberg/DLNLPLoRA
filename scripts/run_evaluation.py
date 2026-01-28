@@ -136,7 +136,7 @@ def main() -> None:
                        help="Path to config file (default: config.yaml)")
     parser.add_argument("--output", type=str, default=None,
                        help="Output directory for evaluation results")
-    parser.add_argument("--num_samples", type=int, default=10,
+    parser.add_argument("--num_samples", type=int, default=-1,
                        help="Number of samples for text generation evaluation")
     
     args = parser.parse_args()
@@ -158,13 +158,31 @@ def main() -> None:
     
     print("Starting comprehensive evaluation...")
     
+    # Extract generation config from config file (inference parameters from LoRA paper)
+    eval_config = config.get("evaluation", {})
+    inference_config = eval_config.get("inference", {})
+    generation_config = eval_config.get("generation", {})
+    
+    # Merge inference config into generation config (inference params take precedence)
+    # This maps beam_size -> num_beams for compatibility
+    merged_generation_config = {
+        "max_new_tokens": generation_config.get("max_new_tokens", 50),
+        "num_beams": inference_config.get("beam_size", 10),
+        "length_penalty": inference_config.get("length_penalty", 0.9),
+        "no_repeat_ngram_size": inference_config.get("no_repeat_ngram_size", 4),
+        "do_sample": False,  # Use beam search, not sampling
+    }
+    
+    print(f"Generation config: {merged_generation_config}")
+    
     results = evaluate_model_comprehensive(
         model=model,
         tokenizer=tokenizer,
         test_loader=test_loader,
         test_dataset=test_dataset,
         device=device,
-        num_samples=args.num_samples
+        num_samples=args.num_samples,
+        generation_config=merged_generation_config
     )
     
     print("\n" + "="*60)
@@ -172,8 +190,20 @@ def main() -> None:
     print("="*60)
     
     for metric, value in results.items():
-        if metric != "_examples":
+        # Skip metadata fields (those starting with '_')
+        if not metric.startswith("_"):
             print(f"{metric:15}: {value:.4f}")
+    
+    # Print evaluation info (multi-reference BLEU context)
+    if "_eval_info" in results:
+        print("\n" + "-"*60)
+        print("EVALUATION INFO (Multi-Reference BLEU)")
+        print("-"*60)
+        info = results["_eval_info"]
+        print(f"Unique MRs evaluated: {info.get('unique_mrs_evaluated', 'N/A')}")
+        print(f"Total unique MRs:     {info.get('total_unique_mrs', 'N/A')}")
+        print(f"Total test samples:   {info.get('total_test_samples', 'N/A')}")
+        print(f"Avg refs per MR:      {info.get('avg_refs_per_mr', 'N/A'):.1f}")
     
     if "_examples" in results:
         print("\n" + "="*60)
@@ -182,9 +212,10 @@ def main() -> None:
         
         for i, example in enumerate(results["_examples"]):
             print(f"\nExample {i+1}:")
-            print(f"Prompt:     {example['prompt']}")
-            print(f"Prediction: {example['prediction'][:100]}...")
-            print(f"Reference:  {example['reference'][:100]}...")
+            print(f"MR:              {example['mr']}")
+            print(f"Prediction:      {example['prediction'][:100]}...")
+            print(f"Num references:  {example['num_references']}")
+            print(f"Sample ref:      {example['sample_reference'][:100]}...")
     
     output_dir = args.output or config.get("paths", {}).get("evaluation_dir", "./results/evaluations")
     os.makedirs(output_dir, exist_ok=True)
@@ -198,11 +229,14 @@ def main() -> None:
         "checkpoint": args.checkpoint,
         "config": {k: v for k, v in config.items() if k != "paths"},
         "timestamp": timestamp,
-        "metrics": {k: v for k, v in results.items() if k != "_examples"}
+        "metrics": {k: v for k, v in results.items() if not k.startswith("_")}
     }
     
     if "_examples" in results:
         save_results["examples"] = results["_examples"]
+    
+    if "_eval_info" in results:
+        save_results["eval_info"] = results["_eval_info"]
     
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(save_results, f, indent=2, ensure_ascii=False)
