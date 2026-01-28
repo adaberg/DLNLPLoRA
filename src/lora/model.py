@@ -7,6 +7,9 @@ from transformers.pytorch_utils import Conv1D
 from .layer import LoRALayer, DoRALayer
 from bitsandbytes.nn import Params4bit
 from torchinfo import summary
+from os import mkdir
+from torchinfo import summary
+from typing import Optional
 
 
 class LoRALinear(nn.Module):
@@ -30,11 +33,11 @@ class LoRALinear(nn.Module):
             out_features = base_layer.nf
 
         self.lora = LoRALayer(in_features, out_features, rank, alpha, dropout)
-        
-        if hasattr(base_layer.weight, 'quant_state'):  # Check if quantized
-          device = base_layer.weight.device
-          self.lora.lora_A.data = self.lora.lora_A.data.to(torch.float16).to(device)
-          self.lora.lora_B.data = self.lora.lora_B.data.to(torch.float16).to(device)
+
+        if hasattr(base_layer.weight, "quant_state"):  # Check if quantized
+            device = base_layer.weight.device
+            self.lora.lora_A.data = self.lora.lora_A.data.to(torch.float16).to(device)
+            self.lora.lora_B.data = self.lora.lora_B.data.to(torch.float16).to(device)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """W₀x + BAx più facile di così non si può"""
@@ -51,21 +54,25 @@ class LoRAGPT2(nn.Module):
         alpha: float,
         target_modules: List[str],
         dropout: float = 0.1,
+        layer_indices: Optional[List[int]] = None,  # for optional layer selection
     ) -> None:
         super().__init__()
         self.base_model = base_model
 
         for param in base_model.parameters():
-          if not isinstance(param, Params4bit):
-            param.requires_grad = False
+            if not isinstance(param, Params4bit):
+                param.requires_grad = False
 
         self.lora_modules = []
         for name, module in base_model.named_modules():
             if isinstance(module, (nn.Linear, Conv1D)):
                 if any(target in name for target in target_modules):
-                    self._inject_lora(name, module, rank, alpha, dropout)
+                    if self._should_inject_lora(name, layer_indices):
+                        self._inject_lora(name, module, rank, alpha, dropout)
 
-        assert len(self.lora_modules) > 0, f"No modules matched {target_modules}"
+        assert len(self.lora_modules) > 0, (
+            f"No modules matched {target_modules}" f"with layer_indices={layer_indices}"
+        )
 
     def _inject_lora(
         self, name: str, module: nn.Linear, rank: int, alpha: float, dropout: float
@@ -75,14 +82,41 @@ class LoRAGPT2(nn.Module):
         parent = self.base_model.get_submodule(parent_name)
 
         lora_linear = LoRALinear(module, rank, alpha, dropout)
-        
+
         # make sure lora parameters are in float16
-        lora_linear.lora.lora_A = nn.Parameter(lora_linear.lora.lora_A.to(torch.float16))
-        lora_linear.lora.lora_B = nn.Parameter(lora_linear.lora.lora_B.to(torch.float16))
+        lora_linear.lora.lora_A = nn.Parameter(
+            lora_linear.lora.lora_A.to(torch.float16)
+        )
+        lora_linear.lora.lora_B = nn.Parameter(
+            lora_linear.lora.lora_B.to(torch.float16)
+        )
 
         # says to the parent "when you call child_name you get lora_linear"
         setattr(parent, child_name, lora_linear)
         self.lora_modules.append(name)
+
+    def _should_inject_lora(
+        self, name: str, layer_indices: Optional[List[int]]
+    ) -> bool:
+        """
+        Determine if LoRA should be injected based on layer indices.
+        """
+        # backward compatible
+        if layer_indices is None:
+            return True
+
+        # Non-block modules (embeddings, final layer norm) - always inject
+        if ".h." not in name:
+            return True
+
+        # Extract block index from "transformer.h.X.attn.c_attn" format
+        try:
+            after_h = name.split(".h.")[1]  # "5.attn.c_attn"
+            block_idx = int(after_h.split(".")[0])
+            return block_idx in layer_indices
+        except (IndexError, ValueError):
+            # If parsing fails, be conservative and inject
+            return True
 
     def forward(
         self,
@@ -105,11 +139,13 @@ class LoRAGPT2(nn.Module):
         for module in self.base_model.modules():
             if isinstance(module, LoRALinear):
                 params.extend([module.lora.lora_A, module.lora.lora_B])
-                
+
         for param in params:
-          assert param.dtype in [torch.float16, torch.float32], \
-              f"LoRA param has wrong dtype: {param.dtype}"
-        
+            assert param.dtype in [
+                torch.float16,
+                torch.float32,
+            ], f"LoRA param has wrong dtype: {param.dtype}"
+
         return params
 
 
@@ -141,58 +177,84 @@ class DoRAGPT2(LoRAGPT2):
         dora_linear = DoRALinear(module, rank, alpha, dropout)
         setattr(parent, child_name, dora_linear)
         self.lora_modules.append(name)
-        
+
     def get_lora_parameters(self) -> List[nn.Parameter]:
         params = []
         for module in self.base_model.modules():
             if isinstance(module, DoRALinear):
-                params.extend([module.lora.lora_A, module.lora.lora_B, module.lora.magnitude])
+                params.extend(
+                    [module.lora.lora_A, module.lora.lora_B, module.lora.magnitude]
+                )
         return params
 
 
 if __name__ == "__main__":
-  
+
     bnb_config = BitsAndBytesConfig(
-      load_in_4bit=True,
-      bnb_4bit_quant_type="nf4",
-      bnb_4bit_compute_dtype=torch.float16,
-      bnb_4bit_use_double_quant=True,
-      llm_int8_skip_modules=["lm_head"]  # Explicitly skip LM head
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_use_double_quant=True,
+        llm_int8_skip_modules=["lm_head"],  # Explicitly skip LM head
     )
 
     model = GPT2LMHeadModel.from_pretrained(
         "gpt2-medium",
         quantization_config=bnb_config,
         device_map="auto",
-        dtype=torch.float16  # Non-quantized params use fp16
+        dtype=torch.float16,  # Non-quantized params use fp16
     )
 
     mkdir("visualization")
-    
-    base_model = GPT2LMHeadModel.from_pretrained(
-        "gpt2-medium")
-    with open("visualization/base.txt", "w") as f:
-      f.write(str(summary(base_model, input_size=(1, 128), dtypes=[torch.long], verbose=2, col_names=[])))
 
-    lora = LoRAGPT2(
-      model,
-      rank=8,
-      alpha=16,
-      target_modules=["c_attn", "c_proj"]
-    )
+    base_model = GPT2LMHeadModel.from_pretrained("gpt2-medium")
+    with open("visualization/base.txt", "w") as f:
+        f.write(
+            str(
+                summary(
+                    base_model,
+                    input_size=(1, 128),
+                    dtypes=[torch.long],
+                    verbose=2,
+                    col_names=[],
+                )
+            )
+        )
+
+    lora = LoRAGPT2(model, rank=8, alpha=16, target_modules=["c_attn", "c_proj"])
     with open("visualization/lora.txt", "w") as f:
-      f.write(str(summary(lora, input_size=(1, 128), dtypes=[torch.long], verbose=2, col_names=[])))
-      
+        f.write(
+            str(
+                summary(
+                    lora,
+                    input_size=(1, 128),
+                    dtypes=[torch.long],
+                    verbose=2,
+                    col_names=[],
+                )
+            )
+        )
+
     dora = DoRAGPT2(
-      base_model=base_model,
-      rank=4,
-      alpha=16.0,
-      dropout=0.0,
-      target_modules=["c_attn", "c_proj"],
+        base_model=base_model,
+        rank=4,
+        alpha=16.0,
+        dropout=0.0,
+        target_modules=["c_attn", "c_proj"],
     )
     with open("visualization/dora.txt", "w") as f:
-      f.write(str(summary(dora, input_size=(1, 128), dtypes=[torch.long], verbose=2, col_names=[])))
-          
+        f.write(
+            str(
+                summary(
+                    dora,
+                    input_size=(1, 128),
+                    dtypes=[torch.long],
+                    verbose=2,
+                    col_names=[],
+                )
+            )
+        )
+
     print()
     dora_layer = DoRALayer(
         in_features=128,
@@ -204,3 +266,53 @@ if __name__ == "__main__":
     print(dora_layer)
     print("--" * 40)
     print(dora_layer.extra_repr())
+
+    mkdir("visualization")
+
+    base_model = GPT2LMHeadModel.from_pretrained("gpt2-medium")
+    with open("visualization/base.txt", "w") as f:
+        f.write(
+            str(
+                summary(
+                    base_model,
+                    input_size=(1, 128),
+                    dtypes=[torch.long],
+                    verbose=2,
+                    col_names=[],
+                )
+            )
+        )
+
+    lora = LoRAGPT2(base_model, rank=8, alpha=16, target_modules=["c_attn", "c_proj"])
+    with open("visualization/lora.txt", "w") as f:
+        f.write(
+            str(
+                summary(
+                    lora,
+                    input_size=(1, 128),
+                    dtypes=[torch.long],
+                    verbose=2,
+                    col_names=[],
+                )
+            )
+        )
+
+    dora = DoRAGPT2(
+        base_model=base_model,
+        rank=4,
+        alpha=16.0,
+        dropout=0.0,
+        target_modules=["c_attn", "c_proj"],
+    )
+    with open("visualization/dora.txt", "w") as f:
+        f.write(
+            str(
+                summary(
+                    dora,
+                    input_size=(1, 128),
+                    dtypes=[torch.long],
+                    verbose=2,
+                    col_names=[],
+                )
+            )
+        )

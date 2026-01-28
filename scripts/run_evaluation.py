@@ -136,7 +136,7 @@ def main() -> None:
                        help="Path to config file (default: config.yaml)")
     parser.add_argument("--output", type=str, default=None,
                        help="Output directory for evaluation results")
-    parser.add_argument("--num_samples", type=int, default=10,
+    parser.add_argument("--num_samples", type=int, default=-1,
                        help="Number of samples for text generation evaluation")
     
     args = parser.parse_args()

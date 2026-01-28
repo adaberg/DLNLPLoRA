@@ -119,6 +119,7 @@ python scripts/run_evaluation.py --checkpoint gpt2-medium --config config.yaml
 ## Tests
 
 ```bash
+source venv/bin/activate
 # Run all tests
 pytest tests/ -v
 
@@ -174,10 +175,11 @@ lora-reproduction/
 
 now ordered by feasibility and easeness of implementation in the current project
 
-- Weightwatcher
-- rank ablation: run multiple runs on different ranks
-- QLoRA: quantization + LoRA (could run in parallel on personal hardware)
-- DoRA: LoRA updates magnitude and direction of the weight matrix concurrently. it is not good for small nuanced changes in one of the two directions. DoRA solves this by decoupling magnitude from direction through weight decomposition
+[] Weightwatcher
+[] rank ablation: run multiple runs on different ranks
+[x] QLoRA: quantization + LoRA (could run in parallel on personal hardware)
+[x] DoRA: LoRA updates magnitude and direction of the weight matrix concurrently. it is not good for small nuanced changes in one of the two directions. DoRA solves this by decoupling magnitude from direction through weight decomposition
+[x] Selective LoRA: enable injection only in selected layers, to use in combination with weightwatcher maybe and highlight overfitting layers
 
 bonus:
 - LoRAFA : frozen A matrix (minimal change of code but almost full processing needed and maybe not that interesting compared to the others)
@@ -198,9 +200,23 @@ pytest tests/test_dora.py -v -m learning
 
 # Extention: QLoRA
 
-## Setup
+## Tests
 
 ```bash
-nvidia-smi  # Shows driver version and CUDA version at top
+pytest tests/test_qlora.py -v
 
+# Test with markers
+pytest tests/test_qlora.py -v -m layer   # Only layer tests
+pytest tests/test_qlora.py -v -m linear  # Only linear tests
+pytest tests/test_qlora.py -v -m model   # Only model tests
+pytest tests/test_qlora.py -v -m learning
+```
+
+# Extention: Selective LoRA
+
+## Tests
+
+```bash
+# Test with markers
+pytest tests/test_qlora.py -v -m selective
 ```

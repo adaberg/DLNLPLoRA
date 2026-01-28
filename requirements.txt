@@ -13,6 +13,7 @@ numpy
 tqdm
 
 pytest
+torchinfo
 
 bitsandbytes
 accelerate
