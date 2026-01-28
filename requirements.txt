@@ -5,6 +5,7 @@ datasets
 evaluate
 rouge-score
 bert-score
+sacrebleu
 
 # Configuration
 pyyaml

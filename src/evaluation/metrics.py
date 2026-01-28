@@ -11,6 +11,7 @@ import numpy as np
 import evaluate
 from tqdm import trange
 from bert_score import score as bertscore
+from sacrebleu import corpus_bleu
 from transformers import GPT2TokenizerFast
 import logging
 from absl import logging as absl_logging
@@ -323,16 +324,38 @@ def compute_generation_metrics(
     references = [[str(r).strip() for r in ref_list] for ref_list in references]
     results = {}
 
-    # 1. Compute BLEU score with multiple references (corpus-level):
+    # 1. Compute HF BLEU and SacreBLEU score with multiple references (corpus-level):
+    # HuggingFace BLEU:
+    # (dis: tokenization is not fixed, value can vary from run to run --> not comparable)
     try:
         bleu = evaluate.load("bleu")
         # 'references' is already in the correct format: List[List[str]]
-        bleu_result = bleu.compute(predictions=predictions, references=references)
+        bleu_result = bleu.compute(
+            predictions=predictions,
+            references=references
+        )
         results["bleu"] = bleu_result["bleu"]  # corpus BLEU
-        logger.info("BLEU (corpus-level, precision-based)")
+        logger.info("HF BLEU (corpus-level, precision-based)")
     except Exception as e:
-        logger.warning(f"BLEU calculation failed: {e}")
+        logger.warning(f"HF BLEU calculation failed: {e}")
         results["bleu"] = 0.0
+
+    # SacreBLEU (shareable, comparable, and reproducible BLEU score):
+    bleu = corpus_bleu(
+        predictions,
+        list(zip(*references)),
+        tokenize="13a",  # default, paper standard (produces the same values as "mteval-v13a.pl" used by WMT)
+        lowercase=False,  # default
+        smooth_method="exp"
+    )
+    results["sacrebleu"] = bleu.score / 100.0
+    logger.info("SacreBLEU (corpus-level, precision-based)")
+    # additional debug logs:
+    logger.info("BLEU:", bleu.score)
+    logger.info("BP:", bleu.bp)  # if bp << 1.0 --> outputs too short
+    logger.info("sys_len:", bleu.sys_len)  # if sys_len << ref_len --> 'max_new_tokens' too small
+    logger.info("ref_len:", bleu.ref_len)
+    logger.info("precisions:", bleu.precisions)  # if p ≈ 0 --> model generated too monotonically
 
     # 2. Compute ROUGE F1 scores (mean of the best scores):
     #    Note: ROUGE F1 does not natively support multiple references well, therefore the
@@ -348,7 +371,8 @@ def compute_generation_metrics(
     results.update(bert_score)
 
     logger.info(
-        f"Generation metrics: BLEU={results.get('bleu', 0.0):.4f}, "
+        f"Generation metrics: HF BLEU={results.get('bleu', 0.0):.4f}, "
+        f"SacreBLEU={results.get('sacrebleu', 0.0):.4f}, "
         f"ROUGE-1 F1={results.get('rouge1_f1', 0.0):.4f}, "
         f"ROUGE-2 F1={results.get('rouge2_f1', 0.0):.4f}, "
         f"ROUGE-L F1={results.get('rougeL_f1', 0.0):.4f}, "
@@ -382,7 +406,6 @@ def compute_bootstrap_generation_metrics(
     rng = np.random.default_rng(seed)
 
     try:
-        bleu = evaluate.load("bleu")
         rouge = evaluate.load("rouge")
     except Exception as e:
         logger.warning(f"Bootstrap metrics calculation failed: {e}")
@@ -402,9 +425,12 @@ def compute_bootstrap_generation_metrics(
         preds_sample = [predictions[i] for i in idx]
         refs_sample = [references[i] for i in idx]
 
-        bleu_result = bleu.compute(
-            predictions=preds_sample,
-            references=[[r] for r in refs_sample]
+        bleu = corpus_bleu(
+            preds_sample,
+            list(zip(*refs_sample)),
+            tokenize="13a",
+            lowercase=False,
+            smooth_method="exp"
         )
         rouge_result = rouge.compute(
             predictions=preds_sample,
@@ -412,7 +438,7 @@ def compute_bootstrap_generation_metrics(
             use_stemmer=True
         )
 
-        bleu_scores.append(bleu_result["bleu"])
+        bleu_scores.append(bleu.score / 100.0)
         rouge1_scores.append(rouge_result["rouge1"])
         rouge2_scores.append(rouge_result["rouge2"])
         rougeL_scores.append(rouge_result["rougeL"])
