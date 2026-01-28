@@ -11,6 +11,7 @@ import numpy as np
 import evaluate
 from transformers import GPT2TokenizerFast
 import logging
+from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ logging.basicConfig(level=logging.INFO)
 def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) -> float:
     """
     Compute perplexity: exp(average_cross_entropy_loss)
-        
+
     Returns:
         Perplexity score (float)
     """
@@ -30,9 +31,9 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
 
     with torch.no_grad():
         for batch in dataloader:
-            batch = {k: v.to(device) for k, v in batch.items() 
+            batch = {k: v.to(device) for k, v in batch.items()
                     if isinstance(v, torch.Tensor)}
-            
+
             # Modifiction
             outputs = model(**batch, loss_type="ForCausalLMLoss")
 
@@ -43,14 +44,14 @@ def compute_perplexity(model: nn.Module, dataloader: DataLoader, device: str) ->
                 )
 
             loss = outputs.loss
-            
+
             batch_size = batch["input_ids"].size(0)
             total_loss += loss.item() * batch_size
             total_samples += batch_size
 
     if total_samples == 0:
         raise ValueError("No valid batches processed for perplexity computation")
-    
+
     avg_loss = total_loss / total_samples
     perplexity = np.exp(avg_loss)
 
@@ -73,12 +74,12 @@ def generate_texts(
 ) -> List[str]:
     """
     Generate text completions for given prompts.
-    
+
     Uses beam search by default (as specified in LoRA paper Table 11/Section D.3):
     - num_beams: 10
     - length_penalty: 0.9 (for E2E)
     - no_repeat_ngram_size: 4
-    
+
     Args:
         model: The language model
         tokenizer: Tokenizer for encoding/decoding
@@ -89,13 +90,13 @@ def generate_texts(
         length_penalty: Length penalty for beam search (paper: 0.9 for E2E)
         no_repeat_ngram_size: Prevent n-gram repetition (paper: 4)
         do_sample: Use sampling instead of beam search (default: False for deterministic output)
-    
+
     Returns:
         List of generated text completions
     """
     model.eval()
     generated_texts = []
-    
+
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -104,7 +105,7 @@ def generate_texts(
             try:
                 inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
                 attention_mask = torch.ones_like(inputs)
-                
+
                 # Generate text using beam search (paper-specified parameters)
                 outputs = model.generate(
                     inputs,
@@ -120,7 +121,7 @@ def generate_texts(
                     pad_token_id=tokenizer.pad_token_id,
                     eos_token_id=tokenizer.eos_token_id,
                 )
-                
+
                 generated = tokenizer.decode(
                     outputs[0][len(inputs[0]) :], skip_special_tokens=True
                 ).strip()
@@ -140,13 +141,17 @@ def compute_generation_metrics(
     predictions: List[str], references: List[List[str]]
 ) -> Dict[str, float]:
     """
-    Compute BLEU and ROUGE using HuggingFace evaluate library.
-    
+    Compute BLEU and ROUGE metrics for E2E NLG evaluation.
+
+    Uses NLTK corpus_bleu with smoothing to match the E2E NLG benchmark methodology.
+    This is important because SacreBLEU (HuggingFace evaluate) gives significantly
+    lower scores than NLTK with smoothing for the same predictions.
+
     Args:
         predictions: List of generated texts (one per unique MR)
         references: List of reference lists (multiple references per MR)
                    Format: [[ref1_mr1, ref2_mr1, ...], [ref1_mr2, ref2_mr2, ...], ...]
-    
+
     Returns:
         Dictionary with BLEU and ROUGE scores
     """
@@ -155,19 +160,30 @@ def compute_generation_metrics(
             f"Length mismatch: predictions ({len(predictions)}) != "
             f"references ({len(references)})"
         )
-    
+
     predictions = [str(p).strip() for p in predictions]
     # Clean up references (each is a list of strings)
     references = [[str(r).strip() for r in ref_list] for ref_list in references]
 
     results = {}
 
-    # 1. Compute BLEU with multiple references
+    # 1. Compute BLEU with multiple references using NLTK (E2E benchmark standard)
+    # NLTK corpus_bleu with smoothing matches the E2E NLG Challenge evaluation
     try:
-        bleu = evaluate.load("bleu")
-        # references is already in correct format: List[List[str]]
-        bleu_result = bleu.compute(predictions=predictions, references=references)
-        results["bleu"] = bleu_result["bleu"]
+        # Tokenize predictions and references (lowercase + split on whitespace)
+        pred_tokens = [p.lower().split() for p in predictions]
+        # NLTK expects references as: [[[ref1_tokens], [ref2_tokens], ...], ...]
+        ref_tokens = [[r.lower().split() for r in ref_list] for ref_list in references]
+
+        # Use smoothing method7 which is commonly used in NLG evaluation
+        # This handles cases where higher-order n-grams have zero matches
+        smoother = SmoothingFunction()
+        bleu_score = corpus_bleu(
+            ref_tokens,
+            pred_tokens,
+            smoothing_function=smoother.method7
+        )
+        results["bleu"] = bleu_score
     except Exception as e:
         logger.warning(f"BLEU computation failed: {e}")
         results["bleu"] = 0.0
@@ -209,13 +225,13 @@ def evaluate_model_comprehensive(
 ) -> Dict[str, float]:
     """
     Comprehensive evaluation combining perplexity and generation metrics.
-    
+
     E2E NLG evaluation methodology:
     - Test samples are grouped by unique meaning representation (MR)
     - Generate one prediction per unique MR
     - Compute multi-reference BLEU
         (validate output against ALL references for each MR)
-    
+
     Args:
         model: The language model to evaluate
         tokenizer: Tokenizer for encoding/decoding
@@ -232,14 +248,14 @@ def evaluate_model_comprehensive(
     """
     if generation_config is None:
         generation_config = {}
-    
+
     # Default generation parameters from LoRA paper (Table 11 / Section D.3)
     max_new_tokens = generation_config.get("max_new_tokens", 50)
     num_beams = generation_config.get("num_beams", generation_config.get("beam_size", 10))
     length_penalty = generation_config.get("length_penalty", 0.9)
     no_repeat_ngram_size = generation_config.get("no_repeat_ngram_size", 4)
     do_sample = generation_config.get("do_sample", False)
-    
+
     results = {}
 
     # 1. Compute perplexity
@@ -255,14 +271,14 @@ def evaluate_model_comprehensive(
     if not hasattr(test_dataset, 'get_grouped_data'):
         logger.error("test_dataset must have get_grouped_data() method for proper E2E evaluation")
         return results
-    
+
     grouped_data = test_dataset.get_grouped_data()
     total_unique_mrs = len(grouped_data)
-    
+
     # Determine how many MRs to evaluate
     if num_samples == -1 or num_samples > total_unique_mrs:
         num_samples = total_unique_mrs
-    
+
     logger.info(f"E2E Evaluation: {num_samples} unique MRs (out of {total_unique_mrs} total)")
     logger.info(f"Total test samples: {len(test_dataset)}, Average refs per MR: {len(test_dataset)/total_unique_mrs:.1f}")
     logger.info(f"Generation config: num_beams={num_beams}, length_penalty={length_penalty}, no_repeat_ngram_size={no_repeat_ngram_size}, do_sample={do_sample}")
@@ -271,7 +287,7 @@ def evaluate_model_comprehensive(
     prompts = []
     all_references = []  # List[List[str]] - multiple refs per MR
     mr_list = []  # Keep track of MRs for examples
-    
+
     for i, (mr, refs) in enumerate(grouped_data.items()):
         if i >= num_samples:
             break
@@ -293,11 +309,11 @@ def evaluate_model_comprehensive(
             no_repeat_ngram_size=no_repeat_ngram_size,
             do_sample=do_sample,
         )
-        
+
         logger.info("Computing generation metrics with multi-reference BLEU...")
         gen_metrics = compute_generation_metrics(predictions, all_references)
         results.update(gen_metrics)
-        
+
         # Store some examples for inspection
         results["_examples"] = []
         for i in range(min(3, len(prompts))):
@@ -309,7 +325,7 @@ def evaluate_model_comprehensive(
                     "sample_reference": all_references[i][0],  # Show first reference
                 }
             )
-        
+
         # Add evaluation metadata
         results["_eval_info"] = {
             "unique_mrs_evaluated": len(prompts),
@@ -327,7 +343,7 @@ def evaluate_model_comprehensive(
 def _test_metrics():
     """Internal test function to verify metrics work correctly."""
     print("Testing evaluation metrics...")
-    
+
     class MockModel(nn.Module):
         def __init__(self):
             super().__init__()
@@ -345,19 +361,19 @@ def _test_metrics():
 
         def generate(self, input_ids, **kwargs):
             return torch.cat([input_ids, input_ids], dim=-1)
-    
+
     from transformers import GPT2TokenizerFast
-    
+
     tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
-    
+
     prompts = ["Hello world", "Test prompt"]
     model = MockModel()
 
     print("Testing generate_texts...")
     generated = generate_texts(model, tokenizer, prompts, device="cpu")
     print(f"Generated: {generated}")
-    
+
     print("\nTesting compute_generation_metrics with multi-reference BLEU...")
     predictions = ["The cat sits on the mat", "I love programming"]
     # NB: Multi-reference format: List[List[str]]
