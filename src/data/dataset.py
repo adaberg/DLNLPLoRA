@@ -103,22 +103,23 @@ class E2EDataset(Dataset):
 
         input_ids = encoding["input_ids"].squeeze(0)
         attention_mask = encoding["attention_mask"].squeeze(0)
-        labels = input_ids.clone()  # initial labels (copy 'input_ids')
+        labels = input_ids.clone()  # initialize labels (copy 'input_ids')
 
-        # Mask prompt tokens (no padding):
+        # Tokenize only the prompt tokens
+        # (no padding and no special tokens):
         prompt_ids = self.tokenizer(
             prompt,
             truncation=True,
-            max_length=self.max_length,
-            return_tensors="pt",
             add_special_tokens=False,
+            max_length=self.max_length,
+            return_tensors="pt"
         )["input_ids"].squeeze(0)
 
         prompt_len = prompt_ids.size(0)
 
-        # Ignore prompt tokens in loss:
+        # Mask prompt tokens (ignore in loss):
         labels[:prompt_len] = -100
-        # Ignore padding tokens in loss:
+        # Mask padding tokens (ignore in loss):
         labels[attention_mask == 0] = -100
 
         item = {

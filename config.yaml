@@ -26,7 +26,7 @@ max_length: 256             # Maximum sequence length
 # ============================================================================
 training:
   # Optimizer: AdamW (paper specification)
-  learning_rate: 2e-4       # Learning rate for LoRA (paper: 0.0002)
+  learning_rate: 1e-4       # Learning rate for LoRA (paper: 0.0002)
   weight_decay: 0.01        # Weight decay (paper: 0.01)
 
   # Training schedule

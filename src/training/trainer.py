@@ -8,7 +8,7 @@ Hyperparameters from Table 11 (GPT-2 on E2E NLG):
 - Epochs: 5
 - Warmup Steps: 500
 - LR Schedule: Linear
-- Learning Rate: 2e-4
+- Learning Rate: 1e-4
 """
 
 from dataclasses import dataclass, field
@@ -34,7 +34,7 @@ class TrainingConfig:
 
     # Training hyperparameters
     #  (reused from paper! TODO: Possibly adapt to better fit our data changes if necessary!)
-    learning_rate: float = 2e-4
+    learning_rate: float = 1e-4
     weight_decay: float = 0.01
     num_epochs: int = 5
     batch_size: int = 8

@@ -197,7 +197,7 @@ def main() -> None:
         device=device,
         num_samples=num_samples,
         generation_config=merged_generation_config,
-        do_bootstrap_eval=True
+        do_bootstrap_eval=False  # disabled (extremely slow during a full sequence evaluation)
     )
 
     print("\n" + "="*60)

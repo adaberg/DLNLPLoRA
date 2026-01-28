@@ -11,7 +11,7 @@ Usage:
     python scripts/train.py --config config.yaml --mode full
 
     # With custom hyperparameters
-    python scripts/train.py --config config.yaml --mode lora --lr 2e-4 --epochs 5 --batch_size 8
+    python scripts/train.py --config config.yaml --mode lora --lr 1e-4 --epochs 5 --batch_size 8
 
 Cloud Deployment:
     # For GPU/TPU training, the script automatically detects available devices
@@ -231,9 +231,9 @@ def main():
     # Create training configuration
     # Use hyperparameters from paper (Table 11) as defaults
     # TODO: Possibly needs adaptation for better fit our data changes if necessary!
-    # NB: YAML may parse scientific notation (e.g., 2e-4) as strings, so we explicitly convert to float/int
+    # NB: YAML may parse scientific notation (e.g., 1e-4) as strings, so we explicitly convert to float/int
     training_config = TrainingConfig(
-        learning_rate=float(args.lr or config.get('training', {}).get('learning_rate', 2e-4)),
+        learning_rate=float(args.lr or config.get('training', {}).get('learning_rate', 1e-4)),
         weight_decay=float(args.weight_decay or config.get('training', {}).get('weight_decay', 0.01)),
         num_epochs=int(args.epochs or config.get('training', {}).get('num_epochs', 5)),
         batch_size=int(args.batch_size or config.get('training', {}).get('batch_size', 8)),
