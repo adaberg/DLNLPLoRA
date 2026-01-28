@@ -67,8 +67,8 @@ class E2EDataset(Dataset):
             dataset = dataset.select(range(num_samples))
 
         self.dataset = dataset
-
         logger.info(f"Loaded {len(self.dataset)} samples from {split}")
+
         if add_eos_token:
             logger.info(f"EOS token will be added after references")
 
