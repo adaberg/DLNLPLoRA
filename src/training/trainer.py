@@ -2,7 +2,7 @@
 Trainer for LoRA fine-tuning following the original paper.
 TODO: Possibly adapt to better fit our data changes if necessary!
 Hyperparameters from Table 11 (GPT-2 on E2E NLG):
-- Optimizer: AdamW
+- Optimizer: AdamW (QLoRA uses SGD)
 - Weight Decay: 0.01
 - Batch Size: 8
 - Epochs: 5
@@ -24,6 +24,7 @@ from torch.utils.data import DataLoader
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
 from tqdm import tqdm
+from transformers import BitsAndBytesConfig
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +70,10 @@ class TrainingConfig:
     
     # Early stopping
     early_stopping_patience: Optional[int] = None
+    
+    # QLoRA quantization
+    use_qlora: bool = False
+    bnb_4bit_compute_dtype: str = "float16"
     
     def effective_batch_size(self) -> int:
         return self.batch_size * self.gradient_accumulation_steps
@@ -116,7 +121,8 @@ class Trainer:
         self.tokenizer = tokenizer
         
         # Move model to device
-        self.model.to(config.device)
+        if not self.config.use_qlora:
+            self.model.to(self.config.device)
         
         # Setup optimizer (only for trainable parameters)
         self.optimizer = self._create_optimizer()
@@ -166,6 +172,15 @@ class Trainer:
         logger.info(f"Total parameters: {total_params:,}")
         logger.info(f"Trainable parameters: {trainable_count:,}")
         logger.info(f"Trainable percentage: {100 * trainable_count / total_params:.2f}%")
+        
+        # Use SGD for QLoRA (more stable with quantization)
+        if self.config.use_qlora:
+            return torch.optim.SGD(
+                trainable_params,
+                lr=self.config.learning_rate,
+                momentum=0.9,
+                weight_decay=self.config.weight_decay
+            )
         
         return AdamW(
             trainable_params,
@@ -333,10 +348,14 @@ class Trainer:
                  if isinstance(v, torch.Tensor)}
         
         # Forward pass
-        if self.config.fp16:
+        if self.config.fp16 and not self.config.use_qlora:
             with torch.amp.autocast('cuda'):
                 outputs = self.model(**batch)
                 loss = outputs.loss
+        elif self.config.use_qlora:
+            # Quantized compute already uses fp16, no autocast needed
+            outputs = self.model(**batch)
+            loss = outputs.loss
         elif self.config.bf16:
             with torch.amp.autocast('cuda', dtype=torch.bfloat16):
                 outputs = self.model(**batch)
@@ -372,9 +391,16 @@ class Trainer:
         checkpoint_dir = os.path.join(self.config.output_dir, name)
         os.makedirs(checkpoint_dir, exist_ok=True)
         
+        # For QLoRA: save only LoRA parameters (huge size reduction)
+        if self.config.use_qlora:
+            model_state = {k: v for k, v in self.model.state_dict().items() 
+                          if 'lora' in k or 'magnitude' in k}  # Include DoRA magnitude
+        else:
+            model_state = self.model.state_dict()
+        
         # Save model state
         checkpoint = {
-            'model_state_dict': self.model.state_dict(),
+            'model_state_dict': model_state,
             'optimizer_state_dict': self.optimizer.state_dict(),
             'scheduler_state_dict': self.scheduler.state_dict(),
             'epoch': self.current_epoch,
@@ -389,6 +415,7 @@ class Trainer:
                 'batch_size': self.config.batch_size,
                 'warmup_steps': self.config.warmup_steps,
                 'training_mode': self.config.training_mode,
+                'use_qlora': self.config.use_qlora,
             }
         }
         
@@ -436,7 +463,10 @@ class Trainer:
         """Load model from checkpoint."""
         checkpoint = torch.load(checkpoint_path, map_location=self.config.device)
         
-        self.model.load_state_dict(checkpoint['model_state_dict'])
+        # For QLoRA: use strict=False since checkpoint only has LoRA params
+        is_qlora = checkpoint.get('config', {}).get('use_qlora', False)
+        self.model.load_state_dict(checkpoint['model_state_dict'], strict=not is_qlora)
+        
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
         self.current_epoch = checkpoint['epoch']
