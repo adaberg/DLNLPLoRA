@@ -1,0 +1,408 @@
+10% data with rank=1:
+============================================================
+EVALUATION RESULTS
+============================================================
+perplexity     : 1.2001
+bleu           : 0.5461
+rouge1         : 0.7333
+rouge2         : 0.4463
+rougeL         : 0.5446
+
+------------------------------------------------------------
+EVALUATION INFO (Multi-Reference BLEU)
+------------------------------------------------------------
+Unique MRs evaluated: 111
+Total unique MRs:     111
+Total test samples:   469
+Avg refs per MR:      4.2
+
+============================================================
+EXAMPLE GENERATIONS
+============================================================
+
+Example 1:
+MR:              name[Blue Spice], eatType[coffee shop], area[city centre]
+Prediction:      Blue Spice is a coffee shop located in the city centre....
+Num references:  2
+Sample ref:      A coffee shop in the city centre area called Blue Spice....
+
+Example 2:
+MR:              name[Blue Spice], eatType[coffee shop], area[riverside]
+Prediction:      Blue Spice is a coffee shop located in the riverside area....
+Num references:  2
+Sample ref:      There is a coffee shop Blue Spice in the riverside area....
+
+Example 3:
+MR:              name[Blue Spice], eatType[coffee shop], customer rating[5 out of 5], near[Crowne Plaza Hotel]
+Prediction:      Blue Spice is a coffee shop located near Crowne Plaza Hotel. It has a customer rating of 5 out of 5....
+Num references:  3
+Sample ref:      The coffee shop Blue Spice is based near Crowne Plaza Hotel and has a high customer rating of 5 out ...
+
+
+100% data with rank=1:
+============================================================
+EVALUATION RESULTS
+============================================================
+perplexity     : 1.2989
+bleu           : 0.4215
+rouge1         : 0.7172
+rouge2         : 0.4369
+rougeL         : 0.5157
+
+------------------------------------------------------------
+EVALUATION INFO (Multi-Reference BLEU)
+------------------------------------------------------------
+Unique MRs evaluated: 1847
+Total unique MRs:     1847
+Total test samples:   4693
+Avg refs per MR:      2.5
+
+============================================================
+EXAMPLE GENERATIONS
+============================================================
+
+Example 1:
+MR:              name[Blue Spice], eatType[coffee shop], area[city centre]
+Prediction:      Blue Spice is a coffee shop located in the city centre....
+Num references:  2
+Sample ref:      A coffee shop in the city centre area called Blue Spice....
+
+Example 2:
+MR:              name[Blue Spice], eatType[coffee shop], area[riverside]
+Prediction:      Blue Spice is a coffee shop located in the riverside area....
+Num references:  2
+Sample ref:      There is a coffee shop Blue Spice in the riverside area....
+
+Example 3:
+MR:              name[Blue Spice], eatType[coffee shop], customer rating[5 out of 5], near[Crowne Plaza Hotel]
+Prediction:      Blue Spice is a coffee shop near Crowne Plaza Hotel. It has a customer rating of 5 out of 5....
+Num references:  3
+Sample ref:      The coffee shop Blue Spice is based near Crowne Plaza Hotel and has a high customer rating of 5 out ...
+
+10% data with rank=2:
+============================================================
+EVALUATION RESULTS
+============================================================
+perplexity     : 1.2011
+bleu           : 0.5256
+rouge1         : 0.7354
+rouge2         : 0.4393
+rougeL         : 0.5360
+
+------------------------------------------------------------
+EVALUATION INFO (Multi-Reference BLEU)
+------------------------------------------------------------
+Unique MRs evaluated: 111
+Total unique MRs:     111
+Total test samples:   469
+Avg refs per MR:      4.2
+
+============================================================
+EXAMPLE GENERATIONS
+============================================================
+
+Example 1:
+MR:              name[Blue Spice], eatType[coffee shop], area[city centre]
+Prediction:      Blue Spice is a coffee shop located in the city centre....
+Num references:  2
+Sample ref:      A coffee shop in the city centre area called Blue Spice....
+
+Example 2:
+MR:              name[Blue Spice], eatType[coffee shop], area[riverside]
+Prediction:      Blue Spice is a coffee shop located in the riverside area....
+Num references:  2
+Sample ref:      There is a coffee shop Blue Spice in the riverside area....
+
+Example 3:
+MR:              name[Blue Spice], eatType[coffee shop], customer rating[5 out of 5], near[Crowne Plaza Hotel]
+Prediction:      Blue Spice is a coffee shop near Crowne Plaza Hotel. It has a customer rating of 5 out of 5....
+Num references:  3
+Sample ref:      The coffee shop Blue Spice is based near Crowne Plaza Hotel and has a high customer rating of 5 out ...
+
+
+100% data with rank=2:
+============================================================
+EVALUATION RESULTS
+============================================================
+perplexity     : 1.2977
+bleu           : 0.4176
+rouge1         : 0.7172
+rouge2         : 0.4400
+rougeL         : 0.5168
+
+------------------------------------------------------------
+EVALUATION INFO (Multi-Reference BLEU)
+------------------------------------------------------------
+Unique MRs evaluated: 1847
+Total unique MRs:     1847
+Total test samples:   4693
+Avg refs per MR:      2.5
+
+============================================================
+EXAMPLE GENERATIONS
+============================================================
+
+Example 1:
+MR:              name[Blue Spice], eatType[coffee shop], area[city centre]
+Prediction:      Blue Spice is a coffee shop located in the city centre....
+Num references:  2
+Sample ref:      A coffee shop in the city centre area called Blue Spice....
+
+Example 2:
+MR:              name[Blue Spice], eatType[coffee shop], area[riverside]
+Prediction:      Blue Spice is a coffee shop located in the riverside area....
+Num references:  2
+Sample ref:      There is a coffee shop Blue Spice in the riverside area....
+
+Example 3:
+MR:              name[Blue Spice], eatType[coffee shop], customer rating[5 out of 5], near[Crowne Plaza Hotel]
+Prediction:      Blue Spice is a coffee shop near Crowne Plaza Hotel. It has a customer rating of 5 out of 5....
+Num references:  3
+Sample ref:      The coffee shop Blue Spice is based near Crowne Plaza Hotel and has a high customer rating of 5 out ...
+
+
+10% data with rank=4:
+============================================================
+EVALUATION RESULTS
+============================================================
+perplexity     : 1.1972
+bleu           : 0.5394
+rouge1         : 0.7311
+rouge2         : 0.4435
+rougeL         : 0.5401
+
+------------------------------------------------------------
+EVALUATION INFO (Multi-Reference BLEU)
+------------------------------------------------------------
+Unique MRs evaluated: 111
+Total unique MRs:     111
+Total test samples:   469
+Avg refs per MR:      4.2
+
+============================================================
+EXAMPLE GENERATIONS
+============================================================
+
+Example 1:
+MR:              name[Blue Spice], eatType[coffee shop], area[city centre]
+Prediction:      Blue Spice is a coffee shop located in the city centre....
+Num references:  2
+Sample ref:      A coffee shop in the city centre area called Blue Spice....
+
+Example 2:
+MR:              name[Blue Spice], eatType[coffee shop], area[riverside]
+Prediction:      Blue Spice is a coffee shop located in the riverside area....
+Num references:  2
+Sample ref:      There is a coffee shop Blue Spice in the riverside area....
+
+Example 3:
+MR:              name[Blue Spice], eatType[coffee shop], customer rating[5 out of 5], near[Crowne Plaza Hotel]
+Prediction:      Blue Spice is a coffee shop near Crowne Plaza Hotel. It has a customer rating of 5 out of 5....
+Num references:  3
+Sample ref:      The coffee shop Blue Spice is based near Crowne Plaza Hotel and has a high customer rating of 5 out ...
+
+
+
+20% data with rank=4:
+============================================================
+EVALUATION RESULTS
+============================================================
+perplexity     : 1.2017
+bleu           : 0.5222
+rouge1         : 0.7385
+rouge2         : 0.4637
+rougeL         : 0.5581
+
+------------------------------------------------------------
+EVALUATION INFO (Multi-Reference BLEU)
+------------------------------------------------------------
+Unique MRs evaluated: 205
+Total unique MRs:     205
+Total test samples:   938
+Avg refs per MR:      4.6
+
+============================================================
+EXAMPLE GENERATIONS
+============================================================
+
+Example 1:
+MR:              name[Blue Spice], eatType[coffee shop], area[city centre]
+Prediction:      Blue Spice is a coffee shop located in the city centre....
+Num references:  2
+Sample ref:      A coffee shop in the city centre area called Blue Spice....
+
+Example 2:
+MR:              name[Blue Spice], eatType[coffee shop], area[riverside]
+Prediction:      Blue Spice is a coffee shop located in the riverside area....
+Num references:  2
+Sample ref:      There is a coffee shop Blue Spice in the riverside area....
+
+Example 3:
+MR:              name[Blue Spice], eatType[coffee shop], customer rating[5 out of 5], near[Crowne Plaza Hotel]
+Prediction:      Blue Spice is a coffee shop near Crowne Plaza Hotel. It has a customer rating of 5 out of 5....
+Num references:  3
+Sample ref:      The coffee shop Blue Spice is based near Crowne Plaza Hotel and has a high customer rating of 5 out ...
+
+100% data with rank=4:
+============================================================
+EVALUATION RESULTS
+============================================================
+perplexity     : 1.3052
+bleu           : 0.4172
+rouge1         : 0.7146
+rouge2         : 0.4358
+rougeL         : 0.5129
+
+------------------------------------------------------------
+EVALUATION INFO (Multi-Reference BLEU)
+------------------------------------------------------------
+Unique MRs evaluated: 1847
+Total unique MRs:     1847
+Total test samples:   4693
+Avg refs per MR:      2.5
+
+============================================================
+EXAMPLE GENERATIONS
+============================================================
+
+Example 1:
+MR:              name[Blue Spice], eatType[coffee shop], area[city centre]
+Prediction:      Blue Spice is a coffee shop located in the city centre....
+Num references:  2
+Sample ref:      A coffee shop in the city centre area called Blue Spice....
+
+Example 2:
+MR:              name[Blue Spice], eatType[coffee shop], area[riverside]
+Prediction:      Blue Spice is a coffee shop located in the riverside area....
+Num references:  2
+Sample ref:      There is a coffee shop Blue Spice in the riverside area....
+
+Example 3:
+MR:              name[Blue Spice], eatType[coffee shop], customer rating[5 out of 5], near[Crowne Plaza Hotel]
+Prediction:      Blue Spice is a coffee shop near Crowne Plaza Hotel. It has a customer rating of 5 out of 5....
+Num references:  3
+Sample ref:      The coffee shop Blue Spice is based near Crowne Plaza Hotel and has a high customer rating of 5 out ...
+
+
+10% data with rank=8:
+============================================================
+EVALUATION RESULTS
+============================================================
+perplexity     : 1.1990
+bleu           : 0.5287
+rouge1         : 0.7339
+rouge2         : 0.4426
+rougeL         : 0.5368
+
+------------------------------------------------------------
+EVALUATION INFO (Multi-Reference BLEU)
+------------------------------------------------------------
+Unique MRs evaluated: 111
+Total unique MRs:     111
+Total test samples:   469
+Avg refs per MR:      4.2
+
+============================================================
+EXAMPLE GENERATIONS
+============================================================
+
+Example 1:
+MR:              name[Blue Spice], eatType[coffee shop], area[city centre]
+Prediction:      Blue Spice is a coffee shop located in the city centre....
+Num references:  2
+Sample ref:      A coffee shop in the city centre area called Blue Spice....
+
+Example 2:
+MR:              name[Blue Spice], eatType[coffee shop], area[riverside]
+Prediction:      Blue Spice is a coffee shop located in the riverside area....
+Num references:  2
+Sample ref:      There is a coffee shop Blue Spice in the riverside area....
+
+Example 3:
+MR:              name[Blue Spice], eatType[coffee shop], customer rating[5 out of 5], near[Crowne Plaza Hotel]
+Prediction:      Blue Spice is a coffee shop located near Crowne Plaza Hotel. It has a customer rating of 5 out of 5....
+Num references:  3
+Sample ref:      The coffee shop Blue Spice is based near Crowne Plaza Hotel and has a high customer rating of 5 out ...
+
+
+20% data with rank=8:
+============================================================
+EVALUATION RESULTS
+============================================================
+perplexity     : 1.2021
+bleu           : 0.5218
+rouge1         : 0.7360
+rouge2         : 0.4609
+rougeL         : 0.5531
+
+------------------------------------------------------------
+EVALUATION INFO (Multi-Reference BLEU)
+------------------------------------------------------------
+Unique MRs evaluated: 205
+Total unique MRs:     205
+Total test samples:   938
+Avg refs per MR:      4.6
+
+============================================================
+EXAMPLE GENERATIONS
+============================================================
+
+Example 1:
+MR:              name[Blue Spice], eatType[coffee shop], area[city centre]
+Prediction:      Blue Spice is a coffee shop located in the city centre....
+Num references:  2
+Sample ref:      A coffee shop in the city centre area called Blue Spice....
+
+Example 2:
+MR:              name[Blue Spice], eatType[coffee shop], area[riverside]
+Prediction:      Blue Spice is a coffee shop located in the riverside area....
+Num references:  2
+Sample ref:      There is a coffee shop Blue Spice in the riverside area....
+
+Example 3:
+MR:              name[Blue Spice], eatType[coffee shop], customer rating[5 out of 5], near[Crowne Plaza Hotel]
+Prediction:      Blue Spice is a coffee shop near Crowne Plaza Hotel. It has a customer rating of 5 out of 5....
+Num references:  3
+Sample ref:      The coffee shop Blue Spice is based near Crowne Plaza Hotel and has a high customer rating of 5 out ...
+
+
+
+100% data with rank=8:
+============================================================
+EVALUATION RESULTS
+============================================================
+perplexity     : 1.3033
+bleu           : 0.4239
+rouge1         : 0.7169
+rouge2         : 0.4365
+rougeL         : 0.5157
+
+------------------------------------------------------------
+EVALUATION INFO (Multi-Reference BLEU)
+------------------------------------------------------------
+Unique MRs evaluated: 1847
+Total unique MRs:     1847
+Total test samples:   4693
+Avg refs per MR:      2.5
+
+============================================================
+EXAMPLE GENERATIONS
+============================================================
+
+Example 1:
+MR:              name[Blue Spice], eatType[coffee shop], area[city centre]
+Prediction:      Blue Spice is a coffee shop located in the city centre....
+Num references:  2
+Sample ref:      A coffee shop in the city centre area called Blue Spice....
+
+Example 2:
+MR:              name[Blue Spice], eatType[coffee shop], area[riverside]
+Prediction:      Blue Spice is a coffee shop located in the riverside area....
+Num references:  2
+Sample ref:      There is a coffee shop Blue Spice in the riverside area....
+
+Example 3:
+MR:              name[Blue Spice], eatType[coffee shop], customer rating[5 out of 5], near[Crowne Plaza Hotel]
+Prediction:      Blue Spice is a coffee shop near Crowne Plaza Hotel. It has a customer rating of 5 out of 5....
+Num references:  3
+Sample ref:      The coffee shop Blue Spice is based near Crowne Plaza Hotel and has a high customer rating of 5 out ...
