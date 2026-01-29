@@ -205,7 +205,7 @@ python scripts/train.py --config config.yaml --mode dora
 ```
 
 ```bash
-python scripts/run_evaluation.py --checkpoint results/best_model/checkpoint.pt --config results/training_config.json
+python scripts/run_evaluation.py --checkpoint results/{model}/best_model/checkpoint.pt --config results/{model}/training_config.json
 ```
 
 
