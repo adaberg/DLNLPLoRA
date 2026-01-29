@@ -4,6 +4,7 @@ transformers
 datasets
 evaluate
 rouge-score
+sacrebleu
 
 # Configuration
 pyyaml
