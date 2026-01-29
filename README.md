@@ -198,6 +198,18 @@ pytest tests/test_dora.py -v -m model   # Only model tests
 pytest tests/test_dora.py -v -m learning
 ```
 
+## Train & evaluate
+
+```bash
+python scripts/train.py --config config.yaml --mode dora
+```
+
+```bash
+python scripts/run_evaluation.py --checkpoint results/best_model/checkpoint.pt --config results/training_config.json
+```
+
+
+
 # Extention: QLoRA
 
 ## Tests
