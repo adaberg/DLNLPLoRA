@@ -240,6 +240,7 @@ def main():
         max_grad_norm=float(args.max_grad_norm or config.get('training', {}).get('max_grad_norm', 1.0)),
         gradient_accumulation_steps=int(args.gradient_accumulation_steps or 
             config.get('training', {}).get('gradient_accumulation_steps', 1)),
+        label_smoothing=float(config.get('training', {}).get('label_smoothing', 0.1)),
         output_dir=output_dir,
         logging_steps=args.logging_steps or config.get('training', {}).get('logging_steps', 100),
         eval_steps=args.eval_steps or config.get('training', {}).get('eval_steps', 500),
@@ -287,6 +288,7 @@ def main():
                 "batch_size": training_config.batch_size,
                 "warmup_steps": training_config.warmup_steps,
                 "gradient_accumulation_steps": training_config.gradient_accumulation_steps,
+                "label_smoothing": training_config.label_smoothing,
                 "fp16": training_config.fp16,
                 "bf16": training_config.bf16,
             },

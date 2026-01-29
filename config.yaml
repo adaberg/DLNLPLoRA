@@ -34,6 +34,9 @@ training:
   batch_size: 8             # Batch size (paper: 8)
   warmup_steps: 500         # Linear warmup steps (paper: 500)
   
+  # Regularization
+  label_smoothing: 0.1      # Label smoothing (paper: 0.1 for E2E)
+  
   # Gradient handling
   max_grad_norm: 1.0        # Gradient clipping
   gradient_accumulation_steps: 1  # Increase for larger effective batch size
