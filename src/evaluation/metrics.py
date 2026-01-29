@@ -10,8 +10,8 @@ from transformers import PreTrainedTokenizer
 import numpy as np
 import evaluate
 from tqdm import trange
-from bert_score import score as bertscore
 from sacrebleu import corpus_bleu
+from bert_score import score as bertscore
 from transformers import GPT2TokenizerFast
 import logging
 from absl import logging as absl_logging
@@ -238,7 +238,7 @@ def compute_rouge_multi_ref(
     rouge2_scores = []
     rougeL_scores = []
 
-    # Select the best ROUGE values ​​from each reference example:
+    # Select the best ROUGE values from each reference example:
     for pred, refs in zip(predictions, references):
         # one prediction and N references
         best_r1 = 0.0
@@ -348,18 +348,21 @@ def compute_generation_metrics(
         lowercase=False,  # default
         smooth_method="exp"
     )
-    results["sacrebleu"] = bleu.score / 100.0
+    bleu_score = bleu.score / 100.0
+    results["sacrebleu"] = bleu_score
     logger.info("SacreBLEU (corpus-level, precision-based)")
     # additional debug logs:
-    logger.info("BLEU:", bleu.score)
-    logger.info("BP:", bleu.bp)  # if bp << 1.0 --> outputs too short
-    logger.info("sys_len:", bleu.sys_len)  # if sys_len << ref_len --> 'max_new_tokens' too small
-    logger.info("ref_len:", bleu.ref_len)
-    logger.info("precisions:", bleu.precisions)  # if p ≈ 0 --> model generated too monotonically
+    logger.info(f"BLEU: {bleu_score:.4f}")
+    logger.info(f"BP: {bleu.bp:.4f}")  # if bp << 1.0 --> outputs too short
+    logger.info(f"sys_len: {bleu.sys_len}")  # if sys_len << ref_len --> 'max_new_tokens' too small
+    logger.info(f"ref_len: {bleu.ref_len}")
+    logger.info(
+        "precisions: " + ", ".join(str(round(val, 4)) for val in bleu.precisions)
+    )  # if p[4] ≈ 0 --> model generated too monotonically
 
     # 2. Compute ROUGE F1 scores (mean of the best scores):
     #    Note: ROUGE F1 does not natively support multiple references well, therefore the
-    #          ROUGE values ​​must be calculated as the arithmetic mean across all references.
+    #          ROUGE values must be calculated as the arithmetic mean across all references.
     rouge_scores = compute_rouge_multi_ref(predictions, references)
     results.update(rouge_scores)
 
