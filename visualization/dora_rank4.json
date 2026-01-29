@@ -1,10 +1,10 @@
 {
-  "checkpoint": "results/lora_gpt2_e2e_dora_20260129_185926/best_model/checkpoint.pt",
+  "checkpoint": "results/lora_gpt2_e2e_dora_20260129_175727/best_model/checkpoint.pt",
   "config": {
     "training_mode": "dora",
     "model_name": "gpt2-medium",
     "lora_config": {
-      "rank": 8,
+      "rank": 4,
       "alpha": 32,
       "dropout": 0.1,
       "target_modules": [
@@ -30,14 +30,14 @@
     "seed": 42,
     "device": "cuda"
   },
-  "timestamp": "20260129_201130",
+  "timestamp": "20260129_185618",
   "metrics": {
-    "perplexity": 1.3236708443243919,
-    "bleu": 0.49530098835611186,
-    "sacrebleu": 0.24861381282097755,
-    "rouge1": 0.711203943234288,
-    "rouge2": 0.4232537358809457,
-    "rougeL": 0.5288413963991807
+    "perplexity": 1.320942227317188,
+    "bleu": 0.4968191561461474,
+    "sacrebleu": 0.2560758472348611,
+    "rouge1": 0.7166137358962137,
+    "rouge2": 0.4393449022081175,
+    "rougeL": 0.5378490252509571
   },
   "examples": [
     {

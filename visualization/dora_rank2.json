@@ -1,10 +1,10 @@
 {
-  "checkpoint": "results/lora_gpt2_e2e_dora_20260129_185926/best_model/checkpoint.pt",
+  "checkpoint": "results/lora_gpt2_e2e_dora_20260129_201733/best_model/checkpoint.pt",
   "config": {
     "training_mode": "dora",
     "model_name": "gpt2-medium",
     "lora_config": {
-      "rank": 8,
+      "rank": 2,
       "alpha": 32,
       "dropout": 0.1,
       "target_modules": [
@@ -30,14 +30,14 @@
     "seed": 42,
     "device": "cuda"
   },
-  "timestamp": "20260129_201130",
+  "timestamp": "20260129_212002",
   "metrics": {
-    "perplexity": 1.3236708443243919,
-    "bleu": 0.49530098835611186,
-    "sacrebleu": 0.24861381282097755,
-    "rouge1": 0.711203943234288,
-    "rouge2": 0.4232537358809457,
-    "rougeL": 0.5288413963991807
+    "perplexity": 1.3191931604352707,
+    "bleu": 0.4781224737684312,
+    "sacrebleu": 0.2424849734253839,
+    "rouge1": 0.7213674526331788,
+    "rouge2": 0.43357753744417604,
+    "rougeL": 0.5372596604840196
   },
   "examples": [
     {
@@ -54,7 +54,7 @@
     },
     {
       "mr": "name[Blue Spice], eatType[coffee shop], customer rating[5 out of 5], near[Crowne Plaza Hotel]",
-      "prediction": "Blue Spice is a coffee shop near Crowne Plaza Hotel. It has a customer rating of 5 out of 5.",
+      "prediction": "Blue Spice is a coffee shop located near Crowne Plaza Hotel. It has a customer rating of 5 out of 5.",
       "num_references": 3,
       "sample_reference": "The coffee shop Blue Spice is based near Crowne Plaza Hotel and has a high customer rating of 5 out of 5."
     }
