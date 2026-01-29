@@ -50,6 +50,10 @@ class LoRAGPT2(nn.Module):
     ) -> None:
         super().__init__()
         self.base_model = base_model
+        self.rank = rank
+        self.alpha = alpha
+        self.target_modules = target_modules
+        self.dropout = dropout
 
         for param in base_model.parameters():
             param.requires_grad = False
