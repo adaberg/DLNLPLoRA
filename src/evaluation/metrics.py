@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from transformers import PreTrainedTokenizer
 import numpy as np
 import evaluate
+from sacrebleu import corpus_bleu
 from transformers import GPT2TokenizerFast
 import logging
 
@@ -162,15 +163,41 @@ def compute_generation_metrics(
 
     results = {}
 
-    # 1. Compute BLEU with multiple references
+    # 1. Compute HF BLEU and SacreBLEU score with multiple references (corpus-level):
+    # HuggingFace BLEU:
+    # (dis: tokenization is not fixed, value can vary from run to run --> not comparable)
     try:
         bleu = evaluate.load("bleu")
-        # references is already in correct format: List[List[str]]
-        bleu_result = bleu.compute(predictions=predictions, references=references)
-        results["bleu"] = bleu_result["bleu"]
+        # 'references' is already in the correct format: List[List[str]]
+        bleu_result = bleu.compute(
+            predictions=predictions,
+            references=references
+        )
+        results["bleu"] = bleu_result["bleu"]  # corpus BLEU
+        logger.info("HF BLEU (corpus-level, precision-based)")
     except Exception as e:
-        logger.warning(f"BLEU computation failed: {e}")
+        logger.warning(f"HF BLEU calculation failed: {e}")
         results["bleu"] = 0.0
+
+    # SacreBLEU (shareable, comparable, and reproducible BLEU score):
+    bleu = corpus_bleu(
+        predictions,
+        list(zip(*references)),
+        tokenize="13a",  # default, paper standard (produces the same values as "mteval-v13a.pl" used by WMT)
+        lowercase=False,  # default
+        smooth_method="exp"
+    )
+    bleu_score = bleu.score / 100.0
+    results["sacrebleu"] = bleu_score
+    logger.info("SacreBLEU (corpus-level, precision-based)")
+    # additional debug logs:
+    logger.info(f"BLEU: {bleu_score:.4f}")
+    logger.info(f"BP: {bleu.bp:.4f}")  # if bp << 1.0 --> outputs too short
+    logger.info(f"sys_len: {bleu.sys_len}")  # if sys_len << ref_len --> 'max_new_tokens' too small
+    logger.info(f"ref_len: {bleu.ref_len}")
+    logger.info(
+        "precisions: " + ", ".join(str(round(val, 4)) for val in bleu.precisions)
+    )  # if p[4] ≈ 0 --> model generated too monotonically
 
     # 2. Compute ROUGE (use first reference from each list for ROUGE)
     # ROUGE doesn't natively support multiple references well
