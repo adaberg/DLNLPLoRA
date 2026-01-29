@@ -14,7 +14,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.models.gpt2_wrapper import load_gpt2_model_and_tokenizer
+from src.models.gpt2_wrapper import (
+  load_gpt2_model_and_tokenizer,
+  load_gpt2_model_and_tokenizer_4bit,
+  load_gpt2_model_and_tokenizer_8bit
+)
 from src.data.dataset import E2EDataset, get_dataloader
 from src.evaluation.metrics import (
     compute_perplexity,
@@ -25,7 +29,7 @@ from src.evaluation.metrics import (
 from src.lora.model import LoRAGPT2, DoRAGPT2
 
 
-def load_checkpoint(checkpoint_path: str, config: Dict, device: str) -> nn.Module:
+def load_checkpoint(checkpoint_path: str, config: Dict, device: str, quantize: str = None) -> nn.Module:
     """
     Load trained model from checkpoint.
 
@@ -33,15 +37,20 @@ def load_checkpoint(checkpoint_path: str, config: Dict, device: str) -> nn.Modul
         checkpoint_path: Path to model checkpoint
         config: Configuration dictionary
         device: Device to load model on
-
+        quantize: Quantization mode ("4bit", "8bit", or None)
     Returns:
         Loaded model ready for evaluation
     """
     # MODIFICATION: Support zero-shot evaluation
     if checkpoint_path.replace("-", "").lower().startswith("gpt2"):
         model_name = config["model_name"]
-        print(f"Zero-shot with {model_name}")
-        model, tokenizer = load_gpt2_model_and_tokenizer(model_name)
+        print(f"Zero-shot with {model_name} and quantization={quantize}...")
+        if quantize == "4bit":
+            model, tokenizer = load_gpt2_model_and_tokenizer_4bit(model_name)
+        elif quantize == "8bit":
+            model, tokenizer = load_gpt2_model_and_tokenizer_8bit(model_name)
+        else:
+            model, tokenizer = load_gpt2_model_and_tokenizer(model_name)
         model.to(device)
         model.eval()
         return model, tokenizer
@@ -162,6 +171,13 @@ def main() -> None:
         default=-1,
         help="Number of samples for text generation evaluation",
     )
+    parser.add_argument(
+        "--quantize",
+        type=str,
+        default=None,
+        choices=["int8", "int4"],
+        help="Quantization method (int8, int4)",
+    )
 
     args = parser.parse_args()
 
@@ -176,7 +192,7 @@ def main() -> None:
     if device.startswith("cuda"):
         torch.cuda.manual_seed(seed)
 
-    model, tokenizer = load_checkpoint(args.checkpoint, config, device)
+    model, tokenizer = load_checkpoint(args.checkpoint, config, device, quantize=args.quantize)
 
     test_loader, test_dataset = setup_test_data(config, tokenizer)
 

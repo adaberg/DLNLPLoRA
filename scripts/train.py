@@ -93,46 +93,6 @@ def setup_model(config: dict, training_mode: str):
         model = base_model
         for param in model.parameters():
             param.requires_grad = True
-    elif training_mode == "none_q4":
-        logger.info(
-            "Setting up quantized model (4-bit) for evaluation only (no training)..."
-        )
-
-        bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.float16,
-            bnb_4bit_use_double_quant=True,
-            llm_int8_skip_modules=["lm_head"],
-        )
-
-        model = GPT2LMHeadModel.from_pretrained(
-            "gpt2-medium",
-            quantization_config=bnb_config,
-            device_map="auto",
-            torch_dtype=torch.float16,
-        )
-
-        for param in model.parameters():
-            param.requires_grad = False
-    elif training_mode == "none_q8":
-        logger.info(
-            "Setting up quantized model (8-bit) for evaluation only (no training)..."
-        )
-
-        bnb_config = BitsAndBytesConfig(
-            load_in_8bit=True, llm_int8_skip_modules=["lm_head"]
-        )
-
-        model = GPT2LMHeadModel.from_pretrained(
-            "gpt2-medium",
-            quantization_config=bnb_config,
-            device_map="auto",
-            torch_dtype=torch.float16,
-        )
-
-        for param in model.parameters():
-            param.requires_grad = False
     else:  # none - evaluation only
         logger.info("Setting up model for evaluation only (no training)...")
         model = base_model
@@ -206,8 +166,8 @@ def parse_args():
         "--mode",
         type=str,
         default="lora",
-        choices=["lora", "full", "none", "dora", "none_q4bit", "none_q8bit"],
-        help="Training mode: lora, full fine-tuning, none (eval only), dora, or quantized none (eval only with quantization)",
+        choices=["lora", "full", "none", "dora"],
+        help="Training mode: lora, full fine-tuning, none (eval only), dora (default: lora)",
     )
 
     # Hyperparameters (override config)
