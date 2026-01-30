@@ -212,6 +212,8 @@ python scripts/run_evaluation.py --checkpoint results/{model}/best_model/checkpo
 
 # Extention: QLoRA
 
+available in branch extension/qlora , usage is the same as normal lora
+
 ## Tests
 
 ```bash
@@ -232,3 +234,9 @@ pytest tests/test_qlora.py -v -m learning
 # Test with markers
 pytest tests/test_qlora.py -v -m selective
 ```
+
+# individual contribution
+
+## Jacopo
+- core lora code: layer.py and model.py + testing
+- DoRA, QLoRA and selective LoRA both code and testing
